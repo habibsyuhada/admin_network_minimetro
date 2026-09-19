@@ -1,4 +1,45 @@
 import { test, expect } from "@playwright/test";
+test("camera stops at map edges and centers when zoomed out", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Main NOC Flow" }).click();
+  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Perbesar peta" }).click();
+  const map = page.getByRole("group", { name: "Peta Flow interaktif" });
+  const bounds = (await map.boundingBox())!;
+  const read = async () =>
+    (await map.getAttribute("viewBox"))!.split(" ").map(Number);
+  const drag = async (delta: number) => {
+    await page.mouse.move(bounds.x + 8, bounds.y + 8);
+    await page.mouse.down();
+    await page.mouse.move(bounds.x + 8 + delta, bounds.y + 8 + delta, {
+      steps: 5,
+    });
+    await page.mouse.up();
+  };
+  await drag(1800);
+  await expect.poll(async () => (await read()).slice(0, 2)).toEqual([0, 0]);
+  await drag(-1800);
+  await expect
+    .poll(async () => {
+      const [x, y, w, h] = await read();
+      return [x + w, y + h];
+    })
+    .toEqual([400, 600]);
+  for (let i = 0; i < 3; i++)
+    await page.getByRole("button", { name: "Perkecil peta" }).click();
+  await expect(
+    page.getByRole("button", { name: "Tampilkan seluruh peta" }),
+  ).toHaveText("65%");
+  const centered = await map.getAttribute("viewBox");
+  await drag(1800);
+  await expect(map).toHaveAttribute("viewBox", centered!);
+  const [x, y, w, h] = await read();
+  expect(x + w / 2).toBeCloseTo(200);
+  expect(y + h / 2).toBeCloseTo(300);
+});
 test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   page,
 }) => {

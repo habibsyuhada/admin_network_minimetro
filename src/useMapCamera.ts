@@ -5,7 +5,7 @@ import {
   type RefObject,
   type PointerEvent,
 } from "react";
-import { zoomView, type Point, type View } from "./game/mapView";
+import { constrainView, zoomView, type Point, type View } from "./game/mapView";
 type Motion = {
   kind: "pan" | "pinch" | "draw";
   view: View;
@@ -20,7 +20,7 @@ export default function useMapCamera(
   frozen: boolean,
 ) {
   const [custom, setCustom] = useState<View | null>(null);
-  const view = custom ?? fit;
+  const view = constrainView(custom ?? fit);
   const live = useRef(view);
   live.current = view;
   const disabled = useRef(frozen);
@@ -28,8 +28,9 @@ export default function useMapCamera(
   const points = useRef(new Map<number, Point>());
   const motion = useRef<Motion | null>(null);
   const update = (v: View) => {
-    live.current = v;
-    setCustom(v);
+    const bounded = constrainView(v);
+    live.current = bounded;
+    setCustom(bounded);
   };
   const world = (p: Point): Point => {
     const matrix = svg.current?.getScreenCTM();

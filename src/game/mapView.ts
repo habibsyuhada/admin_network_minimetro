@@ -1,6 +1,23 @@
 import { SITES, type Line } from "./metro";
 export type Point = { x: number; y: number };
 export type View = Point & { width: number; height: number };
+export const MAP_BOUNDS: View = { x: 0, y: 0, width: 400, height: 600 };
+export function constrainView(view: View): View {
+  const axis = (
+    position: number,
+    size: number,
+    start: number,
+    extent: number,
+  ) =>
+    size >= extent
+      ? start + (extent - size) / 2
+      : Math.max(start, Math.min(start + extent - size, position));
+  return {
+    ...view,
+    x: axis(view.x, view.width, MAP_BOUNDS.x, MAP_BOUNDS.width),
+    y: axis(view.y, view.height, MAP_BOUNDS.y, MAP_BOUNDS.height),
+  };
+}
 export function zoomView(view: View, anchor: Point, factor: number): View {
   const width = Math.max(400 / 3, Math.min(400 / 0.65, view.width / factor));
   const ratio = width / view.width;

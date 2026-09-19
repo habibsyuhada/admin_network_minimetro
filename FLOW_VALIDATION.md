@@ -1,12 +1,11 @@
-# NOC Flow validation — 2026-09-19
+# NOC Flow validation — mobile network redesign
 
-- Production build and TypeScript/Prettier checks pass.
-- 21 unit tests pass, including five Flow tests covering transfers, conservation on reset, progression, failure/recovery, and invalid edits.
-- Both Flow browser scenarios pass on Chromium desktop, Pixel 7 emulation and WebKit iPhone emulation (six project/scenario combinations). Tests cover route input, pause, reset, and responsive portrait/landscape layouts.
-- Existing shift browser scenarios: 28 pass, two existing WebKit service-worker scenarios skipped by repository configuration.
+- The landing-page layout is replaced with a portrait game menu, one primary play action, device illustration, guide, sound settings and local packet record.
+- The old shift screen, simulation, save handlers and obsolete tests are removed. Legacy browser keys are untouched.
+- Network devices replace geometric stations: client, server and database. Queue packets use the same device icons, cables retain route colors, and the camera expands as devices join.
+- Five simulation tests pass. Production build and TypeScript/Prettier checks pass.
+- Browser coverage includes menu navigation, removal of the old mode, settings persistence, blocked storage, route input, pause/reset, portrait/landscape layout, and PWA update/offline behavior.
 
-Windows WebKit reports different visual and layout viewport sizes even before rendering the home page. Mobile interaction tests check that Flow does not increase that baseline overflow. Dedicated layout contexts use the repository's existing fixed viewport approach at 360×640 and 844×390. The initial 320px emulation case produced an effective viewport below the existing 320px minimum body width on this host. Physical iPhone viewport/safe-area behavior remains unverified; emulator success is not device certification.
+WebKit Windows has a visual/layout viewport discrepancy already present before gameplay. Mobile input is tested in device emulation; responsive layout uses fixed 360×640 and 844×390 contexts. Physical iPhone verification remains outstanding. Flow sessions still end on reload; best packet count is persisted when returning to the menu.
 
-This is a playable PWA prototype, not an Android/iOS store build. Flow sessions are memory-only and end on reload or exit; this is disclosed in the in-game guide. Existing shift saves remain unchanged. Difficulty beyond automated deterministic scenarios needs playtesting.
-
-The change is on a local branch. No code has been pushed and no public deployment or pull request has been created.
+No remote branch, pull request, or public deployment has been created. Changes are local.

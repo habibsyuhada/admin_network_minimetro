@@ -3,7 +3,6 @@ import { ArrowLeft, Pause, Play, RotateCcw, Network } from "lucide-react";
 import Dialog from "./Dialog";
 import {
   COLORS,
-  SHAPES,
   SITES,
   clearLine,
   extendLine,
@@ -12,15 +11,28 @@ import {
   reward,
 } from "./game/metro";
 import "./metro.css";
+import {
+  DeviceGlyph,
+  DEVICE_NAMES,
+  DEVICE_CODES,
+  DEVICE_COLORS,
+} from "./NetworkArt";
+import { playCue } from "./game/audio";
 
-export default function MetroGame({ onMenu }: { onMenu: () => void }) {
+export default function MetroGame({
+  onMenu,
+}: {
+  onMenu: (delivered: number) => void;
+}) {
   const [s, setS] = useState(newMetro);
+  const best = useRef(0);
+  best.current = Math.max(best.current, s.delivered);
   const [selected, setSelected] = useState(0);
   const [paused, setPaused] = useState(false);
   const [help, setHelp] = useState(true);
   const [confirm, setConfirm] = useState(false);
   const [tip, setTip] = useState(
-    "Pilih jalur, lalu sentuh simpul berurutan untuk menghubungkannya.",
+    "Pilih jalur, lalu sentuh perangkat berurutan untuk menghubungkannya.",
   );
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -79,13 +91,14 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
     if (frozen) return;
     if (s.lines[selected].stops.includes(id)) {
       setTip(
-        "Simpul sudah ada di jalur ini. Lanjutkan ke simpul lain atau atur ulang jalur.",
+        "Perangkat sudah ada di jalur ini. Lanjutkan ke perangkat lain atau atur ulang jalur.",
       );
       return;
     }
     setS((v) => extendLine(v, selected, id));
+    playCue("link");
     setTip(
-      `Jalur ${selected + 1} diperpanjang. Hubungkan simbol tujuan yang berbeda.`,
+      `Jalur ${selected + 1} diperpanjang. Hubungkan jenis perangkat yang berbeda.`,
     );
   };
   const position = (x: number, y: number) => {
@@ -99,12 +112,18 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
     ? SITES[line.stops[line.stops.length - 1]]
     : null;
   const danger = s.overload.indexOf(Math.max(...s.overload));
+  const activeSites = SITES.slice(0, s.queues.length);
+  const mapTop = Math.max(0, Math.min(...activeSites.map((n) => n.y)) - 65);
+  const mapHeight = Math.max(
+    400,
+    Math.max(...activeSites.map((n) => n.y)) + 75 - mapTop,
+  );
   const restart = () => {
     setS(newMetro());
     setSelected(0);
     setPaused(false);
     setConfirm(false);
-    setTip("Pilih jalur, lalu hubungkan simpul dengan simbol berbeda.");
+    setTip("Pilih jalur, lalu hubungkan perangkat dengan jenis berbeda.");
   };
   return (
     <main className="metro-game">
@@ -136,12 +155,12 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
       </section>
       <div className="metro-map-wrap">
         <div className="metro-map-title">
-          <span>01 — DISTRIK KONEKSI</span>
-          <span>{s.queues.length} simpul</span>
+          <span>01 — LOCAL AREA NETWORK</span>
+          <span>{s.queues.length} perangkat</span>
         </div>
         <svg
           ref={svg}
-          viewBox="0 0 400 600"
+          viewBox={`0 ${mapTop} 400 ${mapHeight}`}
           className="metro-map"
           role="group"
           aria-label="Peta Flow interaktif"
@@ -165,7 +184,7 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
                 id < s.queues.length && Math.hypot(n.x - p.x, n.y - p.y) < 30,
             );
             if (target < 0 || target === g.start) {
-              setTip("Lepaskan di simpul tujuan untuk membuat jalur.");
+              setTip("Lepaskan di perangkat tujuan untuk membuat jalur.");
               return;
             }
             setS((v) => {
@@ -181,7 +200,7 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
               return v;
             });
             setTip(
-              "Tarik dari ujung jalur untuk memperpanjang. Sentuh simpul juga bisa.",
+              "Tarik dari ujung jalur untuk memperpanjang. Sentuh perangkat juga bisa.",
             );
           }}
           onPointerCancel={() => {
@@ -193,18 +212,32 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
             setPointer(null);
           }}
         >
-          <path
-            className="metro-river"
-            d="M-30 355 C60 335 85 160 180 260 S280 460 440 400"
-          />
-          <text
-            className="metro-water-label"
-            x="145"
-            y="290"
-            transform="rotate(30 145 290)"
-          >
-            ALIRAN DATA
-          </text>
+          <defs>
+            <pattern
+              id="network-grid"
+              width="24"
+              height="24"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="1" cy="1" r=".8" fill="#29413d" />
+            </pattern>
+          </defs>
+          <rect width="400" height="600" fill="url(#network-grid)" />
+          <g className="network-zones" aria-hidden="true">
+            <rect x="30" y="36" width="135" height="170" rx="16" />
+            <rect x="195" y="150" width="170" height="290" rx="16" />
+            <rect x="35" y="345" width="140" height="210" rx="16" />
+            <text x="42" y="55">
+              ACCESS / A
+            </text>
+            <text x="205" y="162">
+              DATA CENTER
+            </text>
+            <text x="47" y="538">
+              ACCESS / B
+            </text>
+            <path d="M15 300H155L185 330H390M180 15V120L155 145" />
+          </g>
           {s.lines.map((l, i) => (
             <polyline
               key={i}
@@ -234,7 +267,7 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
                 key={id}
                 transform={`translate(${n.x},${n.y})`}
                 role="button"
-                aria-label={`Simpul ${id + 1} ${SHAPES[n.shape]}`}
+                aria-label={`${DEVICE_NAMES[n.shape]} ${id + 1}`}
                 tabIndex={frozen ? -1 : 0}
                 aria-pressed={line.stops.includes(id)}
                 className="metro-node"
@@ -259,53 +292,43 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
                 <circle r="30" fill="transparent" />
                 {s.overload[id] > 0 && (
                   <circle
-                    r="25"
+                    r="32"
                     className="metro-danger-ring"
-                    strokeDasharray={`${(s.overload[id] / 20) * 157} 157`}
+                    strokeDasharray={`${(s.overload[id] / 20) * 201} 201`}
                     transform="rotate(-90)"
                   />
                 )}
-                {n.shape === 0 ? (
-                  <circle r="12" className="metro-symbol" />
-                ) : n.shape === 1 ? (
-                  <path d="M0 -14L14 12H-14Z" className="metro-symbol" />
-                ) : (
-                  <rect
-                    x="-12"
-                    y="-12"
-                    width="24"
-                    height="24"
-                    rx="2"
-                    className="metro-symbol"
-                  />
-                )}
-                <text y="-33" className="metro-node-id">
-                  {String(id + 1).padStart(2, "0")}
+                <DeviceGlyph kind={n.shape} />
+                <text y="-34" className="metro-node-id">
+                  {DEVICE_CODES[n.shape]}-{String(id + 1).padStart(2, "0")}
                 </text>
-                <text
-                  x={n.x > 275 ? -20 : 20}
-                  textAnchor={n.x > 275 ? "end" : "start"}
-                  y="5"
-                  className="metro-queue"
-                >
-                  {q
-                    .slice(0, 4)
-                    .map((p) => SHAPES[p])
-                    .join(" ")}
-                </text>
-                <text
-                  x={n.x > 275 ? -20 : 20}
-                  textAnchor={n.x > 275 ? "end" : "start"}
-                  y="19"
-                  className="metro-queue"
-                >
-                  {q.length > 4
-                    ? `${q
-                        .slice(4, 7)
-                        .map((p) => SHAPES[p])
-                        .join(" ")}${q.length > 7 ? ` +${q.length - 7}` : ""}`
-                    : ""}
-                </text>
+                <g aria-hidden="true" transform="translate(-24, 35)">
+                  {q.slice(0, 6).map((packet, index) => (
+                    <g
+                      key={index}
+                      transform={`translate(${(index % 3) * 17},${Math.floor(index / 3) * 15})`}
+                    >
+                      <rect
+                        x="-7"
+                        y="-7"
+                        width="14"
+                        height="13"
+                        rx="3"
+                        fill="#142c29"
+                        stroke={DEVICE_COLORS[packet]}
+                        strokeWidth=".6"
+                      />
+                      <g transform="scale(.29)">
+                        <DeviceGlyph kind={packet} compact />
+                      </g>
+                    </g>
+                  ))}
+                  {q.length > 6 && (
+                    <text x="50" y="17" className="metro-queue">
+                      +{q.length - 6}
+                    </text>
+                  )}
+                </g>
               </g>
             );
           })}
@@ -325,7 +348,7 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
                   height="18"
                   rx="5"
                   fill={COLORS[i]}
-                  stroke="#faf8f1"
+                  stroke="#101f20"
                   strokeWidth="2"
                 />
                 <text className="metro-car-count" y="4">
@@ -340,8 +363,8 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
           role="status"
         >
           {s.overload[danger] > 0
-            ? `Simpul ${danger + 1} penuh · ${Math.max(0, Math.ceil(20 - s.overload[danger]))} detik untuk mengurangi antrean`
-            : "Paket menuju simpul dengan simbol yang sama."}
+            ? `Perangkat ${danger + 1} penuh · ${Math.max(0, Math.ceil(20 - s.overload[danger]))} detik untuk mengurangi antrean`
+            : "Ikon pada paket menunjukkan perangkat tujuan."}
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
@@ -356,12 +379,12 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
               onClick={() => {
                 setSelected(i);
                 setTip(
-                  `Jalur ${i + 1} dipilih. Sentuh simpul untuk memperpanjang.`,
+                  `Jalur ${i + 1} dipilih. Sentuh perangkat untuk memperpanjang.`,
                 );
               }}
             >
               <span>{i + 1}</span>
-              <small>{l.stops.length} simpul</small>
+              <small>{l.stops.length} perangkat</small>
             </button>
           ))}
           <button
@@ -374,8 +397,18 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
           </button>
         </div>
         <p role="status">{tip}</p>
+        <div className="network-legend">
+          {DEVICE_NAMES.map((name, i) => (
+            <span key={name}>
+              <svg viewBox="-19 -20 38 40">
+                <DeviceGlyph kind={i} compact />
+              </svg>
+              {name}
+            </span>
+          ))}
+        </div>
         <div className="metro-capacity">
-          <span>{s.capacity} paket / pengangkut</span>
+          <span>{s.capacity} paket / transfer</span>
           <button onClick={() => setHelp(true)}>Cara bermain</button>
         </div>
       </section>
@@ -385,20 +418,20 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
           onClose={() => setHelp(false)}
         >
           <p>
-            Bangun jalur berwarna dan antar paket ke simpul dengan simbol tujuan
-            yang sama: ● ▲ ■.
+            Bangun jalur berwarna dan antar paket ke perangkat dengan jenis
+            perangkat tujuan: Client, Server, atau Database.
           </p>
           <ol className="handbook">
             <li>
-              Pilih warna, lalu sentuh simpul satu per satu. Atau tarik dari
-              simpul awal ke tujuan, lalu lanjutkan dari ujung jalur.
+              Pilih warna, lalu sentuh perangkat satu per satu. Atau tarik dari
+              perangkat awal ke tujuan, lalu lanjutkan dari ujung jalur.
             </li>
             <li>
-              Satu pengangkut bolak-balik di setiap jalur. Paket bisa pindah
-              jalur di simpul bersama.
+              Paket mengalir bolak-balik di setiap jalur dan bisa pindah jalur
+              di perangkat bersama.
             </li>
             <li>
-              Simpul baru muncul setiap 35 detik. Setiap 60 detik, pilih satu
+              Perangkat baru muncul setiap 35 detik. Setiap 60 detik, pilih satu
               peningkatan.
             </li>
             <li>
@@ -420,7 +453,7 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
           <button className="primary" onClick={() => setPaused(false)}>
             <Play size={18} /> Lanjutkan Flow
           </button>
-          <button className="secondary" onClick={onMenu}>
+          <button className="secondary" onClick={() => onMenu(best.current)}>
             <ArrowLeft size={18} /> Akhiri sesi & ke menu
           </button>
         </Dialog>
@@ -431,15 +464,15 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
           onClose={() => setConfirm(false)}
         >
           <p>
-            Paket di pengangkut dikembalikan ke simpul terakhir. Gambar ulang
-            jalur setelah ini.
+            Paket dalam perjalanan dikembalikan ke perangkat terakhir. Gambar
+            ulang jalur setelah ini.
           </p>
           <button
             className="primary"
             onClick={() => {
               setS((v) => clearLine(v, selected));
               setTip(
-                "Jalur diatur ulang. Sentuh simpul untuk menggambar rute baru.",
+                "Jalur diatur ulang. Sentuh perangkat untuk menggambar rute baru.",
               );
               setConfirm(false);
             }}
@@ -462,26 +495,26 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
             disabled={s.lines.length >= COLORS.length}
             onClick={() => setS((v) => reward(v, "line"))}
           >
-            +1 jalur & pengangkut
+            +1 jalur transfer
           </button>
           <button
             className="secondary"
             onClick={() => setS((v) => reward(v, "capacity"))}
           >
-            +2 kapasitas semua pengangkut
+            +2 kapasitas paket per transfer
           </button>
           <button
             className="secondary"
             onClick={() => setS((v) => reward(v, "speed"))}
           >
-            +15 kecepatan semua pengangkut
+            Tingkatkan kecepatan transfer
           </button>
         </Dialog>
       )}
       {s.phase === "over" && (
         <Dialog title="Jaringan kewalahan">
           <p>
-            Antrean terlalu lama penuh. Coba jalur lebih pendek atau simpul
+            Antrean terlalu lama penuh. Coba jalur lebih pendek atau perangkat
             transfer pada sesi berikutnya.
           </p>
           <div className="result-score">
@@ -491,7 +524,7 @@ export default function MetroGame({ onMenu }: { onMenu: () => void }) {
           <button className="primary" onClick={restart}>
             Main Flow lagi
           </button>
-          <button className="secondary" onClick={onMenu}>
+          <button className="secondary" onClick={() => onMenu(best.current)}>
             Kembali ke menu
           </button>
         </Dialog>

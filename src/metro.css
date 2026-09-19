@@ -284,3 +284,212 @@
     flex-wrap: wrap;
   }
 }
+/* Network console: the playable map and the menu share the same device language. */
+.metro-game {
+  color: #deebe5;
+  background: #101f20;
+  max-width: 600px;
+  min-height: 640px;
+}
+.metro-header button,
+.metro-clear {
+  background: #1d3530;
+  color: #afd6bf;
+  border: 1px solid #365148;
+  border-radius: 12px;
+}
+.metro-score small,
+.metro-map-title {
+  color: #819e93;
+}
+.metro-score strong {
+  color: #d9efdf;
+}
+.metro-calendar progress {
+  accent-color: #92ddb1;
+}
+.metro-map-wrap {
+  border-color: #2c433e;
+  background: #102020;
+  border-radius: 12px;
+  min-height: 250px;
+}
+.metro-map-title {
+  padding: 12px 10px 0;
+  font-family: ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+.metro-wordmark {
+  color: #b0e6c7;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.metro-score {
+  padding: 12px 2px;
+}
+.metro-score strong {
+  font-size: 30px;
+}
+.metro-calendar strong {
+  font-size: 20px;
+}
+.network-zones rect {
+  fill: #162a2744;
+  stroke: #29423c;
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+}
+.network-zones text {
+  fill: #47695d;
+  font-size: 7px;
+  letter-spacing: 2px;
+  font-family: ui-monospace, monospace;
+}
+.network-zones path {
+  stroke: #284039;
+  stroke-width: 2;
+  fill: none;
+}
+.metro-route {
+  filter: drop-shadow(0 0 4px #8be2ba15);
+}
+.metro-node-id {
+  fill: #94b2a5;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+}
+.metro-node:focus-visible .device-housing,
+.metro-node[aria-pressed="true"] .device-housing {
+  stroke: #b8f4cc;
+  stroke-width: 2;
+}
+.metro-queue {
+  fill: #bdd9cd;
+}
+.metro-danger-ring {
+  stroke: #f48b73;
+}
+.metro-car-count {
+  fill: #132b26;
+  font-size: 10px;
+}
+.metro-notice {
+  color: #88ac99;
+  font-size: 10px;
+  padding: 8px;
+  min-height: 36px;
+}
+.metro-notice.is-danger {
+  color: #ffc19c;
+}
+.metro-controls {
+  padding-top: 10px;
+}
+.metro-line-buttons > button:not(.metro-clear) {
+  background: #182e2a;
+  color: #8fb6a1;
+  border: 1px solid #2b453c;
+  border-radius: 10px;
+}
+.metro-line-buttons > button[aria-pressed="true"] {
+  background: #29443a;
+  border-color: var(--route);
+}
+.metro-line-buttons span {
+  border-radius: 6px;
+  width: 29px;
+  height: 22px;
+  font-size: 10px;
+}
+.metro-line-buttons small {
+  font-size: 8px;
+}
+.metro-controls > p {
+  color: #8cae9c;
+  font-size: 10px;
+  min-height: 29px;
+  margin-top: 8px;
+}
+.metro-capacity {
+  color: #789984;
+  font-size: 9px;
+}
+.metro-capacity button {
+  color: #b5d2bd;
+  font-size: 10px;
+}
+.network-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 6px 0;
+  border-bottom: 1px solid #273e33;
+}
+.network-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: #96b7a6;
+}
+.network-legend svg {
+  width: 17px;
+  height: 18px;
+}
+.metro-game .device-glyph {
+  pointer-events: none;
+}
+@media (min-width: 761px) {
+  .metro-game {
+    border-color: #2c433e;
+    padding-inline: 24px;
+  }
+}
+@media (max-height: 700px) and (orientation: portrait) {
+  .metro-game {
+    padding: 8px 12px;
+    min-height: 600px;
+  }
+  .metro-score {
+    padding: 6px 2px;
+  }
+  .metro-score strong {
+    font-size: 24px;
+  }
+  .metro-calendar strong {
+    font-size: 18px;
+  }
+  .metro-controls {
+    padding-top: 6px;
+  }
+  .network-legend {
+    padding: 3px 0;
+  }
+  .metro-capacity button {
+    min-height: 36px;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .metro-game {
+    max-width: none;
+    min-height: 360px;
+  }
+  .network-legend {
+    gap: 6px;
+  }
+  .network-legend > span {
+    font-size: 8px;
+  }
+  .metro-controls > p {
+    font-size: 9px;
+  }
+  .metro-map-title {
+    font-size: 7px;
+  }
+}
+@media (max-height: 700px) and (orientation: portrait) {
+  .metro-game {
+    min-height: 560px;
+  }
+}

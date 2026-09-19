@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "NOC Shift",
-  "short_name": "NOC Shift",
-  "description": "Hubungkan kantor, kelola kapasitas, dan jaga HQ District tetap online sepanjang shift.",
+  "name": "NOC Flow",
+  "short_name": "NOC Flow",
+  "description": "Hubungkan client, server, dan database. Jaga paket data mengalir.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#101715",
-  "theme_color": "#101715",
+  "background_color": "#0e201e",
+  "theme_color": "#0e201e",
   "icons": [
     {
       "src": "icon-192.png",

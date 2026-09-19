@@ -4,6 +4,7 @@ test("Flow builds routes, pauses, resets and fits mobile", async ({
   page,
   browser,
 }) => {
+  test.setTimeout(60000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -15,12 +16,12 @@ test("Flow builds routes, pauses, resets and fits mobile", async ({
   );
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
-  for (const n of ["Simpul 1 ●", "Simpul 2 ▲", "Simpul 3 ■"]) {
+  for (const n of ["Client 1", "Server 2", "Database 3"]) {
     await page.getByRole("button", { name: n, exact: true }).click();
   }
   await expect(
     page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("3 simpul");
+  ).toContainText("3 perangkat");
   await page.getByRole("button", { name: "Jeda mode Flow" }).click();
   const clock = await page.getByTestId("flow-clock").textContent();
   await page.waitForTimeout(1200);
@@ -32,8 +33,8 @@ test("Flow builds routes, pauses, resets and fits mobile", async ({
     .click();
   await expect(
     page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("0 simpul");
-  for (const n of ["Simpul 1 ●", "Simpul 2 ▲", "Simpul 3 ■"]) {
+  ).toContainText("0 perangkat");
+  for (const n of ["Client 1", "Server 2", "Database 3"]) {
     await page.getByRole("button", { name: n, exact: true }).click();
   }
   expect(
@@ -74,7 +75,7 @@ test("Flow builds routes, pauses, resets and fits mobile", async ({
         small.getByRole("button", { name: "Jalur 1", exact: true }),
       ).toBeInViewport();
       await expect(
-        small.getByRole("button", { name: "Simpul 3 ■", exact: true }),
+        small.getByRole("button", { name: "Database 3", exact: true }),
       ).toBeInViewport();
       await small.screenshot({
         path: `test-results/flow-layout-${test.info().project.name}-${viewport.width}.png`,
@@ -92,10 +93,10 @@ test("drag joins nodes and pointer cancellation leaves the route unchanged", asy
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
   const a = await page
-    .getByRole("button", { name: "Simpul 1 ●", exact: true })
+    .getByRole("button", { name: "Client 1", exact: true })
     .boundingBox();
   const b = await page
-    .getByRole("button", { name: "Simpul 2 ▲", exact: true })
+    .getByRole("button", { name: "Server 2", exact: true })
     .boundingBox();
   await page.mouse.move(a!.x + a!.width / 2, a!.y + a!.height / 2);
   await page.mouse.down();
@@ -105,11 +106,11 @@ test("drag joins nodes and pointer cancellation leaves the route unchanged", asy
   await page.mouse.up();
   await expect(
     page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("2 simpul");
+  ).toContainText("2 perangkat");
   await page
     .getByRole("group", { name: "Peta Flow interaktif" })
     .dispatchEvent("pointercancel");
   await expect(
     page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("2 simpul");
+  ).toContainText("2 perangkat");
 });

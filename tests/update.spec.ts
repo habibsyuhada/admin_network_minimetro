@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve, sep, extname } from "node:path";
 import type { AddressInfo } from "node:net";
 
-test("subpath PWA update waits for old tabs and preserves saves across versions", async ({
+test("subpath PWA update waits for old tabs and preserves settings across versions", async ({
   page,
   context,
   browserName,
@@ -59,17 +59,7 @@ test("subpath PWA update waits for old tabs and preserves saves across versions"
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/game/`;
   try {
     await page.goto(url);
-    await page
-      .getByRole("button", { name: "Mulai shift baru", exact: true })
-      .click();
-    await page.getByRole("button", { name: "Mulai bertugas" }).click();
-    await page.getByRole("button", { name: "Kantor HQ", exact: true }).click();
-    await page.getByRole("button", { name: /Sambungkan ke node lain/ }).click();
-    await page.getByRole("button", { name: "Router A", exact: true }).click();
-    await page.getByRole("button", { name: "Jeda permainan" }).click();
-    await page
-      .getByRole("button", { name: "Simpan & kembali ke menu" })
-      .click();
+    await page.getByRole("button", { name: "Matikan suara" }).click();
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
     });
@@ -112,12 +102,19 @@ test("subpath PWA update waits for old tabs and preserves saves across versions"
         ),
       )
       .toBe(1);
-    await next.getByRole("button", { name: "Lanjutkan shift" }).click();
-    await expect(next.getByText("1 koneksi", { exact: true })).toBeVisible();
+    await expect(
+      next.getByRole("button", { name: "Aktifkan suara" }),
+    ).toBeVisible();
     await context.setOffline(true);
     await next.reload();
-    await next.getByRole("button", { name: "Lanjutkan shift" }).click();
-    await expect(next.getByText("1 koneksi", { exact: true })).toBeVisible();
+    await expect(
+      next.getByRole("button", { name: "Aktifkan suara" }),
+    ).toBeVisible();
+    await next.getByRole("button", { name: "Main NOC Flow" }).click();
+    await next.getByRole("button", { name: "Ayo hubungkan" }).click();
+    await expect(
+      next.getByRole("button", { name: "Client 1", exact: true }),
+    ).toBeVisible();
     await next.close();
   } finally {
     server.closeAllConnections();

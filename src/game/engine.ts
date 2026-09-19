@@ -1,210 +1,326 @@
-export type NodeId = "hq" | "router" | "server" | "branch";
-export type Phase =
-  | "hq"
-  | "server"
-  | "observe"
-  | "branch"
-  | "normal"
-  | "rush"
-  | "recover"
-  | "complete";
-export const LEVEL = {
-  observe: 25,
-  normal: 20,
-  stable: 20,
-  capacity: 100,
-  upgradeCapacity: 240,
-  queueMax: 80,
-  upgradeCost: 300,
-};
-export const nodes: {
-  id: NodeId;
-  name: string;
-  x: number;
-  y: number;
-  type: string;
-}[] = [
-  { id: "hq", name: "Office HQ", x: 80, y: 210, type: "OFFICE / 01" },
-  { id: "router", name: "Router-A", x: 240, y: 210, type: "CORE ROUTER" },
-  { id: "server", name: "App Server", x: 400, y: 210, type: "APPLICATION" },
-  { id: "branch", name: "Branch Office", x: 240, y: 65, type: "OFFICE / 02" },
-];
+import {
+  MAP,
+  nodes,
+  offices,
+  routers,
+  type NodeId,
+  type OfficeId,
+  type RouterId,
+} from "./map";
+export {
+  MAP,
+  nodes,
+  offices,
+  routers,
+  type NodeId,
+  type OfficeId,
+  type RouterId,
+} from "./map";
 export type Link = [NodeId, NodeId];
+export type Phase = "running" | "complete" | "failed";
 export interface State {
-  sources: Record<
-    "hq" | "branch",
-    { served: number; queue: number; loss: number }
-  >;
+  version: 2;
+  seed: number;
   phase: Phase;
   time: number;
-  phaseTime: number;
   links: Link[];
-  queue: number;
-  load: number;
-  latency: number;
-  loss: number;
+  upgraded: Record<RouterId, boolean>;
+  budget: number;
+  repaired: boolean;
+  sources: Record<OfficeId, { queue: number; served: number; dropped: number }>;
   served: number;
   dropped: number;
   total: number;
-  stable: number;
-  upgraded: boolean;
-  budget: number;
-  peak: number;
+  loss: number;
+  latency: number;
   uptime: number;
+  onlineTime: number;
+  measuredTime: number;
+  badTime: number;
+  stable: number;
+  incidentSeconds: number;
   message: string;
+  tutorial: boolean;
 }
-export const initial = (): State => ({
-  sources: {
-    hq: { served: 0, queue: 0, loss: 0 },
-    branch: { served: 0, queue: 0, loss: 0 },
-  },
-  phase: "hq",
+export const initial = (seed = 1, tutorial = true): State => ({
+  version: 2,
+  seed: seed >>> 0,
+  phase: "running",
   time: 0,
-  phaseTime: 0,
   links: [],
-  queue: 0,
-  load: 0,
-  latency: 0,
-  loss: 0,
+  upgraded: { router: false, backup: false },
+  budget: MAP.budget,
+  repaired: false,
+  sources: {
+    hq: { queue: 0, served: 0, dropped: 0 },
+    branch: { queue: 0, served: 0, dropped: 0 },
+    studio: { queue: 0, served: 0, dropped: 0 },
+  },
   served: 0,
   dropped: 0,
   total: 0,
-  stable: 0,
-  upgraded: false,
-  budget: 500,
-  peak: 0,
+  loss: 0,
+  latency: 0,
   uptime: 100,
+  onlineTime: 0,
+  measuredTime: 0,
+  badTime: 0,
+  stable: 0,
+  incidentSeconds: 0,
   message: "",
+  tutorial,
 });
+export const active = (s: State, id: NodeId) =>
+  nodes.some((n) => n.id === id && n.unlock <= s.time);
+export const linkKey = (a: NodeId, b: NodeId) => [a, b].sort().join(":");
 export const has = (s: State, a: NodeId, b: NodeId) =>
-  s.links.some((l) => l.includes(a) && l.includes(b));
+  s.links.some((l) => linkKey(...l) === linkKey(a, b));
+export const legal = (a: NodeId, b: NodeId) =>
+  a !== b &&
+  nodes.some((n) => n.id === a) &&
+  nodes.some((n) => n.id === b) &&
+  (routers.includes(a as RouterId) || routers.includes(b as RouterId));
+export const broken = (s: State, a: NodeId, b: NodeId) =>
+  s.time >= MAP.outageAt &&
+  !s.repaired &&
+  linkKey(a, b) === linkKey("router", "server");
 export function route(s: State, start: NodeId): NodeId[] {
+  if (!active(s, start)) return [];
   const pending: NodeId[][] = [[start]],
     seen = new Set<NodeId>();
   while (pending.length) {
-    const p = pending.shift()!,
-      n = p[p.length - 1];
-    if (n === "server") return p;
-    if (seen.has(n)) continue;
-    seen.add(n);
-    for (const l of s.links)
-      if (l.includes(n)) pending.push([...p, l[0] === n ? l[1] : l[0]]);
+    const path = pending.shift()!,
+      end = path[path.length - 1];
+    if (end === "server") return path;
+    if (seen.has(end)) continue;
+    seen.add(end);
+    if (end !== start && !routers.includes(end as RouterId)) continue;
+    const neighbors = s.links
+      .filter((l) => l.includes(end) && !broken(s, ...l))
+      .map((l) => (l[0] === end ? l[1] : l[0]))
+      .sort();
+    for (const id of neighbors)
+      if (active(s, id) && !seen.has(id)) pending.push([...path, id]);
   }
   return [];
 }
-const phase = (s: State, p: Phase): State => ({
-  ...s,
-  phase: p,
-  phaseTime: 0,
-  message: "",
-});
 export function connect(s: State, a: NodeId, b: NodeId): State {
-  if (s.phase === "complete" || a === b || has(s, a, b)) return s;
+  if (s.phase !== "running") return s;
+  const reason = !legal(a, b)
+    ? "Koneksi harus melalui router. Office tidak meneruskan traffic."
+    : !active(s, a) || !active(s, b)
+      ? "Node belum aktif."
+      : has(s, a, b)
+        ? "Koneksi ini sudah ada."
+        : s.budget < MAP.linkCost
+          ? "Budget tidak cukup untuk koneksi baru."
+          : "";
+  if (reason) return { ...s, message: reason };
+  return {
+    ...s,
+    links: [...s.links, [a, b]],
+    budget: s.budget - MAP.linkCost,
+    message: "Koneksi terpasang. Biaya 40 kredit.",
+  };
+}
+export function disconnect(s: State, a: NodeId, b: NodeId): State {
+  if (s.phase !== "running" || !has(s, a, b)) return s;
+  return {
+    ...s,
+    links: s.links.filter((l) => linkKey(...l) !== linkKey(a, b)),
+    budget: s.budget + MAP.refund,
+    message: "Koneksi dilepas. Pengembalian 20 kredit.",
+  };
+}
+export function upgrade(s: State, id: RouterId = "router"): State {
   if (
-    (a === "branch" || b === "branch") &&
-    ["hq", "server", "observe"].includes(s.phase)
+    s.phase !== "running" ||
+    !routers.includes(id) ||
+    !active(s, id) ||
+    s.upgraded[id]
   )
     return s;
-  const valid =
-    a === "router" ||
-    b === "router" ||
-    ([a, b].includes("branch") && [a, b].includes("hq"));
-  if (!valid)
+  if (s.budget < MAP.upgradeCost)
+    return { ...s, message: "Budget upgrade tidak cukup." };
+  return {
+    ...s,
+    upgraded: { ...s.upgraded, [id]: true },
+    budget: s.budget - MAP.upgradeCost,
+    message: "Kapasitas router meningkat menjadi 260 req/s.",
+  };
+}
+export function repair(s: State): State {
+  if (s.phase !== "running" || s.time < MAP.outageAt || s.repaired) return s;
+  if (s.budget < MAP.repairCost)
     return {
       ...s,
-      message:
-        "Hubungkan office melalui Router-A. Server hanya menerima link dari router.",
+      message: "Budget perbaikan tidak cukup. Coba jalur melalui Router B.",
     };
-  let n = {
-    ...s,
-    links: [...s.links, [a, b] as Link],
-    message: "Link terpasang.",
-  };
-  if (n.phase === "hq" && has(n, "hq", "router")) n = phase(n, "server");
-  if (n.phase === "server" && route(n, "hq").length) n = phase(n, "observe");
-  if (n.phase === "branch" && route(n, "branch").length) n = phase(n, "normal");
-  return n;
-}
-export function upgrade(s: State): State {
-  return s.phase === "rush" && !s.upgraded && s.budget >= LEVEL.upgradeCost
-    ? phase(
-        { ...s, upgraded: true, budget: s.budget - LEVEL.upgradeCost },
-        "recover",
-      )
-    : s;
-}
-export function demand(s: State) {
-  const rush = ["rush", "recover", "complete"].includes(s.phase);
-  return { hq: rush ? 90 : 38, branch: rush ? 70 : 24 };
-}
-export function tick(s: State, dt: number): State {
-  if (s.phase === "complete" || dt <= 0) return s;
-  let n = { ...s, time: s.time + dt, phaseTime: s.phaseTime + dt };
-  const rates = demand(s);
-  let incoming = 0;
-  for (const id of ["hq", "branch"] as const)
-    if (route(s, id).length) incoming += rates[id];
-  const cap = s.upgraded ? LEVEL.upgradeCapacity : LEVEL.capacity;
-  const available = s.queue + incoming * dt,
-    served = Math.min(available, cap * dt),
-    remaining = available - served;
-  const dropped = Math.max(0, remaining - LEVEL.queueMax);
-  n.queue = Math.min(LEVEL.queueMax, remaining);
-  // A shared fluid queue: retain each office's contribution across ticks.
-  n.sources = { ...s.sources };
-  for (const id of ["hq", "branch"] as const) {
-    const contribution =
-      s.sources[id].queue + (route(s, id).length ? rates[id] * dt : 0);
-    const share = available ? contribution / available : 0;
-    n.sources[id] = {
-      served: s.sources[id].served + served * share,
-      queue: n.queue * share,
-      loss: route(s, id).length
-        ? ((dropped * share) / (rates[id] * dt)) * 100
-        : 0,
-    };
-  }
-  n.load = (incoming / cap) * 100;
-  n.peak = Math.max(s.peak, n.load);
-  n.served += served;
-  n.dropped += dropped;
-  n.total += incoming * dt;
-  n.loss = incoming ? (dropped / (incoming * dt)) * 100 : 0;
-  n.latency = incoming ? 18 + (n.queue / cap) * 1000 : 0;
-  // Availability measures reachable services, independently from congestion loss.
-  n.uptime = route(s, "hq").length ? 100 : 0;
-  if (n.phase === "observe" && n.phaseTime >= LEVEL.observe)
-    n = phase(n, "branch");
-  if (n.phase === "normal" && n.phaseTime >= LEVEL.normal) n = phase(n, "rush");
-  if (n.phase === "recover") {
-    n.stable =
-      n.loss <= 1 && n.latency < 50 && n.uptime >= 99 ? n.stable + dt : 0;
-    if (n.stable >= LEVEL.stable) n = phase(n, "complete");
-  }
-  return n;
-}
-
-export function nodeStats(s: State, id: NodeId) {
-  const office = id === "hq" || id === "branch";
-  const connected = office
-    ? route(s, id).length > 0
-    : id === "router"
-      ? route(s, "router").length > 0
-      : s.links.some((l) => l.includes("server"));
-  const incoming = (["hq", "branch"] as const).reduce(
-    (sum, key) => sum + (route(s, key).length ? demand(s)[key] : 0),
-    0,
-  );
-  const active = connected && (office || incoming > 0);
   return {
-    connected,
-    uptime: connected ? 100 : 0,
-    latency: active ? s.latency : null,
-    loss: active ? (office ? s.sources[id].loss : s.loss) : null,
-    served: office ? s.sources[id].served : s.served,
-    rate: office ? demand(s)[id] : incoming,
-    scope: office
-      ? "Request dari office ini ke App Server. Uptime menunjukkan koneksi layanan saat ini."
-      : "Gabungan traffic Office HQ dan Branch Office. Uptime menunjukkan koneksi layanan saat ini.",
+    ...s,
+    repaired: true,
+    budget: s.budget - MAP.repairCost,
+    message:
+      "Jalur Router A–Server pulih. Koneksi yang dilepas perlu dibuat kembali.",
   };
+}
+export const capacity = (s: State, id: RouterId) =>
+  s.upgraded[id] ? MAP.upgradedCapacity : MAP.capacity;
+export function demand(s: State): Record<OfficeId, number> {
+  // Stateless seeded variation: repeatable across save/resume and frame rates.
+  let hash = (s.seed ^ Math.floor(s.time / 15)) >>> 0;
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b) >>> 0;
+  const variation = 0.96 + (hash % 9) / 100;
+  const base =
+    s.time >= MAP.finalRushAt
+      ? [88, 74, 60]
+      : s.time >= MAP.rushAt
+        ? [82, 66, 54]
+        : [38, 30, 24];
+  return Object.fromEntries(
+    offices.map((id, i) => [id, active(s, id) ? base[i] * variation : 0]),
+  ) as Record<OfficeId, number>;
+}
+export function routerLoad(s: State, id: RouterId) {
+  const rates = demand(s);
+  return (
+    (offices.reduce(
+      (sum, o) => sum + (route(s, o).includes(id) ? rates[o] : 0),
+      0,
+    ) /
+      capacity(s, id)) *
+    100
+  );
+}
+export const stage = (s: State) =>
+  s.time < 90
+    ? "Orientasi"
+    : s.time < 240
+      ? "Ekspansi"
+      : s.time < 360
+        ? "Jam sibuk"
+        : s.time < 390
+          ? "Peringatan jalur"
+          : s.time < 480
+            ? "Pemulihan"
+            : "Penutupan shift";
+export function objective(s: State) {
+  if (s.phase === "complete")
+    return "Shift selesai. Semua kantor mendapat layanan yang stabil.";
+  if (s.phase === "failed") return s.message;
+  if (s.time < 75 && !route(s, "hq").length)
+    return "Hubungkan Kantor HQ → Router A → App Server. Pilih node, lalu pilih Sambungkan atau tarik ke tujuan.";
+  if (s.time >= 360 && s.time < 390)
+    return "Jalur Router A–Server akan terganggu pada 06:30. Siapkan Router B atau sisakan 120 kredit untuk perbaikan.";
+  if (
+    s.time >= 390 &&
+    !s.repaired &&
+    offices.some((id) => !route(s, id).length)
+  )
+    return "Jalur Router A–Server terganggu. Alihkan lewat Router B atau perbaiki jalur (120 kredit).";
+  if (offices.some((id) => active(s, id) && !route(s, id).length))
+    return "Ada kantor belum tersambung. Hubungkan ke router yang memiliki jalur menuju server.";
+  if (s.loss > 1 || s.latency >= 50)
+    return "Traffic menumpuk. Tingkatkan kapasitas atau bagi beban ke Router B.";
+  if (s.time >= 390 && !s.repaired)
+    return "Jalur cadangan menjaga layanan tetap online. Perbaikan jalur A–Server bersifat opsional; pertahankan kualitas sampai akhir shift.";
+  return "Jaga latency <50 ms dan loss ≤1%. Akhiri shift dengan layanan stabil selama 20 detik dan uptime ≥90%.";
+}
+export function tick(s: State, dt: number = MAP.step): State {
+  if (s.phase !== "running" || !Number.isFinite(dt) || dt <= 0) return s;
+  dt = Math.min(dt, MAP.step, MAP.duration - s.time);
+  const n: State = {
+    ...s,
+    time: Math.round((s.time + dt) * 1e6) / 1e6,
+    sources: { ...s.sources },
+  };
+  const rates = demand(s),
+    paths = Object.fromEntries(
+      offices.map((id) => [id, route(s, id)]),
+    ) as Record<OfficeId, NodeId[]>;
+  const available = Object.fromEntries(
+    offices.map((id) => [id, s.sources[id].queue + rates[id] * dt]),
+  ) as Record<OfficeId, number>;
+  const ratios = Object.fromEntries(
+    routers.map((id) => {
+      const offered = offices.reduce(
+        (sum, office) =>
+          sum + (paths[office].includes(id) ? available[office] : 0),
+        0,
+      );
+      return [id, offered ? Math.min(1, (capacity(s, id) * dt) / offered) : 1];
+    }),
+  ) as Record<RouterId, number>;
+  let newServed = 0,
+    newDropped = 0,
+    latency = 18,
+    incoming = 0;
+  for (const id of offices) {
+    if (!active(s, id)) continue;
+    incoming += rates[id] * dt;
+    const path = paths[id],
+      reachable = path.length > 0;
+    const pathRouters = routers.filter((r) => path.includes(r));
+    const served = reachable
+      ? available[id] * Math.min(1, ...pathRouters.map((r) => ratios[r]))
+      : 0;
+    const queue = reachable
+      ? Math.min(MAP.queueMax, Math.max(0, available[id] - served))
+      : 0;
+    const dropped = Math.max(0, available[id] - served - queue);
+    const source = s.sources[id];
+    n.sources[id] = {
+      queue,
+      served: source.served + served,
+      dropped: source.dropped + dropped,
+    };
+    newServed += served;
+    newDropped += dropped;
+    if (queue)
+      latency = Math.max(
+        latency,
+        18 + (queue / Math.max(served / dt, 1)) * 1000,
+      );
+  }
+  n.total += incoming;
+  n.served += newServed;
+  n.dropped += newDropped;
+  n.loss = incoming ? Math.min(100, (newDropped / incoming) * 100) : 0;
+  n.latency = latency;
+  const eligible = offices.filter(
+    (id) =>
+      s.time >=
+      Math.max(75, nodes.find((v) => v.id === id)!.unlock + MAP.grace),
+  );
+  const online = eligible.filter((id) => paths[id].length).length;
+  n.measuredTime += eligible.length * dt;
+  n.onlineTime += online * dt;
+  n.uptime = n.measuredTime ? (n.onlineTime / n.measuredTime) * 100 : 100;
+  const grace =
+    s.time < 75 ||
+    nodes.some(
+      (v) =>
+        v.kind === "office" &&
+        s.time >= v.unlock &&
+        s.time < v.unlock + MAP.grace,
+    );
+  const allOnline = offices
+    .filter((id) => active(s, id))
+    .every((id) => paths[id].length);
+  const unhealthy = !allOnline || n.loss > 8 || n.latency > 250;
+  n.badTime = !grace && unhealthy ? s.badTime + dt : 0;
+  n.stable = allOnline && n.loss <= 1 && n.latency < 50 ? s.stable + dt : 0;
+  if (s.time >= MAP.outageAt && !allOnline) n.incidentSeconds += dt;
+  if (n.badTime >= MAP.failureAfter) {
+    n.phase = "failed";
+    n.message =
+      "Layanan terganggu selama 45 detik berturut-turut. Siapkan kapasitas dan jalur pemulihan lebih awal.";
+  } else if (n.time >= MAP.duration) {
+    n.phase = n.uptime >= 90 && n.stable >= 20 ? "complete" : "failed";
+    n.message =
+      n.phase === "failed"
+        ? "Shift berakhir sebelum target tercapai. Butuh uptime ≥90% dan 20 detik terakhir yang stabil."
+        : "";
+  }
+  return n;
 }

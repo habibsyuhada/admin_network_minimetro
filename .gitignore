@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 android/
 ios/
+playwright-report/
+test-results/

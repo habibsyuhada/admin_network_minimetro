@@ -1,34 +1,40 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Network,
+  ArrowUpRight,
   Play,
   Volume2,
   VolumeX,
-  Trophy,
-  ChevronRight,
-  ArrowLeft,
   Download,
-  ShieldCheck,
 } from "lucide-react";
 import App from "./App";
+import Dialog from "./Dialog";
 import FullscreenButton from "./FullscreenButton";
-import { initial, type State } from "./game/engine";
-import { loadProfile, saveProfile, score, type Profile } from "./game/storage";
-import { playCue, setAudioEnabled, unlockAudio } from "./game/audio";
+import { type State } from "./game/engine";
+import {
+  loadProfile,
+  saveProfile,
+  score,
+  newRun,
+  type Profile,
+} from "./game/storage";
+import { setAudioEnabled, unlockAudio, playCue } from "./game/audio";
 type InstallPrompt = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
 };
 export default function GameShell() {
   const [profile, setProfile] = useState(loadProfile),
-    [screen, setScreen] = useState<"home" | "game" | "help">("home"),
-    [run, setRun] = useState<State | null>(null),
-    [saveFailed, setSaveFailed] = useState(false),
-    [install, setInstall] = useState<InstallPrompt | null>(null),
-    [confirmNew, setConfirmNew] = useState(false);
+    [run, setRun] = useState<State | null>(null);
+  const [help, setHelp] = useState(false),
+    [confirm, setConfirm] = useState(false),
+    [saveFailed, setSaveFailed] = useState(false);
+  const [install, setInstall] = useState<InstallPrompt | null>(null),
+    [offlineReady, setOfflineReady] = useState(false),
+    [updateReady, setUpdateReady] = useState(false);
   const live = useRef(profile),
     lastSave = useRef(0),
-    won = useRef(false);
+    counted = useRef(false);
   const persist = useCallback((next: Profile) => {
     live.current = next;
     setSaveFailed(!saveProfile(next));
@@ -37,37 +43,62 @@ export default function GameShell() {
     setAudioEnabled(profile.sound);
   }, [profile.sound]);
   useEffect(() => {
-    const background = () => {
-      if (document.hidden) persist(live.current);
+    const save = () => persist(live.current);
+    const hide = () => {
+      if (document.hidden) save();
     };
-    const leave = () => persist(live.current);
-    const prompt = (event: Event) => {
-      event.preventDefault();
-      setInstall(event as InstallPrompt);
+    const prompt = (e: Event) => {
+      e.preventDefault();
+      setInstall(e as InstallPrompt);
     };
-    document.addEventListener("visibilitychange", background);
-    window.addEventListener("pagehide", leave);
+    const installed = () => setInstall(null);
+    document.addEventListener("visibilitychange", hide);
+    window.addEventListener("pagehide", save);
     window.addEventListener("beforeinstallprompt", prompt);
+    window.addEventListener("appinstalled", installed);
     return () => {
-      document.removeEventListener("visibilitychange", background);
-      window.removeEventListener("pagehide", leave);
+      document.removeEventListener("visibilitychange", hide);
+      window.removeEventListener("pagehide", save);
       window.removeEventListener("beforeinstallprompt", prompt);
+      window.removeEventListener("appinstalled", installed);
     };
   }, [persist]);
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !import.meta.env.PROD) return;
+    let disposed = false;
+    const timer = window.setInterval(() => {
+      void navigator.serviceWorker
+        .getRegistration()
+        .then((r) => {
+          if (disposed) return;
+          setOfflineReady(!!r?.active);
+          setUpdateReady(!!r?.waiting);
+        })
+        .catch(() => {
+          /* Offline status is optional when the browser blocks SW access. */
+        });
+    }, 3000);
+    return () => {
+      disposed = true;
+      clearInterval(timer);
+    };
+  }, []);
   const update = useCallback(
     (state: State) => {
       let next = { ...live.current, run: state };
-      if (state.phase === "complete" && !won.current) {
-        won.current = true;
+      if (state.phase === "complete" && !counted.current) {
+        counted.current = true;
         next = {
           ...next,
           wins: next.wins + 1,
           best: Math.max(next.best, score(state)),
+          tutorial: false,
         };
       }
-      if (state.phase !== "complete") won.current = false;
+      const terminal =
+        state.phase !== "running" && live.current.run?.phase === "running";
       live.current = next;
-      if (Date.now() - lastSave.current > 1000 || state.phase === "complete") {
+      if (Date.now() - lastSave.current > 1000 || terminal) {
         lastSave.current = Date.now();
         persist(next);
       }
@@ -77,19 +108,19 @@ export default function GameShell() {
   const start = (resume: boolean) => {
     unlockAudio();
     playCue("tap");
-    const state = resume && live.current.run ? live.current.run : initial();
-    won.current = state.phase === "complete";
+    const state =
+      resume && live.current.run ? live.current.run : newRun(live.current);
+    counted.current = state.phase === "complete";
+    persist({ ...live.current, notice: "", run: state });
     setRun(state);
-    persist({ ...live.current, run: state });
-    setConfirmNew(false);
-    setScreen("game");
+    setConfirm(false);
   };
   const home = () => {
     persist(live.current);
     setProfile(live.current);
-    setScreen("home");
+    setRun(null);
   };
-  const toggleSound = () => {
+  const sound = () => {
     const next = { ...live.current, sound: !live.current.sound };
     setAudioEnabled(next.sound);
     unlockAudio();
@@ -97,200 +128,229 @@ export default function GameShell() {
     persist(next);
     setProfile(next);
   };
-  if (screen === "game" && run)
-    return (
-      <>
+  const resumable = profile.run?.phase === "running";
+  return (
+    <>
+      {run ? (
         <App
+          key={run.seed}
           saved={run}
           onStateChange={update}
           onMenu={home}
+          onRestart={() => start(false)}
           sound={profile.sound}
-          onSound={toggleSound}
+          onSound={sound}
         />
-        {saveFailed && (
-          <div className="save-warning" role="status">
-            Penyimpanan tidak tersedia. Progres hanya bertahan selama tab ini
-            terbuka.
-          </div>
-        )}
-      </>
-    );
-  return (
-    <main className="shell">
-      <div className="shell-top">
-        <span className="edition">A NETWORK STRATEGY GAME</span>
-        <FullscreenButton />
-        <button
-          className="icon-button"
-          aria-label={profile.sound ? "Mute sound" : "Enable sound"}
-          onClick={toggleSound}
-        >
-          {profile.sound ? <Volume2 size={20} /> : <VolumeX size={20} />}
-        </button>
-      </div>
-      {screen === "help" ? (
-        <section className="how-to">
-          <button className="text-button" onClick={() => setScreen("home")}>
-            <ArrowLeft size={16} />
-            Kembali
-          </button>
-          <p className="eyebrow">OPERATOR HANDBOOK</p>
-          <h1>Your shift starts here.</h1>
-          <ol>
-            <li>
-              <strong>Drag to connect</strong>
-              <p>
-                Tarik dari satu node ke node lain. Office mengirim request
-                melalui Router-A menuju App Server.
-              </p>
-            </li>
-            <li>
-              <strong>Tap to inspect</strong>
-              <p>
-                Tap node untuk melihat statistiknya. Tap tidak membuat koneksi.
-                Tombol × menutup detail.
-              </p>
-            </li>
-            <li>
-              <strong>Watch the rush</strong>
-              <p>
-                Sambungkan branch baru. Saat antrean meningkat, tap Router-A dan
-                upgrade memakai budget.
-              </p>
-            </li>
-            <li>
-              <strong>Restore the network</strong>
-              <p>
-                Pertahankan latency di bawah 50 ms dan loss maksimal 1% selama
-                20 detik. Respons lebih cepat menghasilkan skor lebih tinggi.
-              </p>
-            </li>
-          </ol>
-          <div className="install-tip">
-            <Download size={20} />
-            <p>
-              Untuk layar penuh: Android gunakan “Install app” di menu browser.
-              iPhone: Safari → Bagikan → Tambah ke Layar Utama.
-            </p>
-          </div>
-          <button className="upgrade" onClick={() => setScreen("home")}>
-            Siap bertugas <ChevronRight size={18} />
-          </button>
-        </section>
       ) : (
-        <div className="home-screen">
+        <main className="shell">
+          <header className="shell-header">
+            <a className="brand" href="#" aria-label="NOC Shift beranda">
+              <Network size={23} /> NOC<span>SHIFT</span>
+            </a>
+            <FullscreenButton />
+            <button
+              className="icon-button"
+              onClick={sound}
+              aria-label={profile.sound ? "Matikan suara" : "Aktifkan suara"}
+            >
+              {profile.sound ? <Volume2 size={19} /> : <VolumeX size={19} />}
+            </button>
+          </header>
           <section className="hero">
-            <div className="hero-network" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <Network size={70} />
+            <div className="eyebrow">
+              <span className="status-dot" /> RUANG KENDALI JARINGAN
             </div>
-            <p className="eyebrow">CONNECT · MONITOR · RESTORE</p>
             <h1>
-              NOC<span>SHIFT</span>
+              Jaringan kecil.
+              <br />
+              <span>Tanggung jawab besar.</span>
             </h1>
             <p>
-              A small network.
+              Hubungkan kantor. Antisipasi lonjakan traffic.
               <br />
-              <b>A whole morning counting on you.</b>
+              Jaga satu distrik tetap online, sepanjang shift.
             </p>
-          </section>
-          <section className="level-tile">
-            <div className="level-number">01</div>
-            <div>
-              <small>FIRST DAY AT NOC</small>
-              <h2>Morning Login Rush</h2>
-              <p>4 nodes · 1 incident · Your first shift</p>
+            <div className="hero-diagram" aria-hidden="true">
+              <span>HQ</span>
+              <i />
+              <span className="router-symbol">
+                <Network size={34} />
+              </span>
+              <i />
+              <span>APP</span>
+              <div className="diagram-note">
+                ● LAYANAN TERHUBUNG <b>18 ms</b>
+              </div>
             </div>
-            <ShieldCheck size={24} />
           </section>
-          <div className="home-actions">
-            {profile.run && profile.run.phase !== "complete" && (
-              <button className="upgrade" onClick={() => start(true)}>
-                <Play size={18} />
-                Lanjutkan shift
-                <ChevronRight size={18} />
+          <section className="mission-card">
+            <div className="mission-top">
+              <span className="eyebrow">MAP 01 / HQ DISTRICT</span>
+              <span className="badge">10 MENIT</span>
+            </div>
+            <h2>Shift pagi pertama</h2>
+            <p>
+              Tiga kantor. Dua router. Satu gangguan yang menguji persiapanmu.
+            </p>
+            <div className="mission-tags">
+              <span>Strategi jaringan</span>
+              <span>Single player</span>
+              <span>Rekor lokal</span>
+            </div>
+            {resumable && (
+              <button className="primary" onClick={() => start(true)}>
+                <Play size={18} /> Lanjutkan shift <ArrowUpRight size={18} />
               </button>
             )}
             <button
-              className={
-                profile.run && profile.run.phase !== "complete"
-                  ? "secondary"
-                  : "upgrade"
-              }
-              onClick={() =>
-                profile.run && profile.run.phase !== "complete"
-                  ? setConfirmNew(true)
-                  : start(false)
-              }
+              className={resumable ? "secondary" : "primary"}
+              onClick={() => (resumable ? setConfirm(true) : start(false))}
             >
-              <Play size={18} />
-              {profile.wins ? "Main lagi" : "Mulai shift baru"}
-              <ChevronRight size={18} />
+              {profile.wins ? "Main lagi" : "Mulai shift baru"}{" "}
+              <ArrowUpRight size={18} />
             </button>
-            <button className="text-button" onClick={() => setScreen("help")}>
-              Cara bermain <ChevronRight size={16} />
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={profile.tutorial}
+                onChange={(e) => {
+                  const next = { ...live.current, tutorial: e.target.checked };
+                  persist(next);
+                  setProfile(next);
+                }}
+              />{" "}
+              Tampilkan panduan awal
+            </label>
+          </section>
+          <div className="home-bottom">
+            <button className="text-button" onClick={() => setHelp(true)}>
+              Cara bermain ↗
             </button>
-          </div>
-          <div className="career">
-            <Trophy size={21} />
             <div>
-              <small>BEST SCORE</small>
-              <strong>{profile.best.toLocaleString()}</strong>
+              <small>REKOR TERBAIK</small>
+              <strong>{profile.best.toLocaleString("id-ID")}</strong>
             </div>
             <div>
-              <small>SHIFTS COMPLETED</small>
+              <small>SHIFT SELESAI</small>
               <strong>{profile.wins}</strong>
             </div>
           </div>
+          {profile.legacyBest > 0 && (
+            <p className="muted">
+              Rekor tutorial versi lama:{" "}
+              {profile.legacyBest.toLocaleString("id-ID")}
+            </p>
+          )}
+          {profile.notice && (
+            <p role="status" className="notice">
+              {profile.notice}
+            </p>
+          )}
           {install && (
             <button
-              className="text-button install-button"
+              className="text-button"
               onClick={async () => {
-                await install.prompt();
-                await install.userChoice;
-                setInstall(null);
+                try {
+                  await install.prompt();
+                  await install.userChoice;
+                } finally {
+                  setInstall(null);
+                }
               }}
             >
-              <Download size={17} />
-              Pasang di layar utama
+              <Download size={16} /> Pasang di layar utama
             </button>
           )}
-          <p className="local-note">
-            Progres tersimpan di perangkat ini.{" "}
-            {saveFailed
-              ? "Penyimpanan browser tidak tersedia."
-              : "Bisa dilanjutkan kapan saja."}
-          </p>
-        </div>
-      )}
-      {confirmNew && (
-        <div className="overlay">
-          <section
-            className="result"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="new-title"
-          >
-            <h1 id="new-title">Mulai dari awal?</h1>
-            <p>
-              Shift yang belum selesai akan diganti. Rekor dan jumlah kemenangan
-              tetap tersimpan.
-            </p>
-            <button className="upgrade" onClick={() => start(false)}>
-              Mulai shift baru
-            </button>
-            <button
-              className="text-button"
-              autoFocus
-              onClick={() => setConfirmNew(false)}
+          <footer>
+            PROGRES LOKAL <span>•</span>{" "}
+            {offlineReady
+              ? "SIAP DIMAINKAN OFFLINE"
+              : "OFFLINE TERSEDIA SETELAH ASET TERSIMPAN"}
+            <br />
+            NOC SHIFT / v1.0.0
+            <br />
+            <a
+              href="./THIRD_PARTY_NOTICES.txt"
+              target="_blank"
+              rel="noreferrer"
             >
-              Kembali
-            </button>
-          </section>
+              Lisensi komponen
+            </a>
+          </footer>
+        </main>
+      )}
+      {saveFailed && (
+        <div role="status" className="save-warning">
+          Penyimpanan gagal. Progres hanya bertahan selama tab terbuka.
         </div>
       )}
-    </main>
+      {updateReady && !run && (
+        <p className="notice">
+          Pembaruan tersedia. Tutup semua tab NOC Shift lalu buka kembali.
+          Progres telah disimpan.
+        </p>
+      )}
+      {confirm && (
+        <Dialog title="Mulai dari awal?" onClose={() => setConfirm(false)}>
+          <p>Shift aktif akan diganti. Rekor tetap tersimpan.</p>
+          <button className="primary" onClick={() => start(false)}>
+            Ya, mulai baru
+          </button>
+          <button
+            className="secondary"
+            autoFocus
+            onClick={() => setConfirm(false)}
+          >
+            Kembali
+          </button>
+        </Dialog>
+      )}
+      {help && (
+        <Dialog title="Panduan operator" onClose={() => setHelp(false)}>
+          <ol className="handbook">
+            <li>
+              <b>Bangun jalur layanan.</b> Tarik dari kantor ke router, lalu
+              router ke server. Atau pilih node, tekan Sambungkan, lalu pilih
+              tujuan. Tab dan Enter juga dapat digunakan.
+            </li>
+            <li>
+              <b>Atur budget 1.000 kredit.</b> Koneksi 40, melepas koneksi
+              mengembalikan 20, upgrade router 260, perbaikan jalur 120.
+              Kapasitas router: 120 → 260 req/s.
+            </li>
+            <li>
+              <b>Antisipasi jadwal.</b> Cabang aktif 01:30, Studio 03:00, jam
+              sibuk 04:00, gangguan Router A–Server 06:30, lonjakan akhir 08:00.
+              Kantor baru mendapat 30 detik masa persiapan.
+            </li>
+            <li>
+              <b>Jaga kualitas.</b> Setelah masa persiapan, kantor terputus,
+              loss &gt;8%, atau latency &gt;250 ms selama 45 detik
+              berturut-turut mengakhiri shift. Peringatan menampilkan waktu
+              tersisa.
+            </li>
+            <li>
+              <b>Tuntaskan shift 10 menit.</b> Butuh uptime ≥90% dan semua
+              kantor stabil selama 20 detik terakhir (loss ≤1%, latency &lt;50
+              ms). Uptime mengukur waktu keterjangkauan semua kantor setelah
+              masa persiapan.
+            </li>
+            <li>
+              <b>Pilih strategi.</b> Tingkatkan router utama dan perbaiki
+              jalurnya, atau bagi beban dan siapkan rute melalui Router B.
+              Routing memilih jalur terpendek yang tersedia.
+            </li>
+          </ol>
+          <p className="muted">
+            Offline perlu kunjungan online pertama. iPhone: Safari → Bagikan →
+            Tambah ke Layar Utama. Tidak ada akun atau pengiriman data
+            permainan.
+          </p>
+          <button className="primary" onClick={() => setHelp(false)}>
+            Siap bertugas
+          </button>
+        </Dialog>
+      )}
+    </>
   );
 }

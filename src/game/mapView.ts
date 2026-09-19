@@ -1,4 +1,4 @@
-import { SITES, type Line } from "./metro";
+import { SITES, type Cable } from "./metro";
 export type Point = { x: number; y: number };
 export type View = Point & { width: number; height: number };
 export const MAP_BOUNDS: View = { x: 0, y: 0, width: 400, height: 600 };
@@ -30,7 +30,7 @@ export function zoomView(view: View, anchor: Point, factor: number): View {
 }
 // Canonical endpoint order keeps lanes on the same side even for reverse routes.
 export function laneSegment(
-  lines: Line[],
+  lines: Cable[],
   lineIndex: number,
   a: number,
   b: number,
@@ -56,7 +56,7 @@ export function laneSegment(
     { x: SITES[b].x + dx, y: SITES[b].y + dy },
   ];
 }
-export function linePath(lines: Line[], index: number): string {
+export function linePath(lines: Cable[], index: number): string {
   const stops = lines[index].stops;
   return stops
     .slice(1)

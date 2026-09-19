@@ -1,17 +1,9 @@
-# NOC Flow validation — mobile network redesign
+# NOC Flow validation — point-to-point cable gameplay
 
-- The landing-page layout is replaced with a portrait game menu, one primary play action, device illustration, guide, sound settings and local packet record.
-- The old shift screen, simulation, save handlers and obsolete tests are removed. Legacy browser keys are untouched.
-- Network devices replace geometric stations: client, server and database. Queue packets use the same device icons, cables retain route colors, and the camera expands as devices join.
-- Five simulation tests pass. Production build and TypeScript/Prettier checks pass.
-- Browser coverage includes menu navigation, removal of the old mode, settings persistence, blocked storage, route input, pause/reset, portrait/landscape layout, and PWA update/offline behavior.
+The previous multi-stop route model is replaced by independent two-node cables. Each cable owns one bidirectional carrier and retains its cargo until arrival; intermediate packets unload into node queues and wait for the next cable's carrier. Packet routing uses positive travel-time costs with queue/capacity pressure and stable cable order. Capacity is shown as load/maximum on every carrier.
 
-WebKit Windows has a visual/layout viewport discrepancy already present before gameplay. Mobile input is tested in device emulation; responsive layout uses fixed 360×640 and 844×390 contexts. Physical iPhone verification remains outstanding. Flow sessions still end on reload; best packet count is persisted when returning to the menu.
+Ethernet (4 packets, speed 60, 1 stock), Fiber (3, speed 100, 2 stock) and Backbone (8, speed 45, 2 stock) use fixed type colors. Initial stock is 6; weekly rewards grant 2 stock plus a chosen upgrade. Removing one cable refunds its cost and returns cargo to its departure endpoint. Other cables continue unchanged. Distinct cable types sharing endpoints remain in parallel lanes.
 
-No remote branch, pull request, or public deployment has been created. Changes are local.
+Validation completed: 15 unit tests, 21 browser scenarios passed; three platform-specific scenarios skipped (native pinch injection outside Chromium mobile and the existing WebKit service-worker update case). Tests cover independent carriers, capacity, transit waiting, bidirectional delivery, alternate routing, stock restrictions/refunds, payload conservation, cable creation/deletion, type colors, camera bounds, pinch, mobile layouts, preferences, offline and updates. Production build and TypeScript/Prettier checks pass.
 
-## Map navigation and cable visibility
-
-Pan on empty map space, pinch, mouse wheel, 65–300% zoom buttons and fit/reset are available. Touching a second finger cancels pending cable construction. Shared connections use canonical parallel lanes, including reversed routes; moving packet markers follow the corresponding lane. Dark cable casings distinguish crossings.
-
-Validation: 8 unit tests and 18 browser tests passed; 3 platform-specific cases skipped (two native pinch protocol cases outside Chromium mobile and the existing WebKit service-worker update case). Build and formatting/type checks pass. The native pinch case explicitly begins on a device and verifies no accidental connection is committed.
+A visual check found cramped cable type labels in landscape; the controls column was widened. Device emulation is not physical-device certification. Active sessions remain memory-only and end on reload. No branch has been pushed and no public deployment or PR has been created.

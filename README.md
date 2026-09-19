@@ -1,20 +1,30 @@
 # NOC Flow
 
-Game strategi jaringan untuk mobile browser/PWA. Satu menu game, satu mode endless: tarik kabel berwarna untuk menghubungkan client, server, dan database. Paket menuju jenis perangkat yang ditampilkan pada ikon antreannya, dengan transfer pada perangkat bersama.
+Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangkat dan mempunyai satu pengangkut yang bolak-balik khusus pada kabel itu. Pemain membangun jaringan bercabang, sementara paket memilih rute menuju Client, Server, atau Database secara otomatis.
 
 ## Bermain
 
-- Tekan **Mulai bermain**; pilih jalur lalu sentuh perangkat secara berurutan, atau tarik dari perangkat awal ke tujuan. Perpanjang dari ujung jalur.
-- Tiga jalur awal, masing-masing memiliki satu batch bergerak dengan kapasitas empat paket. Maksimal lima jalur.
-- Perangkat baru setiap 35 detik, hingga 12 perangkat. Pilih peningkatan setiap satu menit.
-- Antrean delapan paket memicu hitung mundur 20 detik. Kurangi antrean sebelum jaringan kewalahan.
-- Atur ulang jalur untuk menggambar rute baru; paket dikembalikan ke perangkat terakhir.
-- Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 65–300%. Tombol persentase mengembalikan seluruh jaringan ke layar. Drag dari perangkat tetap membuat kabel; jari kedua membatalkan drag kabel dan memulai pinch.
-- Jalur dengan koneksi yang sama digambar pada lajur paralel, termasuk arah terbalik. Paket mengikuti warna lajurnya. Persilangan kabel diberi sela gelap agar rute mudah dibedakan.
-- Kamera dibatasi area peta 400 × 600. Geser berhenti di tepi; jika viewport lebih luas dari peta pada salah satu sumbu, peta dikunci di tengah pada sumbu tersebut. Batas yang sama berlaku untuk pan, pinch, roda mouse, tombol zoom, dan reset.
-- Permainan dijeda ketika aplikasi masuk latar belakang. Sesi aktif belum disimpan setelah reload. Rekor paket dan pengaturan suara disimpan saat kembali ke menu.
+- Pilih jenis kabel, lalu tarik dari perangkat A ke B. Alternatif tap/keyboard: pilih sumber lalu tujuan. Setelah kabel dibuat, pemilihan selesai; node ketiga memulai sambungan baru.
+- Warna menunjukkan jenis kabel, bukan nomor rute. Jenis yang sama boleh dipakai pada banyak sambungan. Satu pasangan perangkat dapat memiliki kabel paralel dengan jenis berbeda; duplikat pasangan dan jenis yang sama ditolak.
+- Pengangkut mengambil paket di ujung kabel setelah jeda bongkar-muat 0,4 detik. Paket menunggu jika kapasitas penuh atau pengangkut belum datang. Muatan/kapasitas ditampilkan di pengangkut.
+- Paket transit turun di perangkat perantara dan menunggu pengangkut kabel selanjutnya. Kabel dua arah memakai pengangkut yang sama, bukan perjalanan paket mandiri.
+- Routing otomatis memperhitungkan jarak, kecepatan kabel, dan banyaknya muatan yang mengantre dibandingkan kapasitas. Rute dihitung lagi saat pemuatan; tujuan adalah perangkat terjangkau dengan jenis yang cocok.
 
-Mode shift 10 menit dan halaman lamanya sudah dihapus. Data browser dari versi lama tidak dihapus, namun tidak dipakai oleh NOC Flow.
+| Jenis | Warna | Kapasitas awal | Kecepatan relatif | Biaya stok |
+|---|---|---:|---|---:|
+| Ethernet | Toska | 4 paket | Seimbang | 1 |
+| Fiber | Oranye | 3 paket | Cepat | 2 |
+| Backbone | Ungu | 8 paket | Lambat | 2 |
+
+Stok awal 6. Tiap menit mendapat 2 stok, lalu satu bonus: tambahan 4 stok, +2 kapasitas semua pengangkut, atau peningkatan kecepatan. Perangkat baru muncul setiap 35 detik, hingga 12 perangkat. Antrean minimal 8 paket selama 20 detik mengakhiri permainan.
+
+**Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Biaya stok dikembalikan seluruhnya; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
+
+## Peta dan penyimpanan
+
+Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 65–300%. Persentase zoom mereset tampilan. Kamera dibatasi area 400 × 600; peta tetap di tengah jika lebih kecil daripada viewport. Sentuhan kedua membatalkan pembuatan kabel dan memulai pinch. Kabel paralel memiliki lajur terpisah dan paket mengikuti lajurnya.
+
+Game dijeda saat masuk latar belakang. Sesi aktif belum disimpan setelah reload; rekor paket dan suara tersimpan saat kembali ke menu. Mode shift lama telah dihapus; data browser lamanya tidak diubah.
 
 ## Menjalankan dan menguji
 
@@ -30,6 +40,6 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
-Build tersedia di `dist/`; base relatif mendukung subpath GitHub Pages. PWA memerlukan kunjungan online pertama untuk menyimpan aset. Android: pasang melalui menu browser; iPhone: Safari → Bagikan → Tambah ke Layar Utama. Ini belum merupakan APK/IPA.
+Build tersedia di `dist/`. Base relatif mendukung subpath GitHub Pages. PWA offline membutuhkan kunjungan online pertama. Ini belum APK/IPA.
 
-`src/game/metro.ts` menyimpan simulasi murni. `src/MetroGame.tsx` menangani kontrol dan permainan; `src/NetworkArt.tsx` menyediakan ikon perangkat; `src/GameShell.tsx` adalah menu mobile. Tes mencakup transfer, konservasi paket, antrean, upgrade, kontrol, preferensi, layout dan pembaruan offline. Pengujian iPhone fisik tetap diperlukan; WebKit Windows mempunyai perbedaan visual/layout viewport bawaan.
+`src/game/metro.ts` menyimpan simulasi dan routing; `src/MetroGame.tsx` menangani permainan; `src/game/mapView.ts` mengatur batas kamera dan lajur kabel; `src/NetworkArt.tsx` menyediakan ikon perangkat. Uji otomatis meliputi muatan per jenis kabel, antrean transit, routing alternatif, perjalanan dua arah, konservasi paket saat kabel dihapus, ekonomi stok, input, pinch, layout dan offline. Verifikasi perangkat iPhone fisik tetap diperlukan.

@@ -538,3 +538,65 @@
 .route-casing {
   filter: none;
 }
+.cable-type-buttons span {
+  width: auto !important;
+  min-width: 42px;
+  height: 24px !important;
+  padding: 3px 6px;
+  font-size: 10px !important;
+}
+.cable-inventory {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #a5c6b4;
+  margin-top: 7px;
+}
+.cable-inventory strong {
+  color: #d7e8ba;
+}
+.cable-inventory button {
+  min-height: 28px;
+  background: none;
+  color: #e6bd82;
+  font-size: 10px;
+  text-decoration: underline;
+}
+.cable-list {
+  display: grid;
+  gap: 9px;
+  max-height: 42dvh;
+  overflow: auto;
+  margin: 16px 0;
+}
+.cable-list > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #203a30;
+  border-radius: 10px;
+}
+.cable-list small {
+  display: block;
+  color: #a9bdaf;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.cable-list .secondary {
+  width: auto;
+  margin: 0 0 0 auto;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.metro-controls > p {
+  margin-top: 6px;
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .metro-game {
+    grid-template-columns: 240px 1fr;
+  }
+}

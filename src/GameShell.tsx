@@ -268,16 +268,19 @@ export default function GameShell() {
           </div>
           <ol className="handbook">
             <li>
-              Pilih jalur lalu sentuh perangkat berurutan, atau tarik kabel dari
-              perangkat ke perangkat.
+              Pilih Ethernet, Fiber, atau Backbone. Tarik satu kabel antara dua
+              perangkat, atau sentuh sumber lalu tujuan. Setiap kabel memiliki
+              pengangkut sendiri.
             </li>
             <li>
-              Paket berpindah jalur di perangkat yang dipakai bersama. Buat rute
-              singkat agar antrean cepat habis.
+              Pengangkut bolak-balik hanya di kabelnya. Kapasitas muatannya
+              menunjukkan bandwidth; paket transit harus menunggu pengangkut
+              berikutnya. Rute dipilih otomatis.
             </li>
             <li>
-              Perangkat baru muncul setiap 35 detik. Pilih peningkatan setiap
-              satu menit.
+              Stok awal 6. Ethernet memakai 1 stok, Fiber dan Backbone 2 stok.
+              Tiap menit dapat 2 stok dan satu bonus. Hapus kabel lewat Kelola
+              kabel untuk mendapat stok kembali.
             </li>
             <li>
               Antrean 8 paket memicu peringatan. Kurangi dalam 20 detik sebelum

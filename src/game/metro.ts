@@ -1,6 +1,31 @@
 export type Shape = 0 | 1 | 2;
-export const SHAPES = ["●", "▲", "■"] as const;
-export const COLORS = ["#ee785d", "#58b8af", "#a596db", "#daa840", "#729acf"];
+export type CableKind = 0 | 1 | 2;
+export const CABLE_TYPES = [
+  {
+    name: "Ethernet",
+    color: "#58b8af",
+    capacity: 4,
+    speed: 60,
+    cost: 1,
+    note: "Seimbang",
+  },
+  {
+    name: "Fiber",
+    color: "#ee785d",
+    capacity: 3,
+    speed: 100,
+    cost: 2,
+    note: "Lebih cepat",
+  },
+  {
+    name: "Backbone",
+    color: "#a596db",
+    capacity: 8,
+    speed: 45,
+    cost: 2,
+    note: "Muatan besar",
+  },
+] as const;
 export const SITES: { x: number; y: number; shape: Shape }[] = [
   { x: 85, y: 125, shape: 0 },
   { x: 235, y: 205, shape: 1 },
@@ -15,130 +40,165 @@ export const SITES: { x: number; y: number; shape: Shape }[] = [
   { x: 65, y: 520, shape: 1 },
   { x: 325, y: 540, shape: 0 },
 ];
-export type Line = {
-  stops: number[];
-  at: number;
-  direction: 1 | -1;
+
+export type Cable = {
+  id: number;
+  kind: CableKind;
+  stops: [number, number];
+  at: 0 | 1;
   progress: number;
+  wait: number;
   cargo: Shape[];
 };
 export type Metro = {
-  version: 1;
+  version: 2;
   time: number;
   seed: number;
   delivered: number;
   queues: Shape[][];
   overload: number[];
-  lines: Line[];
-  capacity: number;
-  speed: number;
+  cables: Cable[];
+  stock: number;
+  nextCableId: number;
+  capacityBonus: number;
+  speedBonus: number;
   week: number;
   phase: "running" | "reward" | "over";
 };
-export const emptyLine = (): Line => ({
-  stops: [],
-  at: 0,
-  direction: 1,
-  progress: 0,
-  cargo: [],
-});
+export const cableCapacity = (s: Metro, kind: CableKind) =>
+  CABLE_TYPES[kind].capacity + s.capacityBonus;
+export const cableSpeed = (s: Metro, kind: CableKind) =>
+  CABLE_TYPES[kind].speed + s.speedBonus;
 export function newMetro(seed = Date.now() >>> 0): Metro {
   return {
-    version: 1,
+    version: 2,
     time: 0,
     seed,
     delivered: 0,
     queues: [[], [], []],
     overload: [0, 0, 0],
-    lines: [emptyLine(), emptyLine(), emptyLine()],
-    capacity: 4,
-    speed: 60,
+    cables: [],
+    stock: 6,
+    nextCableId: 1,
+    capacityBonus: 0,
+    speedBonus: 0,
     week: 1,
     phase: "running",
   };
 }
-// Distance through all drawn lines allows packets to transfer at shared nodes.
-export function distance(s: Metro, start: number, shape: Shape): number {
-  const seen = new Set([start]);
-  const pending = [{ id: start, hops: 0 }];
-  for (const { id, hops } of pending) {
-    if (SITES[id].shape === shape) return hops;
-    for (const line of s.lines) {
-      const i = line.stops.indexOf(id);
-      if (i < 0) continue;
-      for (const next of [line.stops[i - 1], line.stops[i + 1]]) {
-        if (next !== undefined && !seen.has(next)) {
-          seen.add(next);
-          pending.push({ id: next, hops: hops + 1 });
-        }
-      }
-    }
-  }
-  return Infinity;
-}
-export function extendLine(s: Metro, index: number, id: number): Metro {
-  const line = s.lines[index];
+export function connectionError(
+  s: Metro,
+  kind: CableKind,
+  a: number,
+  b: number,
+): string | null {
+  if (s.phase !== "running") return "Permainan sedang dijeda.";
   if (
-    s.phase !== "running" ||
-    !line ||
-    !s.queues[id] ||
-    line.stops.includes(id)
+    !CABLE_TYPES[kind] ||
+    !Number.isInteger(a) ||
+    !Number.isInteger(b) ||
+    !s.queues[a] ||
+    !s.queues[b]
   )
-    return s;
+    return "Perangkat belum tersedia.";
+  if (a === b) return "Pilih dua perangkat yang berbeda.";
+  if (
+    s.cables.some(
+      (c) => c.kind === kind && c.stops.includes(a) && c.stops.includes(b),
+    )
+  )
+    return "Kabel jenis ini sudah menghubungkan kedua perangkat.";
+  if (s.stock < CABLE_TYPES[kind].cost)
+    return "Stok kabel tidak cukup. Hapus kabel atau tunggu bekal mingguan.";
+  return null;
+}
+export function connectCable(
+  s: Metro,
+  kind: CableKind,
+  a: number,
+  b: number,
+): Metro {
+  if (connectionError(s, kind, a, b)) return s;
+  const cable: Cable = {
+    id: s.nextCableId,
+    kind,
+    stops: [a, b],
+    at: 0,
+    progress: 0,
+    wait: 0.4,
+    cargo: [],
+  };
   return {
     ...s,
-    lines: s.lines.map((v, i) =>
-      i === index ? { ...v, stops: [...v.stops, id] } : v,
-    ),
+    cables: [...s.cables, cable],
+    stock: s.stock - CABLE_TYPES[kind].cost,
+    nextCableId: s.nextCableId + 1,
   };
 }
-export function clearLine(s: Metro, index: number): Metro {
-  if (s.phase !== "running" || !s.lines[index]) return s;
-  const line = s.lines[index];
+export function removeCable(s: Metro, id: number): Metro {
+  const cable = s.cables.find((c) => c.id === id);
+  if (!cable || s.phase !== "running") return s;
   const queues = s.queues.map((q) => [...q]);
-  if (line.stops.length) queues[line.stops[line.at]].push(...line.cargo);
+  queues[cable.stops[cable.at]].push(...cable.cargo);
   return {
     ...s,
     queues,
-    lines: s.lines.map((l, i) => (i === index ? emptyLine() : l)),
+    cables: s.cables.filter((c) => c.id !== id),
+    stock: s.stock + CABLE_TYPES[cable.kind].cost,
   };
 }
-export function reward(s: Metro, choice: "line" | "capacity" | "speed"): Metro {
-  if (
-    s.phase !== "reward" ||
-    (choice === "line" && s.lines.length >= COLORS.length)
-  )
-    return s;
+function travelTime(s: Metro, c: Cable) {
+  const [a, b] = c.stops.map((id) => SITES[id]);
+  return Math.hypot(a.x - b.x, a.y - b.y) / cableSpeed(s, c.kind);
+}
+// Positive edge costs include journey time and queued loads. Dijkstra chooses
+// a destination of the requested type; equal costs use stable cable IDs.
+function edgeCost(s: Metro, c: Cable, from: number, shape: Shape) {
+  const loads =
+    s.queues[from].filter((p) => p === shape).length / cableCapacity(s, c.kind);
+  return travelTime(s, c) * (1 + loads) + 0.4;
+}
+export function routeCable(
+  s: Metro,
+  start: number,
+  shape: Shape,
+): number | null {
+  const best = s.queues.map(() => Infinity);
+  const first: (number | null)[] = s.queues.map(() => null);
+  const visited = new Set<number>();
+  best[start] = 0;
+  while (visited.size < s.queues.length) {
+    let node = -1;
+    for (let i = 0; i < best.length; i++)
+      if (!visited.has(i) && (node < 0 || best[i] < best[node])) node = i;
+    if (node < 0 || !Number.isFinite(best[node])) break;
+    if (SITES[node].shape === shape) return first[node];
+    visited.add(node);
+    for (const cable of s.cables) {
+      if (!cable.stops.includes(node)) continue;
+      const next = cable.stops[0] === node ? cable.stops[1] : cable.stops[0];
+      const cost = best[node] + edgeCost(s, cable, node, shape);
+      if (cost < best[next] - 1e-9) {
+        best[next] = cost;
+        first[next] = first[node] ?? cable.id;
+      }
+    }
+  }
+  return null;
+}
+export function reward(
+  s: Metro,
+  choice: "stock" | "capacity" | "speed",
+): Metro {
+  if (s.phase !== "reward") return s;
   return {
     ...s,
     phase: "running",
     week: s.week + 1,
-    lines: choice === "line" ? [...s.lines, emptyLine()] : s.lines,
-    capacity: s.capacity + (choice === "capacity" ? 2 : 0),
-    speed: s.speed + (choice === "speed" ? 15 : 0),
+    stock: s.stock + 2 + (choice === "stock" ? 4 : 0),
+    capacityBonus: s.capacityBonus + (choice === "capacity" ? 2 : 0),
+    speedBonus: s.speedBonus + (choice === "speed" ? 15 : 0),
   };
-}
-function service(s: Metro, line: Line) {
-  const id = line.stops[line.at];
-  const next = line.stops[line.at + line.direction];
-  const keep: Shape[] = [];
-  for (const packet of line.cargo) {
-    if (SITES[id].shape === packet) s.delivered++;
-    else if (distance(s, next, packet) < distance(s, id, packet))
-      keep.push(packet);
-    else s.queues[id].push(packet);
-  }
-  line.cargo = keep;
-  s.queues[id] = s.queues[id].filter((packet) => {
-    if (
-      line.cargo.length < s.capacity &&
-      distance(s, next, packet) < distance(s, id, packet)
-    ) {
-      line.cargo.push(packet);
-      return false;
-    }
-    return true;
-  });
 }
 export function metroTick(state: Metro): Metro {
   if (state.phase !== "running") return state;
@@ -147,11 +207,7 @@ export function metroTick(state: Metro): Metro {
     time: Math.round((state.time + 0.1) * 10) / 10,
     queues: state.queues.map((q) => [...q]),
     overload: [...state.overload],
-    lines: state.lines.map((l) => ({
-      ...l,
-      stops: [...l.stops],
-      cargo: [...l.cargo],
-    })),
+    cables: state.cables.map((c) => ({ ...c, cargo: [...c.cargo] })),
   };
   const random = () => {
     s.seed = (Math.imul(s.seed, 1664525) + 1013904223) >>> 0;
@@ -164,30 +220,49 @@ export function metroTick(state: Metro): Metro {
     s.queues.push([]);
     s.overload.push(0);
   }
-  if (Math.floor(s.time / 3) > Math.floor(state.time / 3)) {
+  if (Math.floor(s.time / 3) > Math.floor(state.time / 3))
     for (let id = 0; id < s.queues.length; id++) {
       if (random() > Math.min(0.85, 0.4 + s.time / 900)) continue;
-      const shape = ((SITES[id].shape + 1 + Math.floor(random() * 2)) %
-        3) as Shape;
-      s.queues[id].push(shape);
+      s.queues[id].push(
+        ((SITES[id].shape + 1 + Math.floor(random() * 2)) % 3) as Shape,
+      );
     }
-  }
-  for (const line of s.lines) {
-    if (line.stops.length < 2) continue;
-    if (line.at === line.stops.length - 1) line.direction = -1;
-    else if (line.at === 0) line.direction = 1;
-    if (line.progress === 0) service(s, line);
-    const a = SITES[line.stops[line.at]],
-      b = SITES[line.stops[line.at + line.direction]];
-    line.progress += (s.speed * 0.1) / Math.hypot(a.x - b.x, a.y - b.y);
-    if (line.progress >= 1) {
-      line.at += line.direction;
-      line.progress = 0;
-      if (line.at === line.stops.length - 1) line.direction = -1;
-      else if (line.at === 0) line.direction = 1;
-      service(s, line);
+  // Departures happen before arrivals: transferring cargo must wait for the
+  // next cable's own carrier, regardless of cable iteration order.
+  for (const c of s.cables) {
+    if (c.wait > 0) {
+      c.wait = Math.max(0, Math.round((c.wait - 0.1) * 10) / 10);
+      if (c.wait > 0) continue;
+      const node = c.stops[c.at];
+      const routes = new Map<Shape, number | null>();
+      for (const packet of s.queues[node])
+        if (!routes.has(packet))
+          routes.set(packet, routeCable(s, node, packet));
+      s.queues[node] = s.queues[node].filter((packet) => {
+        if (
+          c.cargo.length < cableCapacity(s, c.kind) &&
+          routes.get(packet) === c.id
+        ) {
+          c.cargo.push(packet);
+          return false;
+        }
+        return true;
+      });
     }
+    if (!c.wait) c.progress += 0.1 / travelTime(s, c);
   }
+  for (const c of s.cables)
+    if (c.progress >= 1) {
+      c.at = c.at === 0 ? 1 : 0;
+      c.progress = 0;
+      c.wait = 0.4;
+      const node = c.stops[c.at];
+      for (const packet of c.cargo) {
+        if (SITES[node].shape === packet) s.delivered++;
+        else s.queues[node].push(packet);
+      }
+      c.cargo = [];
+    }
   s.overload = s.queues.map((q, i) =>
     q.length >= 8 ? s.overload[i] + 0.1 : Math.max(0, s.overload[i] - 0.2),
   );

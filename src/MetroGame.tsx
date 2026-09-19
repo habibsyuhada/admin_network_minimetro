@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Pause, Play, RotateCcw, Network } from "lucide-react";
+import { ArrowLeft, Pause, Play, Settings2, Network } from "lucide-react";
 import Dialog from "./Dialog";
 import {
-  COLORS,
+  CABLE_TYPES,
+  cableCapacity,
+  cableSpeed,
+  connectionError,
+  type CableKind,
   SITES,
-  clearLine,
-  extendLine,
+  removeCable,
+  connectCable,
   metroTick,
   newMetro,
   reward,
@@ -29,12 +33,13 @@ export default function MetroGame({
   const [s, setS] = useState(newMetro);
   const best = useRef(0);
   best.current = Math.max(best.current, s.delivered);
-  const [selected, setSelected] = useState(0);
+  const [selected, setSelected] = useState<CableKind>(0);
+  const [from, setFrom] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [help, setHelp] = useState(true);
   const [confirm, setConfirm] = useState(false);
   const [tip, setTip] = useState(
-    "Pilih jalur, lalu sentuh perangkat berurutan untuk menghubungkannya.",
+    "Pilih jenis kabel, lalu hubungkan dua perangkat.",
   );
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -67,6 +72,7 @@ export default function MetroGame({
     if (frozen) {
       gesture.current = null;
       setPointer(null);
+      setFrom(null);
       return;
     }
     let last = performance.now(),
@@ -89,19 +95,33 @@ export default function MetroGame({
     }, 50);
     return () => clearInterval(timer);
   }, [frozen]);
-  const add = (id: number) => {
-    if (frozen) return;
-    if (s.lines[selected].stops.includes(id)) {
-      setTip(
-        "Perangkat sudah ada di jalur ini. Lanjutkan ke perangkat lain atau atur ulang jalur.",
-      );
+  const build = (a: number, b: number) => {
+    setFrom(null);
+    const error = connectionError(s, selected, a, b);
+    if (error) {
+      setTip(error);
       return;
     }
-    setS((v) => extendLine(v, selected, id));
+    setS((v) => connectCable(v, selected, a, b));
     playCue("link");
     setTip(
-      `Jalur ${selected + 1} diperpanjang. Hubungkan jenis perangkat yang berbeda.`,
+      `${CABLE_TYPES[selected].name} terpasang. Pengangkut khusus siap bolak-balik.`,
     );
+  };
+  const add = (id: number) => {
+    if (frozen) return;
+    if (from === id) {
+      setFrom(null);
+      setTip("Pemilihan dibatalkan.");
+      return;
+    }
+    if (from !== null) build(from, id);
+    else {
+      setFrom(id);
+      setTip(
+        `${DEVICE_NAMES[SITES[id].shape]} ${id + 1} dipilih. Sentuh perangkat tujuan.`,
+      );
+    }
   };
   const position = (x: number, y: number) => {
     const matrix = svg.current?.getScreenCTM();
@@ -109,10 +129,6 @@ export default function MetroGame({
       ? new DOMPoint(x, y).matrixTransform(matrix.inverse())
       : { x: 0, y: 0 };
   };
-  const line = s.lines[selected];
-  const end = line.stops.length
-    ? SITES[line.stops[line.stops.length - 1]]
-    : null;
   const danger = s.overload.indexOf(Math.max(...s.overload));
   const activeSites = SITES.slice(0, s.queues.length);
   const mapTop = Math.max(0, Math.min(...activeSites.map((n) => n.y)) - 65);
@@ -129,9 +145,10 @@ export default function MetroGame({
     camera.reset();
     setS(newMetro());
     setSelected(0);
+    setFrom(null);
     setPaused(false);
     setConfirm(false);
-    setTip("Pilih jalur, lalu hubungkan perangkat dengan jenis berbeda.");
+    setTip("Pilih jenis kabel, lalu hubungkan dua perangkat.");
   };
   return (
     <main className="metro-game">
@@ -176,6 +193,7 @@ export default function MetroGame({
             if (camera.down(e)) {
               gesture.current = null;
               setPointer(null);
+              setFrom(null);
             }
           }}
           onPointerMove={(e) => {
@@ -207,21 +225,7 @@ export default function MetroGame({
               setTip("Lepaskan di perangkat tujuan untuk membuat jalur.");
               return;
             }
-            setS((v) => {
-              const current = v.lines[selected];
-              if (!current.stops.length)
-                return extendLine(
-                  extendLine(v, selected, g.start),
-                  selected,
-                  target,
-                );
-              if (current.stops[current.stops.length - 1] === g.start)
-                return extendLine(v, selected, target);
-              return v;
-            });
-            setTip(
-              "Tarik dari ujung jalur untuk memperpanjang. Sentuh perangkat juga bisa.",
-            );
+            build(g.start, target);
           }}
           onPointerCancel={() => {
             camera.clear();
@@ -260,31 +264,31 @@ export default function MetroGame({
             </text>
             <path d="M15 300H155L185 330H390M180 15V120L155 145" />
           </g>
-          {s.lines.map((_, i) => (
+          {s.cables.map((_, i) => (
             <g key={i} className="route-layer" aria-hidden="true">
               <path
                 className="metro-route route-casing"
-                d={linePath(s.lines, i)}
+                d={linePath(s.cables, i)}
                 stroke="#101f20"
                 strokeWidth="9"
               />
               <path
                 className="metro-route"
                 data-route={i}
-                d={linePath(s.lines, i)}
-                stroke={COLORS[i]}
-                strokeWidth={selected === i ? 6 : 5}
+                d={linePath(s.cables, i)}
+                stroke={CABLE_TYPES[s.cables[i].kind].color}
+                strokeWidth={selected === s.cables[i].kind ? 6 : 5}
               />
             </g>
           ))}
           {pointer && (
             <line
               className="metro-preview"
-              x1={(end || SITES[gesture.current?.start ?? 0]).x}
-              y1={(end || SITES[gesture.current?.start ?? 0]).y}
+              x1={SITES[gesture.current?.start ?? 0].x}
+              y1={SITES[gesture.current?.start ?? 0].y}
               x2={pointer.x}
               y2={pointer.y}
-              stroke={COLORS[selected]}
+              stroke={CABLE_TYPES[selected].color}
             />
           )}
           {s.queues.map((q, id) => {
@@ -297,7 +301,7 @@ export default function MetroGame({
                 role="button"
                 aria-label={`${DEVICE_NAMES[n.shape]} ${id + 1}`}
                 tabIndex={frozen ? -1 : 0}
-                aria-pressed={line.stops.includes(id)}
+                aria-pressed={from === id}
                 className="metro-node"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -360,33 +364,34 @@ export default function MetroGame({
               </g>
             );
           })}
-          {s.lines.map((l, i) => {
+          {s.cables.map((l, i) => {
             if (l.stops.length < 2) return null;
             const from = l.stops[l.at],
-              to = l.stops[l.at + l.direction];
+              to = l.stops[l.at === 0 ? 1 : 0];
             if (to === undefined) return null;
-            const [a, b] = laneSegment(s.lines, i, from, to);
+            const [a, b] = laneSegment(s.cables, i, from, to);
             const x = a.x + (b.x - a.x) * l.progress,
               y = a.y + (b.y - a.y) * l.progress;
             return (
               <g
-                key={i}
+                key={l.id}
+                data-carrier={l.id}
                 className="packet-marker"
-                transform={`translate(${x},${y}) rotate(${(Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI})`}
+                transform={`translate(${x},${y}) rotate(${(((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 270) % 180) - 90})`}
                 aria-hidden="true"
               >
                 <rect
-                  x="-13"
-                  y="-4"
-                  width="26"
-                  height="8"
+                  x="-19"
+                  y="-6"
+                  width="38"
+                  height="12"
                   rx="3"
-                  fill={COLORS[i]}
+                  fill={CABLE_TYPES[l.kind].color}
                   stroke="#101f20"
                   strokeWidth="2"
                 />
                 <text className="metro-car-count" y="3" style={{ fontSize: 8 }}>
-                  {l.cargo.length}
+                  {l.cargo.length}/{cableCapacity(s, l.kind)}
                 </text>
               </g>
             );
@@ -426,33 +431,43 @@ export default function MetroGame({
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
-        <div className="metro-line-buttons">
-          {s.lines.map((l, i) => (
+        <div className="metro-line-buttons cable-type-buttons">
+          {CABLE_TYPES.map((type, i) => (
             <button
-              key={i}
-              aria-label={`Jalur ${i + 1}`}
+              key={type.name}
+              aria-label={`Kabel ${type.name}`}
               aria-pressed={selected === i}
               disabled={frozen}
-              style={{ "--route": COLORS[i] } as React.CSSProperties}
+              style={{ "--route": type.color } as React.CSSProperties}
               onClick={() => {
-                setSelected(i);
+                setSelected(i as CableKind);
+                setFrom(null);
                 setTip(
-                  `Jalur ${i + 1} dipilih. Sentuh perangkat untuk memperpanjang.`,
+                  `${type.name}: ${cableCapacity(s, i as CableKind)} paket/pengangkut · biaya ${type.cost} stok. ${type.note}.`,
                 );
               }}
             >
-              <span>{i + 1}</span>
-              <small>{l.stops.length} perangkat</small>
+              <span>{type.name}</span>
+              <small>
+                {cableCapacity(s, i as CableKind)} paket · {type.cost} stok
+              </small>
             </button>
           ))}
           <button
             className="metro-clear"
-            aria-label="Atur ulang jalur terpilih"
-            disabled={frozen || !line.stops.length}
+            aria-label="Kelola kabel"
+            disabled={frozen || !s.cables.length}
             onClick={() => setConfirm(true)}
           >
-            <RotateCcw size={19} />
+            <Settings2 size={18} />
           </button>
+        </div>
+        <div className="cable-inventory">
+          <span data-testid="cable-count">{s.cables.length} kabel aktif</span>
+          <strong>Stok: {s.stock}</strong>
+          {from !== null && (
+            <button onClick={() => setFrom(null)}>Batal</button>
+          )}
         </div>
         <p role="status">{tip}</p>
         <div className="network-legend">
@@ -466,7 +481,10 @@ export default function MetroGame({
           ))}
         </div>
         <div className="metro-capacity">
-          <span>{s.capacity} paket / transfer</span>
+          <span>
+            {cableCapacity(s, selected)} paket / pengangkut ·{" "}
+            {CABLE_TYPES[selected].note}
+          </span>
           <button onClick={() => setHelp(true)}>Cara bermain</button>
         </div>
       </section>
@@ -476,8 +494,9 @@ export default function MetroGame({
           onClose={() => setHelp(false)}
         >
           <p>
-            Bangun jalur berwarna dan antar paket ke perangkat dengan jenis
-            perangkat tujuan: Client, Server, atau Database.
+            Setiap kabel menghubungkan dua perangkat dan memiliki satu
+            pengangkut sendiri. Paket menuju Client, Server, atau Database
+            sesuai ikonnya.
           </p>
           <ol className="handbook">
             <li>
@@ -486,16 +505,20 @@ export default function MetroGame({
               melihat seluruh jaringan.
             </li>
             <li>
-              Pilih warna, lalu sentuh perangkat satu per satu. Atau tarik dari
-              perangkat awal ke tujuan, lalu lanjutkan dari ujung jalur.
+              Pilih jenis kabel lalu tarik dari satu perangkat ke perangkat
+              lain. Bisa juga sentuh sumber lalu tujuan. Untuk cabang baru,
+              mulai lagi dari perangkat mana pun.
             </li>
             <li>
-              Paket mengalir bolak-balik di setiap jalur dan bisa pindah jalur
-              di perangkat bersama.
+              Pengangkut hanya bolak-balik pada kabelnya. Angka muatan/kapasitas
+              menunjukkan bandwidth. Paket transit menunggu pengangkut kabel
+              berikutnya; rute dipilih otomatis berdasarkan waktu tempuh dan
+              antrean.
             </li>
             <li>
-              Perangkat baru muncul setiap 35 detik. Setiap 60 detik, pilih satu
-              peningkatan.
+              Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
+              Backbone: 8 paket, lebih lambat. Angka ini bertambah saat upgrade.
+              Setiap menit kamu mendapat 2 stok dan memilih bonus.
             </li>
             <li>
               Antrean 8 paket memulai hitung mundur. Kurangi antrean sebelum 20
@@ -522,28 +545,41 @@ export default function MetroGame({
         </Dialog>
       )}
       {confirm && (
-        <Dialog
-          title={`Atur ulang jalur ${selected + 1}?`}
-          onClose={() => setConfirm(false)}
-        >
+        <Dialog title="Kelola kabel" onClose={() => setConfirm(false)}>
           <p>
-            Paket dalam perjalanan dikembalikan ke perangkat terakhir. Gambar
-            ulang jalur setelah ini.
+            Hapus kabel untuk mengembalikan stok. Muatan dikembalikan ke
+            perangkat asal perjalanan; kabel lainnya tetap terpasang.
           </p>
-          <button
-            className="primary"
-            onClick={() => {
-              setS((v) => clearLine(v, selected));
-              setTip(
-                "Jalur diatur ulang. Sentuh perangkat untuk menggambar rute baru.",
-              );
-              setConfirm(false);
-            }}
-          >
-            Atur ulang jalur
-          </button>
-          <button className="secondary" onClick={() => setConfirm(false)}>
-            Batal
+          <div className="cable-list">
+            {s.cables.map((c) => (
+              <div key={c.id}>
+                <div>
+                  <b style={{ color: CABLE_TYPES[c.kind].color }}>
+                    {CABLE_TYPES[c.kind].name} #{c.id}
+                  </b>
+                  <small>
+                    {c.stops
+                      .map((id) => `${DEVICE_NAMES[SITES[id].shape]} ${id + 1}`)
+                      .join(" ↔ ")}{" "}
+                    · {c.cargo.length}/{cableCapacity(s, c.kind)} paket
+                  </small>
+                </div>
+                <button
+                  className="secondary"
+                  aria-label={`Hapus kabel ${c.id}`}
+                  onClick={() => {
+                    setS((v) => removeCable(v, c.id));
+                    setTip("Kabel dilepas. Stok dan muatan dikembalikan.");
+                  }}
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+          </div>
+          {!s.cables.length && <p>Belum ada kabel terpasang.</p>}
+          <button className="primary" onClick={() => setConfirm(false)}>
+            Selesai
           </button>
         </Dialog>
       )}
@@ -551,20 +587,19 @@ export default function MetroGame({
         <Dialog title={`Minggu ${s.week} selesai`}>
           <p>
             {s.delivered} paket terkirim. Pilih bekal untuk jaringan yang makin
-            sibuk.
+            sibuk. Bekal +2 stok kabel tersedia bersama bonus pilihanmu.
           </p>
           <button
             className="primary"
-            disabled={s.lines.length >= COLORS.length}
-            onClick={() => setS((v) => reward(v, "line"))}
+            onClick={() => setS((v) => reward(v, "stock"))}
           >
-            +1 jalur transfer
+            +4 stok kabel tambahan
           </button>
           <button
             className="secondary"
             onClick={() => setS((v) => reward(v, "capacity"))}
           >
-            +2 kapasitas paket per transfer
+            +2 kapasitas semua pengangkut
           </button>
           <button
             className="secondary"

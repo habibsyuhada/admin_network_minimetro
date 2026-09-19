@@ -1,39 +1,117 @@
 import { describe, expect, it } from "vitest";
 import {
-  clearLine,
-  distance,
-  extendLine,
+  cableCapacity,
+  connectCable,
+  connectionError,
   metroTick,
   newMetro,
+  removeCable,
   reward,
+  routeCable,
+  type Metro,
 } from "./metro";
-
-describe("NOC Flow simulation", () => {
-  it("delivers across two lines with a shared transfer node", () => {
-    let s = newMetro(42);
-    s = extendLine(extendLine(s, 0, 0), 0, 1);
-    s = extendLine(extendLine(s, 1, 1), 1, 2);
-    s.queues[0] = [2];
-    expect(distance(s, 0, 2)).toBe(2);
-    for (let i = 0; i < 150; i++) s = metroTick(s);
-    expect(s.delivered).toBeGreaterThanOrEqual(1);
-    expect(s.queues[0]).not.toContain(2);
+const count = (s: Metro) =>
+  s.delivered +
+  s.queues.flat().length +
+  s.cables.flatMap((c) => c.cargo).length;
+const steps = (s: Metro, n: number) => {
+  for (let i = 0; i < n; i++) s = metroTick(s);
+  return s;
+};
+describe("point-to-point cable transport", () => {
+  it("gives every cable its own carrier with exactly two endpoints", () => {
+    let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2);
+    expect(s.cables.map((c) => c.stops)).toEqual([
+      [0, 1],
+      [1, 2],
+    ]);
+    s = steps(s, 15);
+    expect(s.cables.every((c) => c.progress > 0)).toBe(true);
+    expect(s.cables[0].progress).not.toEqual(s.cables[1].progress);
+    expect(s.cables.map((c) => c.at)).toEqual([0, 0]);
   });
-  it("conserves all packets between demand pulses and on line reset", () => {
-    let s = extendLine(extendLine(newMetro(12), 0, 0), 0, 1);
-    s.queues[0] = [1, 1, 2];
-    for (let i = 0; i < 25; i++) s = metroTick(s);
-    const count = (v: typeof s) =>
-      v.delivered +
-      v.queues.flat().length +
-      v.lines.flatMap((l) => l.cargo).length;
-    expect(count(s)).toBe(3);
-    expect(s.lines[0].cargo.length).toBeLessThanOrEqual(s.capacity);
-    s = clearLine(s, 0);
-    expect(count(s)).toBe(3);
-    expect(s.lines[0].stops).toEqual([]);
+  it("waits for a carrier and respects each cable's capacity", () => {
+    for (const kind of [0, 1, 2] as const) {
+      let s = connectCable(newMetro(42), kind, 0, 1);
+      s.queues[0] = Array(12).fill(1);
+      s = metroTick(s);
+      expect(s.cables[0].cargo).toHaveLength(0);
+      expect(s.delivered).toBe(0);
+      s = steps(s, 3);
+      expect(s.cables[0].cargo).toHaveLength(cableCapacity(s, kind));
+      expect(s.queues[0]).toHaveLength(12 - cableCapacity(s, kind));
+      expect(count(s)).toBe(12);
+    }
   });
-  it("spawns nodes and pauses for a weekly choice", () => {
+  it("unloads at a transfer node and waits for the next cable's carrier", () => {
+    let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2);
+    s.cables[0].cargo = [2];
+    s.cables[0].progress = 0.99;
+    s.cables[0].wait = 0;
+    s.cables[1].at = 1;
+    s.cables[1].progress = 0.3;
+    s.cables[1].wait = 0;
+    s = metroTick(s);
+    expect(s.queues[1]).toEqual([2]);
+    expect(s.cables[1].cargo).toEqual([]);
+    expect(s.delivered).toBe(0);
+    s = steps(s, 120);
+    expect(s.delivered).toBeGreaterThan(0);
+  });
+  it("transports traffic in both directions on the same cable", () => {
+    let s = connectCable(newMetro(42), 0, 0, 1);
+    s.speedBonus = 300;
+    s.queues[0] = [1];
+    s.queues[1] = [0];
+    s = steps(s, 23);
+    expect(s.delivered).toBe(2);
+    expect(count(s)).toBe(2);
+    expect(s.cables[0].stops).toEqual([0, 1]);
+  });
+  it("routes automatically by time and changes preference under queue pressure", () => {
+    let s = connectCable(connectCable(newMetro(42), 1, 0, 1), 2, 0, 1);
+    s.queues[0] = [1];
+    expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
+    s.queues[0] = Array(50).fill(1);
+    expect(routeCable(s, 0, 1)).toBe(s.cables[1].id);
+    expect(routeCable(s, 0, 2)).toBeNull();
+  });
+  it("finds multihop destinations and reroutes after a cable is removed", () => {
+    let s = connectCable(
+      connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2),
+      1,
+      0,
+      2,
+    );
+    expect(routeCable(s, 0, 2)).toBe(s.cables[2].id);
+    s = removeCable(s, s.cables[2].id);
+    expect(routeCable(s, 0, 2)).toBe(s.cables[0].id);
+  });
+  it("removing an in-flight cable refunds stock and returns all cargo to its departure node", () => {
+    let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 1, 1, 2);
+    s.queues[0] = [1, 1];
+    s = steps(s, 12);
+    const original = s;
+    expect(s.cables[0].cargo.length).toBe(2);
+    s = removeCable(s, s.cables[0].id);
+    expect(count(s)).toBe(count(original));
+    expect(s.queues[0]).toEqual([1, 1]);
+    expect(s.stock).toBe(original.stock + 1);
+    expect(s.cables).toHaveLength(1);
+    expect(s.cables[0]).toBe(original.cables[1]);
+  });
+  it("rejects duplicate pairs, self-links, inactive nodes and insufficient stock", () => {
+    let s = connectCable(newMetro(42), 0, 0, 1);
+    expect(connectCable(s, 0, 1, 0)).toBe(s);
+    expect(connectCable(s, 0, 1, 1)).toBe(s);
+    expect(connectCable(s, 0, 1, 10)).toBe(s);
+    expect(connectCable(s, 0, 1, 1.5)).toBe(s);
+    expect(connectCable({ ...s, stock: 0 }, 1, 1, 2).cables).toBe(s.cables);
+    s = { ...s, phase: "over" };
+    expect(connectionError(s, 0, 1, 2)).not.toBeNull();
+    expect(removeCable(s, 1)).toBe(s);
+  });
+  it("provides weekly stock and applies capacity/speed upgrades to cable types", () => {
     let s = newMetro(42);
     s.time = 34.9;
     s = metroTick(s);
@@ -42,28 +120,23 @@ describe("NOC Flow simulation", () => {
     s = metroTick(s);
     expect(s.phase).toBe("reward");
     expect(metroTick(s)).toBe(s);
-    s = reward(s, "line");
-    expect(s.lines).toHaveLength(4);
-    expect(s.week).toBe(2);
-    expect(s.phase).toBe("running");
+    const capacity = reward(s, "capacity");
+    expect(capacity.stock).toBe(s.stock + 2);
+    expect(cableCapacity(capacity, 2)).toBe(10);
+    expect(reward(s, "stock").stock).toBe(s.stock + 6);
+    expect(reward(s, "speed").speedBonus).toBe(15);
   });
-  it("ends only after sustained overload and recovers after draining", () => {
-    let s = newMetro();
+  it("fails only after sustained overload and recovers when queues shrink", () => {
+    let s = newMetro(42);
     s.queues[0] = Array(8).fill(1);
     s.overload[0] = 19.8;
     s = metroTick(s);
     expect(s.phase).toBe("running");
-    const recovered = metroTick({ ...s, queues: [[], [], []] });
-    expect(recovered.overload[0]).toBeLessThan(s.overload[0]);
-    s = metroTick(metroTick(s));
+    expect(metroTick({ ...s, queues: [[], [], []] }).overload[0]).toBeLessThan(
+      s.overload[0],
+    );
+    s = steps(s, 2);
     expect(s.phase).toBe("over");
     expect(metroTick(s)).toBe(s);
-  });
-  it("rejects duplicate stops and edits after game over", () => {
-    const s = extendLine(newMetro(), 0, 0);
-    expect(extendLine(s, 0, 0)).toBe(s);
-    const over = { ...s, phase: "over" as const };
-    expect(extendLine(over, 0, 1)).toBe(over);
-    expect(clearLine(over, 0)).toBe(over);
   });
 });

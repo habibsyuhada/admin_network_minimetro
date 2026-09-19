@@ -60,23 +60,19 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   await page.mouse.move(bounds.x + 62, bounds.y + 95, { steps: 6 });
   await page.mouse.up();
   await expect(map).not.toHaveAttribute("viewBox", zoomed!);
-  await expect(
-    page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("0 perangkat");
+  await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   // Construction must still hit the right devices after camera movement.
   await page.getByRole("button", { name: "Client 1", exact: true }).click();
   await page.getByRole("button", { name: "Server 2", exact: true }).click();
   await page.getByRole("button", { name: "Tampilkan seluruh peta" }).click();
   await expect(map).toHaveAttribute("viewBox", initial!);
-  await page.getByRole("button", { name: "Jalur 2", exact: true }).click();
+  await page.getByRole("button", { name: "Kabel Fiber", exact: true }).click();
   await page.getByRole("button", { name: "Server 2", exact: true }).click();
   await page.getByRole("button", { name: "Client 1", exact: true }).click();
   const a = await page.locator('[data-route="0"]').getAttribute("d");
   const b = await page.locator('[data-route="1"]').getAttribute("d");
   expect(a).not.toEqual(b);
-  await expect(
-    page.getByRole("button", { name: "Jalur 2", exact: true }),
-  ).toContainText("2 perangkat");
+  await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
   await page.screenshot({
     path: `test-results/parallel-map-${test.info().project.name}.png`,
   });
@@ -129,13 +125,9 @@ test("two-finger pinch cancels cable drawing and never commits a route", async (
     type: "touchEnd",
     touchPoints: [],
   });
-  await expect(
-    page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("0 perangkat");
+  await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   await page.getByRole("button", { name: "Tampilkan seluruh peta" }).click();
   await page.getByRole("button", { name: "Client 1", exact: true }).tap();
-  await expect(
-    page.getByRole("button", { name: "Jalur 1", exact: true }),
-  ).toContainText("1 perangkat");
+  await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   await session.detach();
 });

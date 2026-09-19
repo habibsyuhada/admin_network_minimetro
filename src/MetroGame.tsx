@@ -18,6 +18,8 @@ import {
   DEVICE_COLORS,
 } from "./NetworkArt";
 import { playCue } from "./game/audio";
+import useMapCamera from "./useMapCamera";
+import { laneSegment, linePath } from "./game/mapView";
 
 export default function MetroGame({
   onMenu,
@@ -118,7 +120,13 @@ export default function MetroGame({
     400,
     Math.max(...activeSites.map((n) => n.y)) + 75 - mapTop,
   );
+  const camera = useMapCamera(
+    svg,
+    { x: 0, y: mapTop, width: 400, height: mapHeight },
+    frozen,
+  );
   const restart = () => {
+    camera.reset();
     setS(newMetro());
     setSelected(0);
     setPaused(false);
@@ -160,20 +168,32 @@ export default function MetroGame({
         </div>
         <svg
           ref={svg}
-          viewBox={`0 ${mapTop} 400 ${mapHeight}`}
+          viewBox={`${camera.view.x} ${camera.view.y} ${camera.view.width} ${camera.view.height}`}
           className="metro-map"
           role="group"
           aria-label="Peta Flow interaktif"
+          onPointerDown={(e) => {
+            if (camera.down(e)) {
+              gesture.current = null;
+              setPointer(null);
+            }
+          }}
           onPointerMove={(e) => {
+            if (camera.move(e)) {
+              gesture.current = null;
+              setPointer(null);
+              return;
+            }
             const g = gesture.current;
             if (g?.pointer === e.pointerId)
               setPointer(position(e.clientX, e.clientY));
           }}
           onPointerUp={(e) => {
+            const consumed = camera.end(e);
             const g = gesture.current;
             gesture.current = null;
             setPointer(null);
-            if (!g || g.pointer !== e.pointerId || frozen) return;
+            if (consumed || !g || g.pointer !== e.pointerId || frozen) return;
             if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 10) {
               add(g.start);
               return;
@@ -204,10 +224,12 @@ export default function MetroGame({
             );
           }}
           onPointerCancel={() => {
+            camera.clear();
             gesture.current = null;
             setPointer(null);
           }}
-          onLostPointerCapture={() => {
+          onLostPointerCapture={(e) => {
+            camera.end(e);
             gesture.current = null;
             setPointer(null);
           }}
@@ -238,17 +260,22 @@ export default function MetroGame({
             </text>
             <path d="M15 300H155L185 330H390M180 15V120L155 145" />
           </g>
-          {s.lines.map((l, i) => (
-            <polyline
-              key={i}
-              className="metro-route"
-              points={l.stops
-                .map((id) => `${SITES[id].x},${SITES[id].y}`)
-                .join(" ")}
-              stroke={COLORS[i]}
-              strokeWidth={selected === i ? 7 : 5}
-              opacity={selected === i ? 1 : 0.65}
-            />
+          {s.lines.map((_, i) => (
+            <g key={i} className="route-layer" aria-hidden="true">
+              <path
+                className="metro-route route-casing"
+                d={linePath(s.lines, i)}
+                stroke="#101f20"
+                strokeWidth="9"
+              />
+              <path
+                className="metro-route"
+                data-route={i}
+                d={linePath(s.lines, i)}
+                stroke={COLORS[i]}
+                strokeWidth={selected === i ? 6 : 5}
+              />
+            </g>
           ))}
           {pointer && (
             <line
@@ -265,6 +292,7 @@ export default function MetroGame({
             return (
               <g
                 key={id}
+                data-node-id={id}
                 transform={`translate(${n.x},${n.y})`}
                 role="button"
                 aria-label={`${DEVICE_NAMES[n.shape]} ${id + 1}`}
@@ -334,30 +362,60 @@ export default function MetroGame({
           })}
           {s.lines.map((l, i) => {
             if (l.stops.length < 2) return null;
-            const a = SITES[l.stops[l.at]],
-              b = SITES[l.stops[l.at + l.direction]];
-            if (!b) return null;
+            const from = l.stops[l.at],
+              to = l.stops[l.at + l.direction];
+            if (to === undefined) return null;
+            const [a, b] = laneSegment(s.lines, i, from, to);
             const x = a.x + (b.x - a.x) * l.progress,
               y = a.y + (b.y - a.y) * l.progress;
             return (
-              <g key={i} transform={`translate(${x},${y})`} aria-hidden="true">
+              <g
+                key={i}
+                className="packet-marker"
+                transform={`translate(${x},${y}) rotate(${(Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI})`}
+                aria-hidden="true"
+              >
                 <rect
                   x="-13"
-                  y="-9"
+                  y="-4"
                   width="26"
-                  height="18"
-                  rx="5"
+                  height="8"
+                  rx="3"
                   fill={COLORS[i]}
                   stroke="#101f20"
                   strokeWidth="2"
                 />
-                <text className="metro-car-count" y="4">
+                <text className="metro-car-count" y="3" style={{ fontSize: 8 }}>
                   {l.cargo.length}
                 </text>
               </g>
             );
           })}
         </svg>
+        <div className="map-camera-controls" aria-label="Kontrol tampilan peta">
+          <span>Geser area kosong · Cubit untuk zoom</span>
+          <button
+            aria-label="Perkecil peta"
+            disabled={frozen || camera.view.width >= 400 / 0.65}
+            onClick={() => camera.zoom(1 / 1.25)}
+          >
+            −
+          </button>
+          <button
+            aria-label="Tampilkan seluruh peta"
+            disabled={frozen}
+            onClick={camera.reset}
+          >
+            {Math.round((400 / camera.view.width) * 100)}%
+          </button>
+          <button
+            aria-label="Perbesar peta"
+            disabled={frozen || camera.view.width <= 400 / 3}
+            onClick={() => camera.zoom(1.25)}
+          >
+            +
+          </button>
+        </div>
         <div
           className={`metro-notice ${s.overload[danger] > 0 ? "is-danger" : ""}`}
           role="status"
@@ -422,6 +480,11 @@ export default function MetroGame({
             perangkat tujuan: Client, Server, atau Database.
           </p>
           <ol className="handbook">
+            <li>
+              Geser area kosong untuk menggerakkan peta. Cubit dengan dua jari
+              atau gunakan tombol − / + untuk zoom. Tekan persentase untuk
+              melihat seluruh jaringan.
+            </li>
             <li>
               Pilih warna, lalu sentuh perangkat satu per satu. Atau tarik dari
               perangkat awal ke tujuan, lalu lanjutkan dari ujung jalur.

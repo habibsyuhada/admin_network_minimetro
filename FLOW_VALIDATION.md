@@ -9,3 +9,9 @@
 WebKit Windows has a visual/layout viewport discrepancy already present before gameplay. Mobile input is tested in device emulation; responsive layout uses fixed 360×640 and 844×390 contexts. Physical iPhone verification remains outstanding. Flow sessions still end on reload; best packet count is persisted when returning to the menu.
 
 No remote branch, pull request, or public deployment has been created. Changes are local.
+
+## Map navigation and cable visibility
+
+Pan on empty map space, pinch, mouse wheel, 65–300% zoom buttons and fit/reset are available. Touching a second finger cancels pending cable construction. Shared connections use canonical parallel lanes, including reversed routes; moving packet markers follow the corresponding lane. Dark cable casings distinguish crossings.
+
+Validation: 8 unit tests and 18 browser tests passed; 3 platform-specific cases skipped (two native pinch protocol cases outside Chromium mobile and the existing WebKit service-worker update case). Build and formatting/type checks pass. The native pinch case explicitly begins on a device and verifies no accidental connection is committed.

@@ -9,6 +9,8 @@ Game strategi jaringan untuk mobile browser/PWA. Satu menu game, satu mode endle
 - Perangkat baru setiap 35 detik, hingga 12 perangkat. Pilih peningkatan setiap satu menit.
 - Antrean delapan paket memicu hitung mundur 20 detik. Kurangi antrean sebelum jaringan kewalahan.
 - Atur ulang jalur untuk menggambar rute baru; paket dikembalikan ke perangkat terakhir.
+- Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 65–300%. Tombol persentase mengembalikan seluruh jaringan ke layar. Drag dari perangkat tetap membuat kabel; jari kedua membatalkan drag kabel dan memulai pinch.
+- Jalur dengan koneksi yang sama digambar pada lajur paralel, termasuk arah terbalik. Paket mengikuti warna lajurnya. Persilangan kabel diberi sela gelap agar rute mudah dibedakan.
 - Permainan dijeda ketika aplikasi masuk latar belakang. Sesi aktif belum disimpan setelah reload. Rekor paket dan pengaturan suara disimpan saat kembali ke menu.
 
 Mode shift 10 menit dan halaman lamanya sudah dihapus. Data browser dari versi lama tidak dihapus, namun tidak dipakai oleh NOC Flow.

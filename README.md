@@ -1,90 +1,87 @@
-# NOC Shift
+# NOC Shift — HQ District
 
-Game mobile web Level 1, **First Day at NOC**. React + TypeScript + Vite; SVG untuk peta dan packet. Semua berjalan lokal tanpa backend atau layanan akun.
+Game strategi jaringan single-player untuk browser desktop dan mobile. Rilis v1 berisi satu map dengan shift 10 menit: tiga kantor, dua router, lonjakan traffic, dan gangguan jalur. Semua data permainan tinggal di perangkat; tidak ada akun, backend, analytics, atau leaderboard online.
 
-## Run / build
+## Menjalankan
 
-Gunakan Node.js 22 LTS dan npm.
+Node.js 22 LTS dan npm:
 
 ```sh
-npm install
+npm ci
 npm run dev
 npm test
+npm run check
 npm run build
+npx playwright install chromium webkit
+npm run test:e2e
 npm run preview
 ```
 
-Vite menampilkan alamat lokal. Untuk mencoba di HP, gunakan alamat LAN komputer pada jaringan yang sama. Production build ada di `dist/`.
+`npm run build` menghasilkan `dist/`. Browser test memakai production preview pada port 4173. `npm run format` merapikan source. Pengujian browser memerlukan runtime browser Playwright, bukan koneksi akun.
 
 ## Bermain
 
-1. Drag Office HQ ke Router-A. Koneksi hanya dibuat dengan drag.
-2. Hubungkan Router-A ke App Server. Packet mulai bergerak.
-3. Setelah 25 detik, Branch Office muncul. Hubungkan ke router atau HQ.
-4. Setelah 20 detik traffic normal, Morning Login Rush menaikkan demand menjadi 160 req/s. Kapasitas router awal 100 req/s.
-5. Tap Router-A dan upgrade (300 dari budget 500) ke 240 req/s.
-6. Antrean turun. Pertahankan latency <50 ms, loss ≤1%, dan service uptime ≥99% selama 20 detik untuk menyelesaikan level.
+Buat jalur Kantor HQ → Router A → App Server dengan drag, atau pilih node → Sambungkan → tujuan. Keyboard: Tab memilih kontrol, Enter/Space mengaktifkan, Escape menutup detail atau membuka jeda. Detail node terus menjalankan simulasi; menu jeda menghentikannya. Semua biaya tampil sebelum tindakan.
 
-Tombol pause menghentikan simulasi dan packet. Tab yang berada di background tidak memajukan permainan. Restart mengulang level. Tap node membuka detailnya; tap node lain mengganti detail tanpa membuat link. Tombol X atau tap area kosong menutup panel. Keyboard: Tab memilih node, Enter/Space membuka detail.
+| Tindakan | Kredit |
+|---|---:|
+| Budget awal | 1.000 |
+| Buat koneksi | 40 |
+| Lepas koneksi | +20 |
+| Upgrade router 120 → 260 req/s | 260 |
+| Perbaiki jalur A–Server | 120 |
 
-## Struktur
+| Waktu | Peristiwa |
+|---|---|
+| 00:00 | HQ aktif; persiapan awal 75 detik |
+| 01:30 | Kantor Cabang dan Router B tersedia |
+| 03:00 | Studio tersedia |
+| 04:00 | Jam sibuk |
+| 06:00 | Peringatan gangguan jalur |
+| 06:30 | Jalur Router A–Server gagal |
+| 08:00 | Lonjakan akhir |
+| 10:00 | Evaluasi |
 
-- `src/game/engine.ts`: state machine tutorial, routing BFS, parameter Level 1, simulasi aggregate; tidak bergantung React.
-- `src/game/engine.test.ts`: routing, validasi link, konservasi traffic, overload dan recovery.
-- `src/App.tsx`: HUD, pointer/keyboard controls, peta SVG, tutorial dan hasil.
-- `src/style.css`: responsif, safe-area mobile, tema visual.
-- `capacitor.config.json`: identitas aplikasi dan `webDir: dist`.
+Kantor baru mendapat 30 detik persiapan. Setelah masa persiapan, kantor tidak terhubung, loss >8%, atau latency >250 ms selama 45 detik berturut-turut mengakhiri shift. Pemulihan mereset countdown. Kemenangan memerlukan uptime historis ≥90% dan 20 detik terakhir stabil: semua kantor terhubung, loss ≤1%, latency <50 ms.
 
-Simulasi diperbarui tiap 100 ms. Traffic dihitung dalam request aggregate; maksimal tujuh dot per link adalah representasi visual dan bukan object untuk setiap request. Antrean dibatasi 80 request; overflow menjadi dropped request. Latency = 18 ms + queue/capacity. Load menampilkan **offered demand**, sehingga bisa >100%. Link Level 1 tidak memiliki bottleneck terpisah; Router-A menjadi bottleneck utama. BFS memadai karena semua link dianggap berbobot sama.
+Dua strategi yang diuji otomatis sampai selesai:
 
-Service uptime mengukur keterjangkauan layanan, terpisah dari packet loss; setup awal dan office yang belum tersambung belum menghasilkan request. Loss pada panel node adalah loss pada tick terkini; served/dropped adalah total sesi. Kemenangan memakai kondisi stabil terkini, sehingga pemain selalu bisa pulih setelah tutorial overload.
+- **Kapasitas terpusat:** semua kantor melalui Router A, upgrade sebelum jam sibuk, perbaiki jalur setelah insiden.
+- **Jalur cadangan:** Studio melalui Router B; hubungkan A–B dan upgrade kedua router sebelum insiden. Routing otomatis menghindari link rusak.
 
-## Tambahkan Capacitor
+Routing memakai BFS dengan urutan node stabil; ia memilih jumlah hop paling sedikit, bukan jalur dengan kapasitas terbesar. Koneksi tambahan tidak otomatis membagi satu sumber ke dua jalur. Lepaskan koneksi yang tidak diinginkan untuk mengarahkan ulang traffic.
 
-Konfigurasi sudah disiapkan; tidak perlu `cap init`. Dari root project:
+## Model simulasi
 
-```sh
-npm install @capacitor/core @capacitor/android @capacitor/ios
-npm install -D @capacitor/cli
-npm run build
-npx cap add android
-npx cap sync android
-npx cap open android
-```
+`src/game/map.ts` menyimpan konfigurasi satu map. `engine.ts` berisi fungsi murni untuk topologi, ekonomi, traffic, insiden, dan penilaian status. UI menggunakan fixed timestep 100 ms dengan accumulator. Saat background, simulasi berhenti dan pemain harus melanjutkan secara eksplisit. Stall lebih dari 500 ms dibatasi agar kembali dari jeda sistem tidak langsung menghabiskan toleransi.
 
-Untuk iOS, jalankan pada macOS dengan Xcode:
+Traffic berupa request aggregate, bukan paket protokol nyata. Office tidak boleh menjadi perantara. Seluruh router yang dilalui membatasi throughput; alokasi proporsional mempertahankan konservasi `served + dropped + queued = total`. Antrean per kantor maksimal 80 request; sumber terputus membuang antrean dan request baru. Estimasi latency mengikuti antrean sumber. Link tidak memiliki batas bandwidth terpisah. Ini model strategi sederhana, bukan emulator jaringan produksi.
 
-```sh
-npx cap add ios
-npx cap sync ios
-npx cap open ios
-```
+Demand berubah ±4% berdasarkan seed tersimpan dan interval simulasi. Reload tidak mengubah urutan traffic. Uptime adalah rasio waktu keterjangkauan per kantor setelah grace period, terpisah dari loss. Skor = uptime × 40 + rasio served/total × 4.000 + budget × 2 − durasi kantor terputus setelah insiden × 5, dibulatkan dan dibatasi minimum nol. Hanya kemenangan memperbarui rekor terbaik.
 
-Setiap perubahan web: `npm run build` lalu `npx cap sync`. Gunakan Android Studio untuk Android dan Xcode pada macOS untuk iOS. Sesuaikan `appId` sebelum distribusi. Persyaratan Node/SDK mengikuti versi Capacitor yang dipasang: [panduan resmi](https://capacitorjs.com/docs/getting-started) dan [environment setup](https://capacitorjs.com/docs/getting-started/environment-setup).
+## Penyimpanan dan migrasi
 
-Build native belum dibuat atau diuji. Uji pada perangkat nyata untuk touch, safe area, lifecycle, dan frame pacing sebelum rilis. Progres, rekor, dan pengaturan suara tersimpan lokal di perangkat.
+Autosave setiap sekitar satu detik, saat background, saat kembali ke menu, dan saat hasil muncul. Save v2 memvalidasi struktur, angka, topologi, fase, ekonomi, serta konservasi traffic; snapshot valid sebelumnya disimpan sebagai cadangan. Storage yang ditolak/kehabisan kuota menampilkan peringatan dan tetap mengizinkan permainan.
 
-## Cakupan Level 1
+Tutorial v1 tidak setara dengan skenario 10 menit. Migrasi mempertahankan rekor lama secara terpisah, jumlah kemenangan, suara, dan raw save v1 yang tidak diubah; pemain diberi pemberitahuan untuk memulai HQ District. Shift lama tidak dikonversi menjadi posisi permainan baru yang menyesatkan. Data tetap bisa diakses melalui key `noc-shift-save-v1`; save aktif memakai `noc-shift-save-v2`.
 
-Lampiran PLAN.md asli tidak tersedia melalui referensi percakapan. Implementasi mengikuti desain Level 1 yang dapat dibaca dari percakapan tersebut dan brief pengguna. Angka kapasitas memakai req/s secara konsisten; tidak mengklaim mensimulasikan protokol atau Mbps nyata. Durasi scripted sekitar 65 detik ditambah waktu pemain membuat koneksi dan menangani incident. Tidak ada fitur Level 2, monetisasi, auth, cloud save, atau backend.
+Save bersifat lokal dan tidak anti-cheat. Membuka beberapa tab yang memainkan shift secara bersamaan tidak didukung: gunakan satu tab untuk bermain. Menghapus data situs menghapus progres.
 
-## Tampilan game mobile
+## PWA / offline
 
-Game memenuhi viewport tanpa scroll halaman, dengan HUD ringkas, progres empat misi, arena SVG, serta menu pause/restart. Detail node muncul sebagai panel di atas arena. Hanya isi panel panjang dan panduan yang dapat digulir. Layout menyesuaikan portrait, landscape, dan safe area. Tombol layar penuh tersedia pada browser yang mendukung Fullscreen API; pada iPhone, instal ke Layar Utama untuk tampilan standalone.
+Service worker hanya terdaftar pada production build. Instalasi pertama membutuhkan koneksi dan caching aset berhasil. Cache dipisahkan per scope dan versi konten; dokumen serta aset dipasangkan dengan build yang sama. Static cache mengabaikan variasi header Origin agar module-script hasil precache dapat dibaca offline. Tidak ada aktivasi paksa di tengah shift. Pembaruan menunggu semua tab versi lama ditutup; menu menampilkan pemberitahuan jika update menunggu.
 
-Statistik atas telah dipindahkan ke detail node. Office menampilkan served miliknya sendiri; router dan server menampilkan total gabungan. Antrean aggregate melacak kontribusi masing-masing office untuk served dan loss. Latency adalah estimasi end-to-end melalui antrean bersama. Uptime adalah status keterjangkauan saat ini (0/100%), bukan persentase historis waktu online.
+GitHub Pages menggunakan base relatif, sehingga subpath repo didukung. Safari iPhone: Bagikan → Tambah ke Layar Utama. Browser dapat menghapus cache/storage; offline bukan jaminan penyimpanan permanen.
 
-## Menu, progres, suara, dan instalasi
+## Struktur dan pengujian
 
-Menu utama menyediakan mulai baru, lanjutkan shift, panduan, rekor, dan pengaturan suara. Save otomatis setiap satu detik, ketika aplikasi masuk background, dan saat kembali ke menu. Browser yang menolak penyimpanan menampilkan pemberitahuan; game tetap dapat dimainkan. Reload tidak menjalankan shift otomatis: pilih Lanjutkan. Score = max(0, round(10000 - detik shift × 15 - request dropped × 2)). Level tutorial selalu bisa dipulihkan lewat upgrade, tanpa game-over permanen.
+- `src/game/map.ts`, `engine.ts`: map dan simulasi murni.
+- `src/game/storage.ts`: validasi save, cadangan, migrasi, skor.
+- `src/App.tsx`: map SVG, input, fixed clock, HUD dan evaluasi.
+- `src/GameShell.tsx`: menu, lifecycle, autosave, rekor dan instalasi.
+- `src/Dialog.tsx`: native modal dengan fokus terkurung dan pemulihan fokus.
+- `src/game/*.test.ts`: simulasi lengkap beberapa seed, batas router, konservasi, kegagalan/pemulihan, save/migrasi.
+- `tests/game.spec.ts`: produksi desktop Chromium, Chromium mobile, dan WebKit: input, resume, hasil, kegagalan storage, layout, offline.
+- `.github/workflows/pages.yml`: check, test, build, browser test pada PR; hanya main yang dipublikasikan.
 
-Efek suara dibuat lokal dengan Web Audio setelah interaksi pertama. Pindah aplikasi mem-pause shift dan membatalkan drag. Instalasi PWA tersedia pada browser yang mendukung; pada iPhone gunakan Safari → Bagikan → Tambah ke Layar Utama. Production build menyertakan service worker untuk menyimpan aset setelah kunjungan online pertama; offline memerlukan cache tersebut berhasil terpasang. Pembaruan cache aktif setelah tab versi lama ditutup. Dev server tidak mendaftarkan service worker.
-
-Modul tambahan: src/GameShell.tsx (menu/lifecycle), src/game/storage.ts (save tervalidasi), src/game/audio.ts (efek suara), public/manifest.webmanifest (instalasi). Tidak ada analytics atau data yang dikirim dari save lokal.
-
-## GitHub Pages
-
-Source: https://github.com/habibsyuhada/admin_network_minimetro . Workflow .github/workflows/pages.yml menjalankan test, build, lalu deploy setiap push ke main. Di Settings > Pages, pilih GitHub Actions sebagai source. Vite memakai base relatif agar aset, manifest, dan service worker berjalan pada subfolder repo maupun Capacitor.
-
-URL: https://habibsyuhada.github.io/admin_network_minimetro/ . Save lokal terpisah dari situs lama karena domain berbeda.
-
+Detail prosedur rilis dan pengujian perangkat nyata: [RELEASE.md](RELEASE.md). Tidak ada build Android/iOS native dalam lingkup v1; konfigurasi Capacitor lama tetap tersedia untuk pekerjaan lanjutan.

@@ -2,13 +2,13 @@
   "id": "./",
   "name": "NOC Shift",
   "short_name": "NOC Shift",
-  "description": "Connect offices. Handle the morning rush. Keep the network alive.",
+  "description": "Hubungkan kantor, kelola kapasitas, dan jaga HQ District tetap online sepanjang shift.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#101d31",
-  "theme_color": "#101d31",
+  "orientation": "any",
+  "background_color": "#101715",
+  "theme_color": "#101715",
   "icons": [
     {
       "src": "icon-192.png",

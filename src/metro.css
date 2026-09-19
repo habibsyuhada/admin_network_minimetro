@@ -1,0 +1,285 @@
+.metro-game {
+  color: #293d42;
+  background: #f8f6ef;
+  width: 100%;
+  max-width: 680px;
+  margin: auto;
+  height: 100dvh;
+  min-height: 640px;
+  padding: max(12px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+}
+.metro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.metro-wordmark {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.metro-header button,
+.metro-clear {
+  background: #eae8df;
+  color: #293d42;
+  border-radius: 50%;
+  width: 44px;
+  display: grid;
+  place-items: center;
+}
+.metro-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0 10px;
+}
+.metro-score small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #657677;
+}
+.metro-score strong {
+  font-size: 38px;
+  letter-spacing: -2px;
+  font-weight: 600;
+}
+.metro-calendar {
+  text-align: right;
+}
+.metro-calendar strong {
+  display: block;
+  font-size: 23px;
+  letter-spacing: -1px;
+  padding: 5px 0;
+  font-variant-numeric: tabular-nums;
+}
+.metro-calendar progress {
+  display: block;
+  width: 82px;
+  height: 3px;
+  accent-color: #58b8af;
+}
+.metro-map-wrap {
+  flex: 1;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #dedfd7;
+  border-bottom: 1px solid #dedfd7;
+}
+.metro-map-title {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 0;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #788786;
+}
+.metro-map {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+.metro-river {
+  fill: none;
+  stroke: #deebe7;
+  stroke-width: 32;
+}
+.metro-water-label {
+  fill: #8baba7;
+  font-size: 8px;
+  letter-spacing: 3px;
+}
+.metro-route {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.metro-preview {
+  stroke-width: 5;
+  stroke-dasharray: 5 8;
+  opacity: 0.6;
+}
+.metro-node {
+  cursor: pointer;
+  outline: none;
+}
+.metro-symbol {
+  fill: #f8f6ef;
+  stroke: #293d42;
+  stroke-width: 3;
+}
+.metro-node:focus-visible .metro-symbol {
+  stroke: #c16c33;
+  stroke-width: 5;
+}
+.metro-node[aria-pressed="true"] .metro-symbol {
+  fill: #e3eae3;
+}
+.metro-node-id {
+  text-anchor: middle;
+  fill: #7c8988;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.metro-queue {
+  fill: #293d42;
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.metro-danger-ring {
+  fill: none;
+  stroke: #d65343;
+  stroke-width: 4;
+}
+.metro-car-count {
+  text-anchor: middle;
+  fill: #172b32;
+  font-size: 11px;
+  font-weight: 800;
+}
+.metro-notice {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  text-align: center;
+  padding: 5px 0;
+  color: #637876;
+}
+.metro-notice.is-danger {
+  color: #b53c30;
+  font-weight: 700;
+}
+.metro-controls {
+  padding-top: 12px;
+}
+.metro-line-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.metro-line-buttons > button:not(.metro-clear) {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #506365;
+  border-radius: 10px;
+  padding: 6px 2px;
+  min-width: 0;
+}
+.metro-line-buttons > button[aria-pressed="true"] {
+  border-color: var(--route);
+  background: #fff9;
+}
+.metro-line-buttons span {
+  display: grid;
+  place-items: center;
+  background: var(--route);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  margin: auto auto 4px;
+  font-size: 12px;
+  color: #18333b;
+  font-weight: 800;
+}
+.metro-line-buttons small {
+  display: block;
+  font-size: 9px;
+}
+.metro-clear {
+  flex-shrink: 0;
+}
+.metro-controls > p {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 9px 0 0;
+  min-height: 33px;
+  color: #627775;
+}
+.metro-capacity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: #6f8380;
+}
+.metro-capacity button {
+  background: none;
+  color: #334e50;
+  font-size: 11px;
+  text-decoration: underline;
+  padding: 0 6px;
+}
+.flow-entry {
+  margin-bottom: 22px;
+  padding: 18px;
+  border: 1px solid #657970;
+  border-radius: 12px;
+  background: #293a31;
+}
+.flow-entry h3 {
+  margin: 8px 0;
+  font-size: 24px;
+}
+.flow-entry p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #b4c5ba;
+}
+@media (min-width: 761px) {
+  .metro-game {
+    border-inline: 1px solid #dedfd7;
+    padding-inline: 30px;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .metro-game {
+    max-width: none;
+    min-height: 360px;
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    grid-template-rows: 48px 90px 1fr;
+    gap: 0 20px;
+  }
+  .metro-map-wrap {
+    grid-column: 2;
+    grid-row: 1 / 4;
+  }
+  .metro-score {
+    grid-column: 1;
+  }
+  .metro-controls {
+    grid-column: 1;
+  }
+  .metro-wordmark {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .metro-line-buttons {
+    gap: 3px;
+  }
+  .metro-line-buttons small {
+    display: none;
+  }
+  .metro-clear {
+    width: 36px;
+  }
+  .metro-capacity {
+    flex-wrap: wrap;
+  }
+}

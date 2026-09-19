@@ -2,7 +2,19 @@
 
 Game strategi jaringan single-player untuk browser desktop dan mobile. Rilis v1 berisi satu map dengan shift 10 menit: tiga kantor, dua router, lonjakan traffic, dan gangguan jalur. Semua data permainan tinggal di perangkat; tidak ada akun, backend, analytics, atau leaderboard online.
 
-## Menjalankan
+## NOC Flow — mode mobile terinspirasi permainan jalur transit
+
+Pilih **Main NOC Flow** di menu untuk memainkan mode baru dengan tema jaringan komputer. Pilih warna lalu sentuh simpul berurutan, atau tarik dari simpul awal ke tujuan dan lanjutkan dari ujung jalur. Setiap jalur memiliki satu pengangkut yang bolak-balik; paket dikirim ke simbol tujuan yang sama dan dapat berpindah jalur di simpul bersama. Tombol atur ulang mengembalikan muatan ke simpul terakhir sebelum jalur digambar ulang.
+
+- Tiga jalur awal, maksimal lima; kapasitas awal empat paket per pengangkut.
+- Simpul baru setiap 35 detik, hingga 12 simpul. Setiap 60 detik simulasi dijeda untuk memilih jalur baru, tambahan kapasitas, atau kecepatan.
+- Antrean minimal delapan paket selama 20 detik menyebabkan game over. Timer pulih ketika antrean berkurang.
+- Mendukung tap, drag, keyboard, portrait, landscape, dan jeda saat aplikasi masuk latar belakang.
+- Mode Flow saat ini prototipe PWA: sesi tidak disimpan setelah reload atau keluar ke menu. Save mode shift lama tetap terpisah dan tidak diubah. Belum berupa APK/IPA; pengujian perangkat fisik dan tuning kesulitan masih diperlukan sebelum rilis toko aplikasi.
+
+Simulasi murni: `src/game/metro.ts`; tampilan dan kontrol: `src/MetroGame.tsx`. Uji otomatis meliputi transfer paket, konservasi muatan, perkembangan minggu, overload, input browser, jeda, dan layout mobile.
+
+## Menjalankan lokal
 
 Node.js 22 LTS dan npm:
 

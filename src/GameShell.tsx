@@ -8,6 +8,7 @@ import {
   Download,
 } from "lucide-react";
 import App from "./App";
+import MetroGame from "./MetroGame";
 import Dialog from "./Dialog";
 import FullscreenButton from "./FullscreenButton";
 import { type State } from "./game/engine";
@@ -24,6 +25,7 @@ type InstallPrompt = Event & {
   userChoice: Promise<{ outcome: string }>;
 };
 export default function GameShell() {
+  const [flow, setFlow] = useState(false);
   const [profile, setProfile] = useState(loadProfile),
     [run, setRun] = useState<State | null>(null);
   const [help, setHelp] = useState(false),
@@ -129,6 +131,7 @@ export default function GameShell() {
     setProfile(next);
   };
   const resumable = profile.run?.phase === "running";
+  if (flow) return <MetroGame onMenu={() => setFlow(false)} />;
   return (
     <>
       {run ? (
@@ -184,6 +187,17 @@ export default function GameShell() {
             </div>
           </section>
           <section className="mission-card">
+            <div className="flow-entry">
+              <span className="eyebrow">MODE BARU / MOBILE</span>
+              <h3>NOC Flow</h3>
+              <p>
+                Gambar jalur. Antar paket. Jaga jaringan yang terus tumbuh.
+                Strategi santai sampai antrean mulai penuh.
+              </p>
+              <button className="primary" onClick={() => setFlow(true)}>
+                Main NOC Flow <ArrowUpRight size={18} />
+              </button>
+            </div>
             <div className="mission-top">
               <span className="eyebrow">MAP 01 / HQ DISTRICT</span>
               <span className="badge">10 MENIT</span>

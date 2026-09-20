@@ -1,0 +1,80 @@
+{
+  "x": 275,
+  "y": 250,
+  "kind": 0,
+  "phase": "complete",
+  "time": 180,
+  "month": 3,
+  "delivered": 83,
+  "gold": 2314,
+  "actions": [
+    {
+      "time": 0,
+      "type": "place",
+      "args": [
+        275,
+        250,
+        3
+      ]
+    },
+    {
+      "time": 0,
+      "type": "connect",
+      "args": [
+        0,
+        0,
+        3
+      ]
+    },
+    {
+      "time": 0,
+      "type": "connect",
+      "args": [
+        0,
+        1,
+        3
+      ]
+    },
+    {
+      "time": 0,
+      "type": "connect",
+      "args": [
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "time": 60,
+      "type": "reward",
+      "args": [
+        "continue"
+      ]
+    },
+    {
+      "time": 60,
+      "type": "connect",
+      "args": [
+        0,
+        4,
+        3
+      ]
+    },
+    {
+      "time": 120,
+      "type": "reward",
+      "args": [
+        "continue"
+      ]
+    },
+    {
+      "time": 120,
+      "type": "connect",
+      "args": [
+        0,
+        5,
+        3
+      ]
+    }
+  ]
+}

@@ -1374,11 +1374,21 @@ export default function MetroGame({
         </Dialog>
       )}
       {s.phase === "over" && (
-        <Dialog title={s.gold < 0 ? "Out of gold" : "Network overloaded"}>
+        <Dialog
+          title={
+            s.failure === "deadline"
+              ? "Mission time is up"
+              : s.gold < 0
+                ? "Out of gold"
+                : "Network overloaded"
+          }
+        >
           <p>
-            {s.gold < 0
-              ? "Your balance could not cover maintenance. Try a more efficient network next time."
-              : "A queue stayed full for too long. Try shorter cables or more transfer devices next time."}
+            {s.failure === "deadline"
+              ? `Month ${level?.months} has ended. You delivered ${s.delivered} of ${level?.packets} required packets. Try again with a faster network.`
+              : s.gold < 0
+                ? "Your balance could not cover maintenance. Try a more efficient network next time."
+                : "A queue stayed full for too long. Try shorter cables or more transfer devices next time."}
           </p>
           <div className="result-score">
             <small>PACKETS DELIVERED</small>

@@ -36,7 +36,12 @@ describe("campaign maps", () => {
     expect(complete.phase).toBe("complete");
     expect(metroTick(complete)).toBe(complete);
     expect(reward(complete, "continue")).toBe(complete);
-    expect(metroTick({ ...s, delivered: 59 }).phase).toBe("reward");
+    expect(metroTick({ ...s, delivered: 59 }).phase).toBe("over");
+    expect(metroTick({ ...s, delivered: 59 }).failure).toBe("deadline");
+    expect(metroTick({ ...s, time: 120, delivered: 80 }).phase).toBe("running");
+    expect(
+      metroTick({ ...s, time: 119.9, month: 2, delivered: 80 }).phase,
+    ).toBe("reward");
     expect(metroTick({ ...s, gold: -1 }).phase).toBe("over");
     expect(
       metroTick({

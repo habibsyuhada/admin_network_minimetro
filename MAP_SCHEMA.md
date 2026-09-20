@@ -2,9 +2,9 @@
 
 Campaign contains six sequential missions in a 1000 x 1200 world. Terrain is gameplay geometry, not just decoration. Level 1 has no environment restrictions. Existing level IDs remain unchanged for saved progress.
 
-| Level | ID | Name | Minimum months | Packets | Starting gold | Traffic multiplier |
+| Level | ID | Name | Final month | Packets | Starting gold | Traffic multiplier |
 |---|---|---|---:|---:|---:|---:|
-| 1 | neighborhood | Home Lab | 3 | 60 | 1800 | 0.8 |
+| 1 | neighborhood | Home Lab | 3 | 60 | 1800 | 1.0 |
 | 2 | campus | Campus | 4 | 120 | 1700 | 0.9 |
 | 3 | harbor | Riverside | 6 | 250 | 1900 | 0.9 |
 | 4 | downtown | Downtown | 8 | 450 | 1900 | 0.9 |
@@ -30,7 +30,7 @@ Environment checks apply to cable creation and moving connected devices. Selling
 
 Automatic spawn candidates avoid water, rocks, reserved construction areas, and other nodes. Client bursts remain clustered. Automatic clients and services have one port; player devices follow their own specs. Terrain does not replace the icon-destination and carrier mechanics.
 
-Victory is checked at month end after settlement and loss checks; both month and packet goals must be reached. Missing the packet goal continues the session into another month. Stars: one for completion, one for delivering 125% of target, one for retaining at least half the starting gold. Best stars persist and unlock the next mission. Active sessions and their inventory are memory-only and reset on reload or a new mission. Endless mode has all devices/items unlocked and no terrain.
+The configured month is a fixed deadline. Reaching the packet target early keeps the simulation running. At the end of the final month, after settlement and loss checks, meeting the packet goal completes the mission; missing it ends the run with a deadline failure. There is no extra campaign month. Stars: one for completion, one for delivering 125% of target, one for retaining at least half the starting gold. Best stars persist and unlock the next mission. Active sessions and their inventory are memory-only and reset on reload or a new mission. Endless mode has all devices/items unlocked and no terrain.
 
 ## Validation and initial balance
 
@@ -53,3 +53,8 @@ These are single-seed campaign solvability checks, not a claim of final human di
 Lab is now 250x280 (previously 125x140), Library 280x280 (140x140), and Dorms 340x420 (170x210). Each footprint is four times the area, with twice the width and height. Library moved to (240,430) and Dorms to (600,730), leaving open corridors and keeping all footprints within the existing 1000x1200 world. Starting nodes, economy, traffic multiplier, and mission targets remain unchanged.
 
 `node scripts/check-campus.mjs` compares ten seeded traffic runs using the same adaptive strategy. Before: 10/10 completed in months 4-5, average 4.2 months. After: 10/10 completed in months 4-5, average 4.4 months. The campaign's seed 123 now finishes in month 5 with 179 packets and 740 gold. Ending gold across new runs ranges from 519 to 1252. Reports: `docs/balance/campus-before-buildings.json` and `docs/balance/campus-large-buildings.json`. This suggests the geometry adds modest routing pressure without requiring an economy adjustment; it is automated solvability evidence, not a substitute for human playtesting.
+
+
+### Fixed campaign deadline
+
+Campaigns now end at their configured final month. Earlier balance tables above predate this rule. Home Lab traffic is 1.0 (was 0.8) so the 75-packet star can be earned within three months. A one-router Ethernet strategy at (275,250), connecting initial endpoints and each new endpoint, completes month 3 with 83 packets and 2314 gold in seed 987. No fourth-month extension is used. Simulation tests cover reaching goals early without ending, final-month success, final-month target failure, and insolvency/overload precedence.

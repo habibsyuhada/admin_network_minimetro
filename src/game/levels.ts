@@ -28,7 +28,7 @@ export const LEVELS: Level[] = [
     packets: 60,
     gold: 1800,
     spawnEvery: 60,
-    traffic: 0.8,
+    traffic: 1,
     maxNodes: 10,
     color: "#a4edaa",
     zones: [{ x: 70, y: 70, width: 450, height: 510 }],

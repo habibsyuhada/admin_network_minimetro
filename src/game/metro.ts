@@ -197,6 +197,7 @@ export type Cable = {
 };
 export type Metro = {
   version: 10;
+  failure?: "deadline";
   levelId?: string;
   inventory: ItemKind[];
   purchasedThisMonth: boolean;
@@ -766,13 +767,10 @@ export function metroTick(state: Metro): Metro {
     s.phase = s.gold < 0 ? "over" : "reward";
   }
   if (s.overload.some((t) => t >= OVERLOAD_SECONDS)) s.phase = "over";
-  if (
-    s.phase === "reward" &&
-    level &&
-    s.month >= level.months &&
-    s.delivered >= level.packets
-  )
-    s.phase = "complete";
+  if (s.phase === "reward" && level && s.month >= level.months) {
+    s.phase = s.delivered >= level.packets ? "complete" : "over";
+    if (s.phase === "over") s.failure = "deadline";
+  }
   return s;
 }
 

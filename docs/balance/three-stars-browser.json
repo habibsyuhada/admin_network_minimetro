@@ -1,0 +1,87 @@
+{
+  "summary": "Mission complete!\n★★★\nHome Lab\n\n3 months completed. 83 packets delivered.\n\nFinal balance 2314 gold. Your level progress has been saved.\n\nYour stars\n★ Mission complete\n3 months and 60 packets required · Earned\n★ Deliver 75 packets\n83 delivered · Earned\n★ Finish with 900 gold\n2314 gold remaining · Earned\nBack to mission map\nReplay for more stars",
+  "reports": [
+    {
+      "time": 60,
+      "summary": "Month 1 complete\n\nProfit: 306 gold\nMaintenance: 90 gold\nNet income: 216 gold\n\nBalance: 1566 gold. Buy one optional item this month. It goes to Inventory, not directly onto your network.\n\nUpgrade items unlock in Campus.\n\nContinue to next month"
+    },
+    {
+      "time": 120,
+      "summary": "Month 2 complete\n\nProfit: 504 gold\nMaintenance: 110 gold\nNet income: 394 gold\n\nBalance: 1860 gold. Buy one optional item this month. It goes to Inventory, not directly onto your network.\n\nUpgrade items unlock in Campus.\n\nContinue to next month"
+    },
+    {
+      "time": 180,
+      "summary": "Mission complete!\n★★★\nHome Lab\n\n3 months completed. 83 packets delivered.\n\nFinal balance 2314 gold. Your level progress has been saved.\n\nYour stars\n★ Mission complete\n3 months and 60 packets required · Earned\n★ Deliver 75 packets\n83 delivered · Earned\n★ Finish with 900 gold\n2314 gold remaining · Earned\nBack to mission map\nReplay for more stars"
+    }
+  ],
+  "actions": [
+    {
+      "time": 0,
+      "type": "place",
+      "args": [
+        275,
+        250,
+        3
+      ]
+    },
+    {
+      "time": 0,
+      "type": "connect",
+      "args": [
+        0,
+        0,
+        3
+      ]
+    },
+    {
+      "time": 0,
+      "type": "connect",
+      "args": [
+        0,
+        1,
+        3
+      ]
+    },
+    {
+      "time": 0,
+      "type": "connect",
+      "args": [
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "time": 60,
+      "type": "reward",
+      "args": [
+        "continue"
+      ]
+    },
+    {
+      "time": 60,
+      "type": "connect",
+      "args": [
+        0,
+        4,
+        3
+      ]
+    },
+    {
+      "time": 120,
+      "type": "reward",
+      "args": [
+        "continue"
+      ]
+    },
+    {
+      "time": 120,
+      "type": "connect",
+      "args": [
+        0,
+        5,
+        3
+      ]
+    }
+  ]
+}

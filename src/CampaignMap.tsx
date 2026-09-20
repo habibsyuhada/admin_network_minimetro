@@ -151,24 +151,25 @@ export default function CampaignMap({
                 <b>{level.gold.toLocaleString("en-US")}</b> gold
               </span>
             </div>
-            <button
-              className="play-button"
-              disabled={!open}
-              onClick={() => onPlay(level.id)}
-              aria-label={`Play level ${LEVELS.indexOf(level) + 1}`}
-            >
-              <Play size={19} fill="currentColor" />
-              {open
-                ? progress[level.id]
-                  ? "PLAY AGAIN"
-                  : "START MISSION"
-                : "COMPLETE THE PREVIOUS LEVEL"}
-              <ChevronRight size={20} />
-            </button>
+
             <small className="mission-stars-hint">
               ★ Complete mission · ★ +25% packets · ★ Keep 50% of starting gold
             </small>
           </section>
+          <button
+            className="play-button"
+            disabled={!open}
+            onClick={() => onPlay(level.id)}
+            aria-label={`Play level ${LEVELS.indexOf(level) + 1}`}
+          >
+            <Play size={19} fill="currentColor" />
+            {open
+              ? progress[level.id]
+                ? "PLAY AGAIN"
+                : "START MISSION"
+              : "COMPLETE THE PREVIOUS LEVEL"}
+            <ChevronRight size={20} />
+          </button>
         </Dialog>
       )}
     </>

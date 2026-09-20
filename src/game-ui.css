@@ -1512,24 +1512,74 @@ dialog select {
   }
 }
 
-/* Blank-map cartography: only gameplay terrain and the player's network. */
+/* Muted land districts keep the map in the same palette as the HUD. */
 .metro-map-wrap,
 .metro-map {
-  background: #f4f1e8;
-}
-.metro-map-wrap {
-  border-color: transparent;
+  background: #173039;
 }
 .metro-game .metro-node-id {
-  fill: #4c6465;
-  font-weight: 700;
+  fill: #bbd0bd;
 }
 .metro-game .node-feedback.build {
-  stroke: #50894d;
+  stroke: #b9f595;
 }
 .metro-game .node-feedback.arrival {
-  stroke: #258c99;
+  stroke: #7de6ec;
 }
 .metro-game .metro-map .route-casing {
-  stroke: #f4f1e8;
+  stroke: #173039;
+}
+/* Only the body scrolls, on every dialog. */
+dialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  max-height: calc(100dvh - 24px);
+}
+.dialog-heading {
+  flex: 0 0 auto;
+  padding: 18px 20px;
+  border-bottom: 1px solid #3a5549;
+  background: #142823;
+}
+.dialog-heading h2 {
+  font-size: clamp(18px, 5vw, 23px);
+}
+.dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 20px 16px;
+  scrollbar-color: #638274 #142823;
+}
+.dialog-footer {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  padding: 14px 20px max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid #3a5549;
+  background: #142823;
+}
+.dialog-footer:empty {
+  display: none;
+}
+.dialog-footer button {
+  margin: 0;
+  width: 100%;
+}
+.dialog-body .monthly-items {
+  max-height: none;
+  overflow: visible;
+}
+@media (max-height: 500px) {
+  .dialog-heading {
+    padding: 10px 16px;
+  }
+  .dialog-footer {
+    padding: 10px 16px;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
 }

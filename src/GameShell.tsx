@@ -1,3 +1,4 @@
+import { setMusicEnabled, unlockMusic } from "./game/music";
 import { useEffect, useState } from "react";
 import {
   Settings2,
@@ -24,13 +25,14 @@ function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "{}");
     return {
+      music: typeof v?.music === "boolean" ? v.music : true,
       progress: readProgress(v?.progress),
       sound: typeof v?.sound === "boolean" ? v.sound : true,
       best:
         Number.isSafeInteger(v?.best) && v.best >= 0 ? (v.best as number) : 0,
     };
   } catch {
-    return { sound: true, best: 0, progress: readProgress(null) };
+    return { sound: true, music: true, best: 0, progress: readProgress(null) };
   }
 }
 export default function GameShell() {
@@ -44,6 +46,7 @@ export default function GameShell() {
   const [updateReady, setUpdateReady] = useState(false);
   useEffect(() => {
     setAudioEnabled(profile.sound);
+    setMusicEnabled(profile.music);
     try {
       localStorage.setItem(KEY, JSON.stringify(profile));
       setSaveFailed(false);
@@ -84,6 +87,12 @@ export default function GameShell() {
     return (
       <MetroGame
         levelId={activeLevel}
+        music={profile.music}
+        onToggleMusic={() => {
+          setMusicEnabled(!profile.music);
+          if (!profile.music) unlockMusic();
+          setProfile((v) => ({ ...v, music: !v.music }));
+        }}
         sound={profile.sound}
         onToggleSound={() => {
           setAudioEnabled(!profile.sound);
@@ -258,6 +267,17 @@ export default function GameShell() {
           <p className="muted">
             Best run: {profile.best.toLocaleString("en-US")} packets
           </p>
+          <button
+            className="secondary"
+            onClick={() => {
+              setMusicEnabled(!profile.music);
+              if (!profile.music) unlockMusic();
+              setProfile((v) => ({ ...v, music: !v.music }));
+            }}
+            aria-label={profile.music ? "Mute music" : "Enable music"}
+          >
+            Music: {profile.music ? "On" : "Off"}
+          </button>
           <FullscreenButton />
           {install && (
             <button

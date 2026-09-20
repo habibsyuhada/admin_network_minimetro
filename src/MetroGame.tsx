@@ -60,9 +60,13 @@ export default function MetroGame({
   onMenu,
   levelId,
   onComplete,
+  music = true,
+  onToggleMusic,
   sound = true,
   onToggleSound,
 }: {
+  music?: boolean;
+  onToggleMusic?: () => void;
   sound?: boolean;
   onToggleSound?: () => void;
   onMenu: (delivered: number) => void;
@@ -403,7 +407,7 @@ export default function MetroGame({
             className="blank-map-land"
             width={MAP_BOUNDS.width}
             height={MAP_BOUNDS.height}
-            fill="#f4f1e8"
+            fill="#173039"
           />
           <EnvironmentArt state={s} />
           {s.cables.map((_, i) => (
@@ -411,7 +415,7 @@ export default function MetroGame({
               <path
                 className="metro-route route-casing"
                 d={linePath(s.cables, i, renderNodes)}
-                stroke="#f4f1e8"
+                stroke="#173039"
                 strokeWidth="9"
               />
               <path
@@ -616,7 +620,7 @@ export default function MetroGame({
                   height="12"
                   rx="3"
                   fill={CABLE_TYPES[l.kind].color}
-                  stroke="#f4f1e8"
+                  stroke="#173039"
                   strokeWidth="2"
                 />
                 <text className="metro-car-count" y="3" style={{ fontSize: 8 }}>
@@ -980,6 +984,13 @@ export default function MetroGame({
                 onClick={() => setGamePanel("inventory")}
               >
                 Inventory · {s.inventory.length} items
+              </button>
+              <button
+                className="secondary"
+                onClick={onToggleMusic}
+                aria-label={music ? "Mute music" : "Enable music"}
+              >
+                Music: {music ? "On" : "Off"}
               </button>
               <button
                 className="secondary"

@@ -1,3 +1,4 @@
+import { unlockMusic } from "./music";
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
 let enabled = true;
@@ -33,6 +34,7 @@ export function setAudioEnabled(value: boolean) {
   }
 }
 export function unlockAudio() {
+  unlockMusic();
   if (!enabled) return;
   try {
     context ??= new AudioContext();

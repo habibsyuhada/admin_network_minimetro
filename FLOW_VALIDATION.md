@@ -126,3 +126,14 @@ Validation: audio lifecycle unit tests cover gesture gating, throttling, mute, h
 ## Blank-map gameplay presentation
 
 Gameplay now uses a warm off-white map, pale-blue water, flat gray building footprints, muted rocky terrain and distinct construction/flood areas. Decorative grid, district rectangles/names, access/data-center labels and building window details are removed. Node IDs and bridge capacity remain because they communicate gameplay state. Terrain geometry, seeded spawn zones, collision checks, economy and camera bounds are unchanged. Route casing and node-label/feedback colors were adjusted for the light background. Production build/type/format checks and five mobile campaign/expansion browser cases pass; the river/radio screenshot was visually inspected.
+
+
+## Dark district map, fixed modal layout, and background music
+
+Map background is dark teal again. Organic, unlabelled land patches follow each map's existing spawn zones with different muted green/blue/olive/plum colors. Terrain uses matching dark colors; these patches do not add collision or change spawn rules.
+
+Every shared Dialog now separates its fixed header, scrolling body, and fixed action footer. Direct action buttons move to the footer; nested catalog controls remain in the body. Mission selection moves its Play action outside the mission card into this shared footer. Dialogs without an action use a Done footer when dismissible. Monthly items use the dialog body instead of a nested scroll region. Short landscape layouts arrange footer actions horizontally.
+
+Original background music is synthesized locally: an eight-bar 84-BPM sine-synth loop with bass, sustained chords and a light arpeggio. Music has a separate persistent toggle in Settings and the gameplay menu, begins only after a gesture, and does not speed up with simulation speed. It stops while hidden or muted, disconnects ended nodes, and avoids scheduling a backlog after timer stalls. Existing sound-effect preferences remain independent. No network audio assets are needed.
+
+Validation: 61 unit tests pass, including music gesture/mute/visibility/scheduler lifecycle. Mobile tests verify fixed header/footer positions while scrolling Guide, Settings, Mission details, gameplay help, build/cable pickers, statistics, game menu, and node details; music preference survives reload. Existing monthly item purchase, radio construction and gateway cases pass. Expanded-help and dark river-map screenshots visually inspected.

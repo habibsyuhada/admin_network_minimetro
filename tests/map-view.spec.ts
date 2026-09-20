@@ -1,3 +1,4 @@
+import { dragCable } from "./helpers";
 import { test, expect } from "@playwright/test";
 test("camera stops at map edges and centers when zoomed out", async ({
   page,
@@ -30,18 +31,20 @@ test("camera stops at map edges and centers when zoomed out", async ({
       const [x, y, w, h] = await read();
       return [x + w, y + h];
     })
-    .toEqual([400, 600]);
-  for (let i = 0; i < 3; i++)
+    .toEqual([1000, 1200]);
+  for (let i = 0; i < 6; i++)
     await page.getByRole("button", { name: "Perkecil peta" }).click();
   await expect(
-    page.getByRole("button", { name: "Tampilkan seluruh peta" }),
-  ).toHaveText("65%");
+    page.getByRole("button", { name: "Kembali ke area awal" }),
+  ).toHaveText("40%");
+  await page.getByRole("button", { name: "Lihat seluruh area" }).click();
   const centered = await map.getAttribute("viewBox");
   await drag(1800);
   await expect(map).toHaveAttribute("viewBox", centered!);
   const [x, y, w, h] = await read();
-  expect(x + w / 2).toBeCloseTo(200);
-  expect(y + h / 2).toBeCloseTo(300);
+  expect(w * h).toBe(400 * 600 * 5);
+  expect(x + w / 2).toBeCloseTo(500);
+  expect(y + h / 2).toBeCloseTo(600);
 });
 test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   page,
@@ -54,7 +57,7 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   const initial = await map.getAttribute("viewBox");
   await page.getByRole("button", { name: "Perbesar peta" }).click();
   await expect(
-    page.getByRole("button", { name: "Tampilkan seluruh peta" }),
+    page.getByRole("button", { name: "Kembali ke area awal" }),
   ).toHaveText("125%");
   const zoomed = await map.getAttribute("viewBox");
   const bounds = (await map.boundingBox())!;
@@ -65,13 +68,11 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   await expect(map).not.toHaveAttribute("viewBox", zoomed!);
   await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   // Construction must still hit the right devices after camera movement.
-  await page.getByRole("button", { name: "Client 1", exact: true }).click();
-  await page.getByRole("button", { name: "Server 2", exact: true }).click();
-  await page.getByRole("button", { name: "Tampilkan seluruh peta" }).click();
+  await dragCable(page, 0, 1);
+  await page.getByRole("button", { name: "Kembali ke area awal" }).click();
   await expect(map).toHaveAttribute("viewBox", initial!);
   await page.getByRole("button", { name: "Kabel Fiber", exact: true }).click();
-  await page.getByRole("button", { name: "Server 2", exact: true }).click();
-  await page.getByRole("button", { name: "Client 1", exact: true }).click();
+  await dragCable(page, 1, 0);
   const a = await page.locator('[data-route="0"]').getAttribute("d");
   const b = await page.locator('[data-route="1"]').getAttribute("d");
   expect(a).not.toEqual(b);
@@ -129,8 +130,35 @@ test("two-finger pinch cancels cable drawing and never commits a route", async (
     touchPoints: [],
   });
   await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
-  await page.getByRole("button", { name: "Tampilkan seluruh peta" }).click();
+  await page.getByRole("button", { name: "Kembali ke area awal" }).click();
   await page.getByRole("button", { name: "Client 1", exact: true }).tap();
   await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   await session.detach();
+});
+
+test("new distant nodes stay in the large map and can be located through details", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date(42) });
+  await page.goto("/");
+  await page.clock.pauseAt(new Date(100000));
+  await page.clock.setFixedTime(new Date(42));
+  await page.getByRole("button", { name: "Main NOC Flow" }).click();
+  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  const map = page.getByRole("group", { name: "Peta Flow interaktif" });
+  const initial = await map.getAttribute("viewBox");
+  await page.clock.runFor(35200);
+  await expect(page.locator("[data-node-id]")).toHaveCount(4);
+  await expect(map).toHaveAttribute("viewBox", initial!);
+  await page.getByRole("button", { name: "Detail node", exact: true }).click();
+  await page.getByRole("button", { name: /Client 4.*paket/ }).click();
+  await page.getByRole("button", { name: "Lihat node di peta" }).click();
+  await expect(
+    page.getByRole("button", { name: "Client 4", exact: true }),
+  ).toBeInViewport();
+  await page.getByRole("button", { name: "Client 4", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Detail Client 4" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
 });

@@ -5,7 +5,13 @@ import {
   type RefObject,
   type PointerEvent,
 } from "react";
-import { constrainView, zoomView, type Point, type View } from "./game/mapView";
+import {
+  constrainView,
+  zoomView,
+  MAP_BOUNDS,
+  type Point,
+  type View,
+} from "./game/mapView";
 type Motion = {
   kind: "pan" | "pinch" | "draw";
   view: View;
@@ -19,8 +25,8 @@ export default function useMapCamera(
   fit: View,
   frozen: boolean,
 ) {
-  const [custom, setCustom] = useState<View | null>(null);
-  const view = constrainView(custom ?? fit);
+  const [custom, setCustom] = useState<View>(fit);
+  const view = constrainView(custom);
   const live = useRef(view);
   live.current = view;
   const disabled = useRef(frozen);
@@ -123,7 +129,15 @@ export default function useMapCamera(
     clear,
     reset: () => {
       clear();
-      setCustom(null);
+      setCustom(constrainView(fit));
+    },
+    overview: () => {
+      clear();
+      update(MAP_BOUNDS);
+    },
+    focus: (point: Point) => {
+      clear();
+      update({ x: point.x - 200, y: point.y - 200, width: 400, height: 400 });
     },
     zoom: (factor: number) => {
       if (!frozen)

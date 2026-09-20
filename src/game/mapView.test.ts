@@ -16,27 +16,18 @@ describe("map presentation", () => {
       constrainView({ x: -1000, y: -1000, width: 200, height: 300 }),
     ).toEqual({ x: 0, y: 0, width: 200, height: 300 });
     expect(
-      constrainView({ x: 1000, y: 1000, width: 200, height: 300 }),
-    ).toEqual({ x: 200, y: 300, width: 200, height: 300 });
+      constrainView({ x: 10000, y: 10000, width: 200, height: 300 }),
+    ).toEqual({ x: 800, y: 900, width: 200, height: 300 });
     const inside = { x: 40, y: 80, width: 200, height: 300 };
     expect(constrainView(inside)).toEqual(inside);
   });
-  it("centers axes larger than the map while allowing the other axis to pan", () => {
-    expect(constrainView({ x: 900, y: 100, width: 500, height: 300 })).toEqual({
-      x: -50,
-      y: 100,
-      width: 500,
-      height: 300,
-    });
-    expect(constrainView({ x: -900, y: 900, width: 500, height: 700 })).toEqual(
-      { x: -50, y: -50, width: 500, height: 700 },
+  it("centers views larger than the fivefold map", () => {
+    expect(constrainView({ x: 900, y: 100, width: 1100, height: 300 })).toEqual(
+      { x: -50, y: 100, width: 1100, height: 300 },
     );
-    expect(constrainView({ x: 40, y: 60, width: 400, height: 600 })).toEqual({
-      x: 0,
-      y: 0,
-      width: 400,
-      height: 600,
-    });
+    expect(
+      constrainView({ x: 900, y: 900, width: 1100, height: 1300 }),
+    ).toEqual({ x: -50, y: -50, width: 1100, height: 1300 });
   });
   it("separates shared connections even when a route runs in reverse", () => {
     const lines = [cable(0, 1), cable(1, 0, 1)];
@@ -64,6 +55,6 @@ describe("map presentation", () => {
       (anchor.y - view.y) / view.height,
     );
     expect(zoomView(view, anchor, 100).width).toBeCloseTo(400 / 3);
-    expect(zoomView(view, anchor, 0.01).width).toBeCloseTo(400 / 0.65);
+    expect(zoomView(view, anchor, 0.01).width).toBeCloseTo(1000);
   });
 });

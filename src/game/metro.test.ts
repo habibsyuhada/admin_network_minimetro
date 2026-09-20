@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  SITES,
   cableCapacity,
   connectCable,
   connectionError,
@@ -185,6 +186,11 @@ describe("specific node destinations", () => {
       s.queues.forEach((queue, source) =>
         queue.forEach((packet) => {
           expect(packet.destination).not.toBe(source);
+          expect(
+            !(
+              SITES[source].shape === 0 && SITES[packet.destination].shape === 0
+            ),
+          ).toBe(true);
           expect(packet.destination).toBeGreaterThanOrEqual(0);
           expect(packet.destination).toBeLessThan(s.queues.length);
           if (

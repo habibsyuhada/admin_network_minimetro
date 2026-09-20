@@ -31,15 +31,15 @@ export const SITES: { x: number; y: number; shape: Shape }[] = [
   { x: 85, y: 125, shape: 0 },
   { x: 235, y: 205, shape: 1 },
   { x: 305, y: 365, shape: 2 },
-  { x: 95, y: 410, shape: 0 },
-  { x: 310, y: 80, shape: 2 },
-  { x: 75, y: 275, shape: 1 },
-  { x: 230, y: 495, shape: 0 },
-  { x: 335, y: 260, shape: 1 },
-  { x: 175, y: 65, shape: 2 },
-  { x: 165, y: 335, shape: 2 },
-  { x: 65, y: 520, shape: 1 },
-  { x: 325, y: 540, shape: 0 },
+  { x: 238, y: 820, shape: 0 },
+  { x: 775, y: 160, shape: 2 },
+  { x: 188, y: 550, shape: 1 },
+  { x: 575, y: 990, shape: 0 },
+  { x: 838, y: 520, shape: 1 },
+  { x: 438, y: 130, shape: 2 },
+  { x: 413, y: 670, shape: 2 },
+  { x: 163, y: 1040, shape: 1 },
+  { x: 813, y: 1080, shape: 0 },
 ];
 
 export type Cable = {
@@ -225,8 +225,15 @@ export function metroTick(state: Metro): Metro {
   if (Math.floor(s.time / 3) > Math.floor(state.time / 3))
     for (let id = 0; id < s.queues.length; id++) {
       if (random() > Math.min(0.85, 0.4 + s.time / 900)) continue;
-      const target = Math.floor(random() * (s.queues.length - 1));
-      s.queues[id].push({ destination: target >= id ? target + 1 : target });
+      const targets = s.queues.flatMap((_, target) =>
+        target !== id && !(SITES[id].shape === 0 && SITES[target].shape === 0)
+          ? [target]
+          : [],
+      );
+      if (targets.length)
+        s.queues[id].push({
+          destination: targets[Math.floor(random() * targets.length)],
+        });
     }
   // Departures happen before arrivals: transferring cargo must wait for the
   // next cable's own carrier, regardless of cable iteration order.

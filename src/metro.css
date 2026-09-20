@@ -518,7 +518,7 @@
   color: #b9e9cc;
   font-size: 18px;
 }
-.map-camera-controls button:nth-of-type(2) {
+.map-camera-controls button[aria-label="Kembali ke area awal"] {
   font-size: 10px;
   min-width: 48px;
 }
@@ -734,4 +734,8 @@
   .cable-inventory {
     justify-content: flex-start;
   }
+}
+
+.map-camera-controls button[aria-label="Lihat seluruh area"] {
+  font-size: 11px;
 }

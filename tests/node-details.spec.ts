@@ -1,3 +1,4 @@
+import { dragCable } from "./helpers";
 import { test, expect } from "@playwright/test";
 
 test("node details show exact packet destinations and pause the simulation", async ({
@@ -11,7 +12,6 @@ test("node details show exact packet destinations and pause the simulation", asy
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
   await page.clock.runFor(3200);
   await page.getByRole("button", { name: "Client 1", exact: true }).click();
-  await page.getByRole("button", { name: "Detail node", exact: true }).click();
   const detail = page.getByRole("dialog", {
     name: "Detail Client 1",
     exact: true,
@@ -25,8 +25,7 @@ test("node details show exact packet destinations and pause the simulation", asy
   await page.clock.runFor(6000);
   await expect(page.getByTestId("flow-clock")).toHaveText(clock!);
   await detail.getByRole("button", { name: "Kembali ke peta" }).click();
-  await page.getByRole("button", { name: "Client 1", exact: true }).click();
-  await page.getByRole("button", { name: "Server 2", exact: true }).click();
+  await dragCable(page, 0, 1);
   await page.getByRole("button", { name: "Detail node", exact: true }).click();
   await page.getByRole("button", { name: /Client 1.*paket/ }).click();
   await expect(destination).toContainText("Via Server 2");

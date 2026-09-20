@@ -270,8 +270,8 @@ export default function GameShell() {
           <ol className="handbook">
             <li>
               Pilih Ethernet, Fiber, atau Backbone. Tarik satu kabel antara dua
-              perangkat, atau sentuh sumber lalu tujuan. Setiap kabel memiliki
-              pengangkut sendiri.
+              perangkat. Ketuk node untuk membuka detailnya. Setiap kabel
+              memiliki pengangkut sendiri.
             </li>
             <li>
               Pengangkut bolak-balik hanya di kabelnya. Kapasitas muatannya

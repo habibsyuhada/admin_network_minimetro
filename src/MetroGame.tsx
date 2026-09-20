@@ -23,7 +23,7 @@ import {
 } from "./NetworkArt";
 import { playCue } from "./game/audio";
 import useMapCamera from "./useMapCamera";
-import { laneSegment, linePath } from "./game/mapView";
+import { laneSegment, linePath, MAP_BOUNDS } from "./game/mapView";
 
 export default function MetroGame({
   onMenu,
@@ -34,14 +34,13 @@ export default function MetroGame({
   const best = useRef(0);
   best.current = Math.max(best.current, s.delivered);
   const [selected, setSelected] = useState<CableKind>(0);
-  const [from, setFrom] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [help, setHelp] = useState(true);
   const [confirm, setConfirm] = useState(false);
   const [showNodes, setShowNodes] = useState(false);
   const [detailNode, setDetailNode] = useState<number | null>(null);
   const [tip, setTip] = useState(
-    "Pilih jenis kabel, lalu hubungkan dua perangkat.",
+    "Tarik kabel antar perangkat. Ketuk node untuk detail.",
   );
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -75,7 +74,6 @@ export default function MetroGame({
     if (frozen) {
       gesture.current = null;
       setPointer(null);
-      setFrom(null);
       return;
     }
     let last = performance.now(),
@@ -99,7 +97,6 @@ export default function MetroGame({
     return () => clearInterval(timer);
   }, [frozen]);
   const build = (a: number, b: number) => {
-    setFrom(null);
     const error = connectionError(s, selected, a, b);
     if (error) {
       setTip(error);
@@ -111,20 +108,10 @@ export default function MetroGame({
       `${CABLE_TYPES[selected].name} terpasang. Pengangkut khusus siap bolak-balik.`,
     );
   };
-  const add = (id: number) => {
+  const inspect = (id: number) => {
     if (frozen) return;
-    if (from === id) {
-      setFrom(null);
-      setTip("Pemilihan dibatalkan.");
-      return;
-    }
-    if (from !== null) build(from, id);
-    else {
-      setFrom(id);
-      setTip(
-        `${DEVICE_NAMES[SITES[id].shape]} ${id + 1} dipilih. Sentuh perangkat tujuan.`,
-      );
-    }
+    setDetailNode(id);
+    setShowNodes(true);
   };
   const position = (x: number, y: number) => {
     const matrix = svg.current?.getScreenCTM();
@@ -133,25 +120,18 @@ export default function MetroGame({
       : { x: 0, y: 0 };
   };
   const danger = s.overload.indexOf(Math.max(...s.overload));
-  const activeSites = SITES.slice(0, s.queues.length);
-  const mapTop = Math.max(0, Math.min(...activeSites.map((n) => n.y)) - 65);
-  const mapHeight = Math.max(
-    400,
-    Math.max(...activeSites.map((n) => n.y)) + 75 - mapTop,
-  );
   const camera = useMapCamera(
     svg,
-    { x: 0, y: mapTop, width: 400, height: mapHeight },
+    { x: 0, y: 60, width: 400, height: 400 },
     frozen,
   );
   const restart = () => {
-    camera.reset();
+    camera.focus({ x: 200, y: 260 });
     setS(newMetro());
     setSelected(0);
-    setFrom(null);
     setPaused(false);
     setConfirm(false);
-    setTip("Pilih jenis kabel, lalu hubungkan dua perangkat.");
+    setTip("Tarik kabel antar perangkat. Ketuk node untuk detail.");
   };
   return (
     <main className="metro-game">
@@ -196,7 +176,6 @@ export default function MetroGame({
             if (camera.down(e)) {
               gesture.current = null;
               setPointer(null);
-              setFrom(null);
             }
           }}
           onPointerMove={(e) => {
@@ -216,7 +195,7 @@ export default function MetroGame({
             setPointer(null);
             if (consumed || !g || g.pointer !== e.pointerId || frozen) return;
             if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 10) {
-              add(g.start);
+              inspect(g.start);
               return;
             }
             const p = position(e.clientX, e.clientY);
@@ -251,7 +230,11 @@ export default function MetroGame({
               <circle cx="1" cy="1" r=".8" fill="#29413d" />
             </pattern>
           </defs>
-          <rect width="400" height="600" fill="url(#network-grid)" />
+          <rect
+            width={MAP_BOUNDS.width}
+            height={MAP_BOUNDS.height}
+            fill="url(#network-grid)"
+          />
           <g className="network-zones" aria-hidden="true">
             <rect x="30" y="36" width="135" height="170" rx="16" />
             <rect x="195" y="150" width="170" height="290" rx="16" />
@@ -304,12 +287,11 @@ export default function MetroGame({
                 role="button"
                 aria-label={`${DEVICE_NAMES[n.shape]} ${id + 1}`}
                 tabIndex={frozen ? -1 : 0}
-                aria-pressed={from === id}
                 className="metro-node"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    add(id);
+                    inspect(id);
                   }
                 }}
                 onPointerDown={(e) => {
@@ -404,16 +386,23 @@ export default function MetroGame({
           })}
         </svg>
         <div className="map-camera-controls" aria-label="Kontrol tampilan peta">
+          <button
+            aria-label="Lihat seluruh area"
+            disabled={frozen}
+            onClick={camera.overview}
+          >
+            Peta
+          </button>
           <span>Geser area kosong · Cubit untuk zoom</span>
           <button
             aria-label="Perkecil peta"
-            disabled={frozen || camera.view.width >= 400 / 0.65}
+            disabled={frozen || camera.view.width >= MAP_BOUNDS.width}
             onClick={() => camera.zoom(1 / 1.25)}
           >
             −
           </button>
           <button
-            aria-label="Tampilkan seluruh peta"
+            aria-label="Kembali ke area awal"
             disabled={frozen}
             onClick={camera.reset}
           >
@@ -447,7 +436,6 @@ export default function MetroGame({
               style={{ "--route": type.color } as React.CSSProperties}
               onClick={() => {
                 setSelected(i as CableKind);
-                setFrom(null);
                 setTip(
                   `${type.name}: ${cableCapacity(s, i as CableKind)} paket/pengangkut · biaya ${type.cost} stok. ${type.note}.`,
                 );
@@ -475,16 +463,13 @@ export default function MetroGame({
             aria-label="Detail node"
             disabled={frozen}
             onClick={() => {
-              setDetailNode(from);
+              setDetailNode(null);
               setShowNodes(true);
             }}
           >
-            {from === null ? "Detail node" : `Detail ${nodeName(from)}`}
+            Detail node
           </button>
           <button onClick={() => setHelp(true)}>Panduan</button>
-          {from !== null && (
-            <button onClick={() => setFrom(null)}>Batal</button>
-          )}
         </div>
         <p role="status">{tip}</p>
       </section>
@@ -496,18 +481,19 @@ export default function MetroGame({
           <p>
             Setiap kabel menghubungkan dua perangkat dan memiliki satu
             pengangkut sendiri. Setiap paket menuju satu perangkat tertentu,
-            misalnya Server 2. Ikon tetap menunjukkan jenis perangkatnya.
+            misalnya Server 2. PC mengirim ke Server atau Database, bukan PC
+            lain. Ikon tetap menunjukkan jenis perangkatnya.
           </p>
           <ol className="handbook">
             <li>
               Geser area kosong untuk menggerakkan peta. Cubit dengan dua jari
               atau gunakan tombol − / + untuk zoom. Tekan persentase untuk
-              melihat seluruh jaringan.
+              kembali ke area awal. Tombol Peta menampilkan seluruh area.
             </li>
             <li>
               Pilih jenis kabel lalu tarik dari satu perangkat ke perangkat
-              lain. Bisa juga sentuh sumber lalu tujuan. Untuk cabang baru,
-              mulai lagi dari perangkat mana pun.
+              lain. Klik atau sentuh satu perangkat untuk melihat detailnya.
+              Untuk cabang baru, mulai lagi dari perangkat mana pun.
             </li>
             <li>
               Pengangkut hanya bolak-balik pada kabelnya. Angka muatan/kapasitas
@@ -557,6 +543,17 @@ export default function MetroGame({
           }
           onClose={() => setShowNodes(false)}
         >
+          {detailNode !== null && (
+            <button
+              className="secondary"
+              onClick={() => {
+                camera.focus(SITES[detailNode]);
+                setShowNodes(false);
+              }}
+            >
+              Lihat node di peta
+            </button>
+          )}
           <NodeDetails state={s} node={detailNode} onSelect={setDetailNode} />
           <button className="primary" onClick={() => setShowNodes(false)}>
             Kembali ke peta

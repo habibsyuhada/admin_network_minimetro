@@ -4,7 +4,7 @@ Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangka
 
 ## Bermain
 
-- Pilih jenis kabel, lalu tarik dari perangkat A ke B. Alternatif tap/keyboard: pilih sumber lalu tujuan. Setelah kabel dibuat, pemilihan selesai; node ketiga memulai sambungan baru.
+- Pilih jenis kabel, lalu tarik dari perangkat A ke B. Kabel hanya dibuat lewat drag. Tap, klik, Enter, dan Spasi pada node membuka detail, tidak membuat kabel.
 - Warna menunjukkan jenis kabel, bukan nomor rute. Jenis yang sama boleh dipakai pada banyak sambungan. Satu pasangan perangkat dapat memiliki kabel paralel dengan jenis berbeda; duplikat pasangan dan jenis yang sama ditolak.
 - Pengangkut mengambil paket di ujung kabel setelah jeda bongkar-muat 0,4 detik. Paket menunggu jika kapasitas penuh atau pengangkut belum datang. Muatan/kapasitas ditampilkan di pengangkut.
 - Paket transit turun di perangkat perantara dan menunggu pengangkut kabel selanjutnya. Kabel dua arah memakai pengangkut yang sama, bukan perjalanan paket mandiri.
@@ -20,11 +20,11 @@ Stok awal 6. Tiap menit mendapat 2 stok, lalu satu bonus: tambahan 4 stok, +2 ka
 
 **Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Biaya stok dikembalikan seluruhnya; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
 
-**Detail node** menampilkan daftar perangkat dan antrean yang dikelompokkan berdasarkan tujuan, termasuk jumlah paket, kabel berikutnya, dan tujuan yang belum terhubung. Pilih node di peta lalu buka Detail untuk langsung memeriksanya, atau buka Detail node untuk daftar semua perangkat. Simulasi dijeda selama panel terbuka.
+**Detail node** menampilkan daftar perangkat dan antrean yang dikelompokkan berdasarkan tujuan, termasuk jumlah paket, kabel berikutnya, dan tujuan yang belum terhubung. Klik node di peta untuk langsung memeriksanya, atau buka Detail node untuk daftar semua perangkat. Simulasi dijeda selama panel terbuka.
 
 ## Peta dan penyimpanan
 
-Panel kontrol diringkas agar peta mendapat lebih banyak ruang pada HP; layar lebar memakai panel kontrol di samping. Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 65–300%. Persentase zoom mereset tampilan. Kamera dibatasi area 400 × 600; peta tetap di tengah jika lebih kecil daripada viewport. Sentuhan kedua membatalkan pembuatan kabel dan memulai pinch. Kabel paralel memiliki lajur terpisah dan paket mengikuti lajurnya.
+Panel kontrol diringkas agar peta mendapat lebih banyak ruang pada HP; layar lebar memakai panel kontrol di samping. Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 40–300%. Persentase zoom kembali ke area awal, tombol Peta menampilkan seluruh area. Node baru tersebar ke wilayah lebih jauh tanpa mengecilkan kamera otomatis. Detail node menyediakan tombol Lihat node di peta. Kamera dibatasi area 1.000 × 1.200 (luas 5x peta awal); peta tetap di tengah jika lebih kecil daripada viewport. Sentuhan kedua membatalkan pembuatan kabel dan memulai pinch. Kabel paralel memiliki lajur terpisah dan paket mengikuti lajurnya.
 
 Game dijeda saat masuk latar belakang. Sesi aktif belum disimpan setelah reload; rekor paket dan suara tersimpan saat kembali ke menu. Mode shift lama telah dihapus; data browser lamanya tidak diubah.
 
@@ -45,3 +45,5 @@ npm run test:e2e
 Build tersedia di `dist/`. Base relatif mendukung subpath GitHub Pages. PWA offline membutuhkan kunjungan online pertama. Ini belum APK/IPA.
 
 `src/game/metro.ts` menyimpan simulasi dan routing; `src/MetroGame.tsx` menangani permainan; `src/game/mapView.ts` mengatur batas kamera dan lajur kabel; `src/NetworkArt.tsx` menyediakan ikon perangkat. Uji otomatis meliputi muatan per jenis kabel, antrean transit, routing alternatif, perjalanan dua arah, konservasi paket saat kabel dihapus, ekonomi stok, input, pinch, layout dan offline. Verifikasi perangkat iPhone fisik tetap diperlukan.
+
+PC hanya menghasilkan paket menuju Server atau Database. Server dan Database dapat mengirim ke PC atau perangkat layanan lain. Trafik masih simulasi sederhana, bukan pasangan request/response protokol nyata.

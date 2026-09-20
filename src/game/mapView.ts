@@ -1,7 +1,7 @@
 import { SITES, type Cable } from "./metro";
 export type Point = { x: number; y: number };
 export type View = Point & { width: number; height: number };
-export const MAP_BOUNDS: View = { x: 0, y: 0, width: 400, height: 600 };
+export const MAP_BOUNDS: View = { x: 0, y: 0, width: 1000, height: 1200 };
 export function constrainView(view: View): View {
   const axis = (
     position: number,
@@ -19,7 +19,10 @@ export function constrainView(view: View): View {
   };
 }
 export function zoomView(view: View, anchor: Point, factor: number): View {
-  const width = Math.max(400 / 3, Math.min(400 / 0.65, view.width / factor));
+  const width = Math.max(
+    400 / 3,
+    Math.min(MAP_BOUNDS.width, view.width / factor),
+  );
   const ratio = width / view.width;
   return {
     x: anchor.x - (anchor.x - view.x) * ratio,

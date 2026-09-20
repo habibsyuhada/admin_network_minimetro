@@ -1,3 +1,4 @@
+import { dragCable } from "./helpers";
 import { test, expect } from "@playwright/test";
 
 test("point-to-point cables have separate carriers and can be removed individually", async ({
@@ -11,27 +12,28 @@ test("point-to-point cables have separate carriers and can be removed individual
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
   const tap = async (name: string) =>
     page.getByRole("button", { name, exact: true }).click();
-  await tap("Client 1");
-  await tap("Server 2");
+  await dragCable(page, 0, 1);
   await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
-  // A third tap only selects a source; it cannot extend the existing cable.
+  // Tapping inspects a node and never extends or creates a cable.
   await tap("Database 3");
   await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
-  await tap("Server 2");
+  await expect(
+    page.getByRole("dialog", { name: "Detail Database 3" }),
+  ).toBeVisible();
+  await tap("Kembali ke peta");
+  await dragCable(page, 2, 1);
   await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
   await expect(page.locator("[data-carrier]")).toHaveCount(2);
   await expect(page.locator('[data-carrier="1"]')).toContainText("/4");
   await tap("Kabel Fiber");
-  await tap("Client 1");
-  await tap("Server 2");
+  await dragCable(page, 0, 1);
   await expect(page.locator('[data-carrier="3"]')).toContainText("/3");
   const colors = await page
     .locator("[data-route]")
     .evaluateAll((paths) => paths.map((p) => p.getAttribute("stroke")));
   expect(colors[0]).toBe(colors[1]);
   expect(colors[2]).not.toBe(colors[0]);
-  await tap("Client 1");
-  await tap("Server 2");
+  await dragCable(page, 0, 1);
   await expect(
     page.getByText("Kabel jenis ini sudah menghubungkan kedua perangkat."),
   ).toBeVisible();

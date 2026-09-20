@@ -32,7 +32,7 @@ export default function Dialog({
         {onClose && (
           <button
             className="icon-button"
-            aria-label="Tutup dialog"
+            aria-label="Close dialog"
             onClick={onClose}
           >
             ×

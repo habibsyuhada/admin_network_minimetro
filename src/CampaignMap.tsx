@@ -24,7 +24,7 @@ export default function CampaignMap({
   const open = levelUnlocked(selected, progress);
   return (
     <>
-      <section className="campaign-world" aria-label="Peta perjalanan">
+      <section className="campaign-world" aria-label="Journey map">
         <svg
           className="world-water"
           viewBox="0 0 400 280"
@@ -52,7 +52,7 @@ export default function CampaignMap({
             d="M76 213Q130 205 196 171T320 213V95L184 62 72 101"
           />
         </svg>
-        <span className="world-label">KEPULAUAN NOC</span>
+        <span className="world-label">NOC ISLANDS</span>
         {LEVELS.map((l, i) => {
           const unlocked = levelUnlocked(l.id, progress),
             stars = progress[l.id] ?? 0;
@@ -68,7 +68,7 @@ export default function CampaignMap({
                 } as React.CSSProperties
               }
               onClick={() => onSelect(l.id)}
-              aria-label={`Level ${i + 1}: ${l.name}${unlocked ? "" : ", terkunci"}`}
+              aria-label={`Level ${i + 1}: ${l.name}${unlocked ? "" : ", locked"}`}
               aria-pressed={selected === l.id}
             >
               <span className="island-land">
@@ -82,7 +82,7 @@ export default function CampaignMap({
               <span className="island-number">
                 {unlocked ? i + 1 : <Lock size={12} />}
               </span>
-              <span className="island-stars" aria-label={`${stars} bintang`}>
+              <span className="island-stars" aria-label={`${stars} stars`}>
                 {[1, 2, 3].map((n) => (
                   <Star
                     key={n}
@@ -98,7 +98,7 @@ export default function CampaignMap({
       <section
         className="mission-card"
         style={{ "--island": level.color } as React.CSSProperties}
-        aria-label="Misi terpilih"
+        aria-label="Selected mission"
       >
         <div className="mission-heading">
           <div>
@@ -110,31 +110,31 @@ export default function CampaignMap({
         <p>{level.description}</p>
         <div className="mission-goals">
           <span>
-            <b>{level.months}</b> bulan
+            <b>{level.months}</b> months
           </span>
           <span>
-            <b>{level.packets}</b> paket
+            <b>{level.packets}</b> packets
           </span>
           <span>
-            <b>{level.gold.toLocaleString("id-ID")}</b> gold
+            <b>{level.gold.toLocaleString("en-US")}</b> gold
           </span>
         </div>
         <button
           className="play-button"
           disabled={!open}
           onClick={() => onPlay(level.id)}
-          aria-label={`Main level ${LEVELS.indexOf(level) + 1}`}
+          aria-label={`Play level ${LEVELS.indexOf(level) + 1}`}
         >
           <Play size={19} fill="currentColor" />
           {open
             ? progress[level.id]
-              ? "MAIN LAGI"
-              : "MULAI MISI"
-            : "SELESAIKAN LEVEL SEBELUMNYA"}
+              ? "PLAY AGAIN"
+              : "START MISSION"
+            : "COMPLETE THE PREVIOUS LEVEL"}
           <ChevronRight size={20} />
         </button>
         <small className="mission-stars-hint">
-          ★ Selesaikan misi · ★ +25% paket · ★ Sisa 50% modal
+          ★ Complete mission · ★ +25% packets · ★ Keep 50% of starting gold
         </small>
       </section>
     </>

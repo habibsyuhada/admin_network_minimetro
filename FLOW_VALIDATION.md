@@ -79,3 +79,11 @@ Validation: 42 unit tests passed. Campaign/menu and existing cable flows were ch
 Removed always-visible economy breakdown, score panel, map subtitle, build catalog, cable catalog and repeated hints. Gameplay now exposes only wallet/month/time controls plus three contextual dock buttons. Cable and build trays reveal prices on request; wallet/mission opens paused statistics, and the menu contains exit/help. Camera controls use a separate toggle. A compact pause badge leaves topology editable. The initial help dialog now collapses the longer rules.
 
 Validated with 42 unit tests, production build and TypeScript/format checks. Thirty targeted browser cases passed across desktop Chromium, Android and iPhone emulation: compact HUD, map taking over 65% of the viewport, tool selection/automatic closing, placement cancellation, statistics, menu, campaign progression, node details, cables, pause and speed. Visual screenshots inspected after fixing the wallet layout.
+
+## English interface and modal tool pickers
+
+Build and cable selection now open native dialogs instead of expanding the bottom dock. Both pause the simulation while open, support Escape/close, and close after selection. Device selection still creates a draggable preview with OK/Cancel; dismissing a picker does not spend gold. Cable selection preserves the chosen type for subsequent drags. Modal rows show prices and capacities.
+
+All player-facing text is now English, including campaign names, help, client names, accessible labels, dynamic errors, device/cable details, monthly reports, installation metadata and update/storage messages. Level IDs and the profile storage key are unchanged, preserving previous progress. The document language is `en`, and formatted numbers use `en-US`.
+
+Validation: 42 unit tests pass; build and TypeScript/format checks pass. Browser checks cover both modal pickers on Chromium, Android and iPhone emulation, including pausing, Escape, cancellation without spending gold, selection, and returning to placement. Existing campaign, cable, economy, move/sale and error flows passed on Chromium. Storage-error and PWA-update tests were updated to English and passed; node-detail labels were updated to match the new English headings. Mobile modal screenshots were visually inspected.

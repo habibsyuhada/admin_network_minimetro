@@ -10,11 +10,11 @@ for (const kind of ["router", "switch"])
     await page.goto("/");
     await page.clock.pauseAt(new Date(100000));
     await page.clock.setFixedTime(new Date(42));
-    await page.getByRole("button", { name: "Main NOC Flow" }).click();
-    await page.getByRole("button", { name: "Ayo hubungkan" }).click();
-    await page.getByRole("button", { name: "Bangun perangkat" }).click();
+    await page.getByRole("button", { name: "Play NOC Flow" }).click();
+    await page.getByRole("button", { name: "Start connecting" }).click();
+    await page.getByRole("button", { name: "Build device" }).click();
     await page
-      .getByRole("button", { name: new RegExp(`Pasang ${kind}`) })
+      .getByRole("button", { name: new RegExp(`Place ${kind}`) })
       .click();
     await page.getByRole("button", { name: "OK", exact: true }).click();
     await dragCable(page, 0, 3);
@@ -24,9 +24,9 @@ for (const kind of ["router", "switch"])
     const path = await page.locator('[data-route="0"]').getAttribute("d");
     const gold = await page.getByTestId("gold").textContent();
     await node.click();
-    await page.getByRole("button", { name: "Pindahkan", exact: true }).click();
+    await page.getByRole("button", { name: "Move", exact: true }).click();
     const preview = page.getByRole("button", {
-      name: `Geser pratinjau ${kind}`,
+      name: `Move preview ${kind}`,
     });
     await preview.focus();
     await preview.press("ArrowRight");
@@ -39,7 +39,7 @@ for (const kind of ["router", "switch"])
     await expect(node).toHaveAttribute("transform", original!);
     await expect(page.locator('[data-route="0"]')).toHaveAttribute("d", path!);
     await node.click();
-    await page.getByRole("button", { name: "Pindahkan", exact: true }).click();
+    await page.getByRole("button", { name: "Move", exact: true }).click();
     const start = await preview.evaluate((el) => {
       const p = new DOMPoint(0, 0).matrixTransform(
         (el as SVGGraphicsElement).getScreenCTM()!,
@@ -53,33 +53,33 @@ for (const kind of ["router", "switch"])
     await page.getByRole("button", { name: "OK", exact: true }).click();
     await expect(node).not.toHaveAttribute("transform", original!);
     await expect(page.getByTestId("gold")).toHaveText(gold!);
-    await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
+    await expect(page.getByTestId("cable-count")).toHaveText("2 active cables");
     await node.click();
-    await page.getByRole("button", { name: "Jual node", exact: true }).click();
-    const confirm = page.getByRole("dialog", { name: /Jual/ });
+    await page.getByRole("button", { name: "Sell node", exact: true }).click();
+    const confirm = page.getByRole("dialog", { name: /Sell/ });
     await expect(confirm).toContainText(
       kind === "router" ? "275 gold" : "240 gold",
     );
     await confirm.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(node).toBeVisible();
     await node.click();
-    await page.getByRole("button", { name: "Jual node", exact: true }).click();
+    await page.getByRole("button", { name: "Sell node", exact: true }).click();
     await confirm
-      .getByRole("button", { name: "Jual node", exact: true })
+      .getByRole("button", { name: "Sell node", exact: true })
       .click();
     await expect(page.getByTestId("gold")).toHaveText(
       kind === "router" ? "1525 gold" : "1560 gold",
     );
     await expect(page.locator("[data-node-id]")).toHaveCount(3);
-    await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
+    await expect(page.getByTestId("cable-count")).toHaveText("0 active cables");
   });
 
 test("all sixteen client icons are available in the guide", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Panduan", exact: true }).click();
-  await page.getByText("16 variasi client", { exact: true }).click();
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await page.getByText("16 client types", { exact: true }).click();
   await expect(page.locator(".client-gallery > div")).toHaveCount(16);
   await expect(page.locator(".client-gallery")).toContainText("Headset VR");
   await page.locator(".client-gallery").screenshot({

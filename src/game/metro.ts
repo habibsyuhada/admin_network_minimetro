@@ -10,20 +10,20 @@ export type Site = {
 export const CLIENT_VARIANTS = [
   "Desktop",
   "Laptop",
-  "Ponsel",
+  "Phone",
   "Tablet",
-  "Konsol",
+  "Console",
   "Smart TV",
   "Printer",
-  "Kamera CCTV",
-  "Jam pintar",
-  "Speaker pintar",
-  "Kios",
+  "CCTV Camera",
+  "Smartwatch",
+  "Smart speaker",
+  "Kiosk",
   "Headset VR",
   "Handheld",
   "Mini PC",
   "Workstation",
-  "Terminal kasir",
+  "POS terminal",
 ];
 const nextSerial = (s: Metro) =>
   Math.max(0, ...s.nodes.map((n, i) => n.serial ?? i + 1)) + 1;
@@ -71,7 +71,7 @@ export const CABLE_TYPES = [
     speed: 60,
     cost: 100,
     maintenance: 20,
-    note: "Seimbang",
+    note: "Balanced",
   },
   {
     name: "Fiber",
@@ -80,7 +80,7 @@ export const CABLE_TYPES = [
     speed: 100,
     cost: 200,
     maintenance: 35,
-    note: "Lebih cepat",
+    note: "Faster",
   },
   {
     name: "Backbone",
@@ -89,7 +89,7 @@ export const CABLE_TYPES = [
     speed: 45,
     cost: 250,
     maintenance: 40,
-    note: "Muatan besar",
+    note: "High capacity",
   },
 ] as const;
 export const SITES: Site[] = [
@@ -175,7 +175,7 @@ export function connectionError(
   a: number,
   b: number,
 ): string | null {
-  if (s.phase !== "running") return "Permainan sedang dijeda.";
+  if (s.phase !== "running") return "The simulation is paused.";
   if (
     !CABLE_TYPES[kind] ||
     !Number.isInteger(a) ||
@@ -183,16 +183,15 @@ export function connectionError(
     !s.queues[a] ||
     !s.queues[b]
   )
-    return "Perangkat belum tersedia.";
-  if (a === b) return "Pilih dua perangkat yang berbeda.";
+    return "This device is not available.";
+  if (a === b) return "Choose two different devices.";
   for (const id of [a, b]) {
     const n = s.nodes[id];
     const ports = nodePorts(n.shape);
     if (s.cables.filter((c) => c.stops.includes(id)).length >= ports)
-      return `Port ${isTransit(n.shape) ? TRANSIT[n.shape].name : n.shape === 0 ? CLIENT_VARIANTS[n.clientVariant ?? 0] : ["", "YouTube", "Facebook", "", "", "TikTok", "Instagram", "WhatsApp", "Netflix", "Spotify"][n.shape]} ${n.serial ?? id + 1} penuh (${ports}/${ports}). Hapus kabel di detail node untuk membebaskan port.`;
+      return `Port ${isTransit(n.shape) ? TRANSIT[n.shape].name : n.shape === 0 ? CLIENT_VARIANTS[n.clientVariant ?? 0] : ["", "YouTube", "Facebook", "", "", "TikTok", "Instagram", "WhatsApp", "Netflix", "Spotify"][n.shape]} ${n.serial ?? id + 1} full (${ports}/${ports}). Remove a cable in Node details to free a port.`;
   }
-  if (s.gold < CABLE_TYPES[kind].cost)
-    return "Gold tidak cukup untuk memasang kabel ini.";
+  if (s.gold < CABLE_TYPES[kind].cost) return "Not enough gold for this cable.";
   return null;
 }
 export function connectCable(
@@ -512,11 +511,11 @@ export function routerError(
   kind: TransitKind = 3,
   ignoreId?: number,
 ): string | null {
-  if (s.phase !== "running") return "Permainan sedang dijeda.";
+  if (s.phase !== "running") return "The simulation is paused.";
   if (ignoreId !== undefined && s.nodes[ignoreId]?.shape !== kind)
-    return "Perangkat ini tidak dapat dipindahkan.";
+    return "This device cannot be moved.";
   if (ignoreId === undefined && s.gold < TRANSIT[kind].cost)
-    return `Gold tidak cukup untuk memasang ${TRANSIT[kind].name}.`;
+    return `Not enough gold to place ${TRANSIT[kind].name}.`;
   if (
     !Number.isFinite(x) ||
     !Number.isFinite(y) ||
@@ -525,11 +524,11 @@ export function routerError(
     x > WORLD.width - 40 ||
     y > WORLD.height - 40
   )
-    return "Tempatkan perangkat di dalam batas peta.";
+    return "Place the device inside the map boundaries.";
   if (
     s.nodes.some((n, i) => i !== ignoreId && Math.hypot(n.x - x, n.y - y) < 75)
   )
-    return "Terlalu dekat dengan perangkat lain. Pilih area yang lebih kosong.";
+    return "Too close to another device. Choose an open area.";
   return null;
 }
 export function placeRouter(

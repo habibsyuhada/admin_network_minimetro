@@ -8,19 +8,19 @@ test("point-to-point cables have separate carriers and can be removed individual
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
   const tap = async (name: string) =>
     page.getByRole("button", { name, exact: true }).click();
-  await page.getByRole("button", { name: "Jeda mode Flow" }).click();
+  await page.getByRole("button", { name: "Pause Flow" }).click();
   await addTransit(page);
   await addTransit(page, "switch", 10);
   await dragCable(page, 3, 4);
   await dragCable(page, 3, 4);
-  await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
+  await expect(page.getByTestId("cable-count")).toHaveText("2 active cables");
   await expect(page.locator("[data-carrier]")).toHaveCount(2);
-  await tap("Pilih kabel");
-  await tap("Kabel Fiber");
+  await tap("Choose cable");
+  await tap("Cable Fiber");
   await dragCable(page, 3, 4);
   await expect(page.locator('[data-carrier="3"]')).toContainText("/3");
   const colors = await page
@@ -28,21 +28,21 @@ test("point-to-point cables have separate carriers and can be removed individual
     .evaluateAll((paths) => paths.map((p) => p.getAttribute("stroke")));
   expect(colors[0]).toBe(colors[1]);
   expect(colors[2]).not.toBe(colors[0]);
-  await tap("Pilih kabel");
-  await tap("Kabel Ethernet");
+  await tap("Choose cable");
+  await tap("Cable Ethernet");
   await dragCable(page, 0, 3);
   await dragCable(page, 0, 4);
-  await expect(page.getByRole("alert")).toContainText("penuh (1/1)");
-  await expect(page.getByTestId("cable-count")).toHaveText("4 kabel aktif");
+  await expect(page.getByRole("alert")).toContainText("full (1/1)");
+  await expect(page.getByTestId("cable-count")).toHaveText("4 active cables");
   const clock = await page.getByTestId("flow-clock").textContent();
   await page.waitForTimeout(1100);
   await expect(page.getByTestId("flow-clock")).toHaveText(clock!);
-  await tap("Lanjutkan Flow");
-  await tap("Pilih kabel");
-  await tap("Kelola kabel");
-  await tap("Hapus kabel 1");
-  await tap("Selesai");
-  await expect(page.getByTestId("cable-count")).toHaveText("3 kabel aktif");
+  await tap("Resume Flow");
+  await tap("Choose cable");
+  await tap("Manage cables");
+  await tap("Remove cable 1");
+  await tap("Done");
+  await expect(page.getByTestId("cable-count")).toHaveText("3 active cables");
   await expect(page.locator('[data-carrier="1"]')).toHaveCount(0);
   await expect(page.locator('[data-carrier="2"]')).toHaveCount(1);
   await expect(page.getByTestId("gold")).toHaveText("970 gold");
@@ -59,8 +59,8 @@ test("drag makes one cable and mobile layouts remain usable", async ({
 }) => {
   test.setTimeout(60000);
   await page.goto("/");
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
   const a = (await page
     .getByRole("button", { name: "Client 1", exact: true })
     .boundingBox())!;
@@ -71,11 +71,11 @@ test("drag makes one cable and mobile layouts remain usable", async ({
   await page.mouse.down();
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
   await page.mouse.up();
-  await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
+  await expect(page.getByTestId("cable-count")).toHaveText("1 active cables");
   await page
-    .getByRole("group", { name: "Peta Flow interaktif" })
+    .getByRole("group", { name: "Interactive Flow map" })
     .dispatchEvent("pointercancel");
-  await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
+  await expect(page.getByTestId("cable-count")).toHaveText("1 active cables");
   for (const viewport of [
     { width: 360, height: 640 },
     { width: 844, height: 390 },
@@ -91,8 +91,8 @@ test("drag makes one cable and mobile layouts remain usable", async ({
     try {
       const small = await context.newPage();
       await small.goto("/");
-      await small.getByRole("button", { name: "Main NOC Flow" }).click();
-      await small.getByRole("button", { name: "Ayo hubungkan" }).click();
+      await small.getByRole("button", { name: "Play NOC Flow" }).click();
+      await small.getByRole("button", { name: "Start connecting" }).click();
       expect(
         await small.evaluate(
           () =>
@@ -101,7 +101,7 @@ test("drag makes one cable and mobile layouts remain usable", async ({
         ),
       ).toBeLessThanOrEqual(1);
       await expect(
-        small.getByRole("button", { name: "Pilih kabel", exact: true }),
+        small.getByRole("button", { name: "Choose cable", exact: true }),
       ).toBeInViewport();
       await expect(
         small.getByRole("button", { name: "Facebook 3", exact: true }),

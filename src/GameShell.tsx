@@ -111,7 +111,7 @@ export default function GameShell() {
         </span>
         <button
           className="icon-button"
-          aria-label="Pengaturan"
+          aria-label="Settings"
           onClick={() => setPanel("settings")}
         >
           <Settings2 size={20} />
@@ -119,7 +119,7 @@ export default function GameShell() {
       </header>
       <section className="home-title">
         <div>
-          <span className="overline">BANGUN. HUBUNGKAN. TUMBUH.</span>
+          <span className="overline">BUILD. CONNECT. GROW.</span>
           <h1 aria-label="NOC FLOW.">
             NOC{" "}
             <span>
@@ -128,7 +128,7 @@ export default function GameShell() {
           </h1>
         </div>
         <span className="season-badge">
-          EKSPEDISI
+          EXPEDITION
           <br />
           <b>01</b>
         </span>
@@ -147,7 +147,7 @@ export default function GameShell() {
       />
       <button
         className="endless-play"
-        aria-label="Main NOC Flow"
+        aria-label="Play NOC Flow"
         onClick={() => {
           unlockAudio();
           playCue("tap");
@@ -157,20 +157,20 @@ export default function GameShell() {
       >
         <span>∞</span>
         <div>
-          <b>MODE BEBAS</b>
+          <b>ENDLESS MODE</b>
           <small>
-            Tanpa target · rekor {profile.best.toLocaleString("id-ID")} paket
+            No goals · best {profile.best.toLocaleString("en-US")} packets
           </small>
         </div>
         <span>›</span>
       </button>
-      <nav className="home-bottom-bar" aria-label="Menu game">
+      <nav className="home-bottom-bar" aria-label="Game menu">
         <button onClick={() => setPanel("help")}>
-          <BookOpen size={18} /> Panduan
+          <BookOpen size={18} /> Guide
         </button>
-        <span>PETA MISI</span>
+        <span>MISSION MAP</span>
         <button
-          aria-label={profile.sound ? "Matikan suara" : "Aktifkan suara"}
+          aria-label={profile.sound ? "Mute sound" : "Enable sound"}
           onClick={() => {
             setAudioEnabled(!profile.sound);
             unlockAudio();
@@ -178,31 +178,31 @@ export default function GameShell() {
             setProfile((v) => ({ ...v, sound: !v.sound }));
           }}
         >
-          {profile.sound ? <Volume2 size={18} /> : <VolumeX size={18} />} Suara
+          {profile.sound ? <Volume2 size={18} /> : <VolumeX size={18} />} Sound
         </button>
       </nav>
       {saveFailed && (
         <p className="notice" role="status">
-          Progres, rekor, dan pengaturan belum bisa disimpan di perangkat ini.
+          Progress, records, and settings could not be saved on this device.
         </p>
       )}
       {updateReady && (
         <p className="notice">
-          Pembaruan tersedia. Tutup semua tab NOC Flow lalu buka kembali.
+          An update is available. Close all NOC Flow tabs, then reopen the game.
         </p>
       )}
       {panel === "help" && (
-        <Dialog title="Panduan operator" onClose={() => setPanel(null)}>
+        <Dialog title="Operator guide" onClose={() => setPanel(null)}>
           <p>
-            Selesaikan target bulan dan paket untuk membuka map berikutnya.
-            Bintang tambahan: kirim 25% lebih banyak paket dan sisakan minimal
-            50% modal awal. Progres misi tersimpan di perangkat; sesi yang
-            sedang berjalan belum tersimpan.
+            Meet the month and packet targets to unlock the next map. Earn extra
+            stars by delivering 25% more packets and keeping at least 50% of
+            your starting gold. Mission progress is saved on this device; active
+            sessions are not saved.
           </p>
           <p>
-            Hubungkan perangkat dengan kabel berwarna. Antar paket ke perangkat
-            berdasarkan ikon layanan. Paket YouTube dapat diterima node YouTube
-            mana pun. Buka Detail node untuk melihat antrean per ikon.
+            Connect devices with colored cables. Deliver packets to matching
+            service icons. Any YouTube node can receive YouTube packets. Open
+            Node details to inspect queues by icon.
           </p>
           <div className="device-legend">
             {DEVICE_NAMES.map((name, i) => (
@@ -215,7 +215,7 @@ export default function GameShell() {
             ))}
           </div>
           <details className="client-catalog">
-            <summary>16 variasi client</summary>
+            <summary>16 client types</summary>
             <div className="client-gallery">
               {CLIENT_VARIANTS.map((name, variant) => (
                 <div key={name}>
@@ -227,43 +227,42 @@ export default function GameShell() {
               ))}
             </div>
             <p>
-              Setiap jenis client menerima paket dengan ikon perangkat yang
-              sama.
+              Each client type receives packets with its matching device icon.
             </p>
           </details>
           <ol className="handbook">
             <li>
-              Pilih Ethernet, Fiber, atau Backbone. Tarik satu kabel antara dua
-              perangkat. Ketuk node untuk membuka detailnya. Setiap kabel
-              memiliki pengangkut sendiri.
+              Choose Ethernet, Fiber, or Backbone. Drag a cable between two
+              devices. Tap a node to inspect it. Each cable has its own carrier.
             </li>
             <li>
-              Pengangkut bolak-balik hanya di kabelnya. Kapasitas muatannya
-              menunjukkan bandwidth; paket transit harus menunggu pengangkut
-              berikutnya. Rute dipilih otomatis.
+              Carriers travel back and forth along their own cable. Cargo
+              capacity represents bandwidth. Transit packets wait for the next
+              carrier, and routes are selected automatically.
             </li>
             <li>
-              Modal awal 1.600 gold. Kabel berharga 100/200/250 gold; router 150
-              gold. Router muncul sebagai pratinjau: geser, lalu OK atau Cancel.
-              Setiap paket terkirim memberi profit 18 gold. Tiap menit, profit
-              dikurangi maintenance masuk ke saldo. Penjualan kabel
-              mengembalikan 100% harganya.
+              Endless mode starts with 1,600 gold. Cables cost 100/200/250 gold
+              and routers cost 150 gold. Drag the device preview, then choose OK
+              or Cancel. Each delivered packet earns 18 gold. Every month,
+              profit minus maintenance is added to your balance. Selling cables
+              refunds their full price.
             </li>
             <li>
-              Antrean penuh memicu peringatan: PC/layanan 10, switch 16, router
-              24 paket. Kurangi dalam 25 detik sebelum jaringan kewalahan.
+              Full queues trigger a warning: 10 packets for clients/services, 16
+              for switches, and 24 for routers. Reduce the queue within 25
+              seconds to avoid an overload.
             </li>
           </ol>
           <button className="primary" onClick={() => setPanel(null)}>
-            Siap menghubungkan
+            Ready to connect
           </button>
         </Dialog>
       )}
       {panel === "settings" && (
-        <Dialog title="Pengaturan" onClose={() => setPanel(null)}>
+        <Dialog title="Settings" onClose={() => setPanel(null)}>
           <p className="muted">
-            Sesi aktif berakhir saat halaman dimuat ulang. Rekor paket tersimpan
-            di perangkat setelah kembali ke menu.
+            Reloading ends the active session. Your packet record is saved on
+            this device when you return to the menu.
           </p>
           <FullscreenButton />
           {install && (
@@ -278,19 +277,17 @@ export default function GameShell() {
                 }
               }}
             >
-              <Download size={18} /> Pasang di layar utama
+              <Download size={18} /> Add to home screen
             </button>
           )}
-          <p className="muted">
-            iPhone: Safari → Bagikan → Tambah ke Layar Utama.
-          </p>
+          <p className="muted">iPhone: Safari → Share → Add to Home Screen.</p>
           <a
             className="license-link"
             href="./THIRD_PARTY_NOTICES.txt"
             target="_blank"
             rel="noreferrer"
           >
-            Lisensi komponen ↗
+            Component licenses ↗
           </a>
         </Dialog>
       )}

@@ -19,9 +19,10 @@ export type Level = {
 export const LEVELS: Level[] = [
   {
     id: "neighborhood",
-    name: "Kampung Digital",
-    subtitle: "01 / KONEKSI PERTAMA",
-    description: "Jaringan kecil, jarak dekat. Kuasai aliran paket pertamamu.",
+    name: "Digital Neighborhood",
+    subtitle: "01 / FIRST CONNECTION",
+    description:
+      "A small neighborhood with short connections. Master your first packet flows.",
     seed: 987,
     months: 3,
     packets: 60,
@@ -39,10 +40,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "campus",
-    name: "Kampus Terhubung",
-    subtitle: "02 / JAM SIBUK",
+    name: "Connected Campus",
+    subtitle: "02 / RUSH HOUR",
     description:
-      "Client berkumpul di dua area kampus. Bangun titik transfer yang efisien.",
+      "Clients gather in two campus areas. Build efficient transfer hubs.",
     seed: 123,
     months: 4,
     packets: 120,
@@ -63,10 +64,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "harbor",
-    name: "Pelabuhan Data",
-    subtitle: "03 / DUA TEPI",
+    name: "Data Harbor",
+    subtitle: "03 / TWO SHORES",
     description:
-      "Dua sisi pelabuhan, perjalanan lebih panjang. Pilih kecepatan dan kapasitas dengan cermat.",
+      "Connect both sides of the harbor. Balance speed and capacity over longer distances.",
     seed: 987,
     months: 6,
     packets: 250,
@@ -87,10 +88,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "downtown",
-    name: "Pusat Kota",
-    subtitle: "04 / ARUS PADAT",
+    name: "Downtown",
+    subtitle: "04 / HEAVY TRAFFIC",
     description:
-      "Empat distrik tumbuh bersamaan. Sebarkan beban dari router utama.",
+      "Four districts grow at once. Distribute traffic across your network.",
     seed: 2026,
     months: 8,
     packets: 450,
@@ -113,10 +114,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "highlands",
-    name: "Bukit Sinyal",
-    subtitle: "05 / JANGKAU LEBIH JAUH",
+    name: "Signal Hills",
+    subtitle: "05 / REACH FURTHER",
     description:
-      "Perangkat tersebar sepanjang punggung bukit. Jalur pendek dan backbone sama pentingnya.",
+      "Devices spread across the hills. Combine short links with strong backbone connections.",
     seed: 45678,
     months: 10,
     packets: 700,
@@ -139,9 +140,9 @@ export const LEVELS: Level[] = [
   {
     id: "metropolis",
     name: "Metro Network",
-    subtitle: "06 / SATU TAHUN PENUH",
+    subtitle: "06 / A FULL YEAR",
     description:
-      "Satukan seluruh wilayah. Jaga jaringan tetap hidup selama dua belas bulan.",
+      "Connect the entire region. Keep the network running for twelve months.",
     seed: 987,
     months: 12,
     packets: 1100,

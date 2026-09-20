@@ -18,23 +18,23 @@ await page.clock.pauseAt(new Date(100000));
 await page.clock.setFixedTime(new Date(987));
 await page
   .getByRole("button", {
-    name: campaign ? "Main level 1" : "Main NOC Flow",
+    name: campaign ? "Play level 1" : "Play NOC Flow",
     exact: true,
   })
   .click();
-await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+await page.getByRole("button", { name: "Start connecting" }).click();
 let now = 0,
   paused = false;
 const btn = (name) => page.getByRole("button", { name, exact: true });
 const pause = async () => {
   if (!paused) {
-    await btn("Jeda mode Flow").click();
+    await btn("Pause Flow").click();
     paused = true;
   }
 };
 const resume = async () => {
   if (paused) {
-    await btn("Lanjutkan Flow").click();
+    await btn("Resume Flow").click();
     paused = false;
   }
 };
@@ -67,7 +67,7 @@ try {
     }
     if (action.type === "reward") {
       const report = page.getByRole("dialog", {
-        name: new RegExp(`Bulan ${Math.round(now / 60)} selesai`),
+        name: new RegExp(`Month ${Math.round(now / 60)} complete`),
       });
       await report.waitFor();
       const summary = await report.innerText();
@@ -81,27 +81,24 @@ try {
           fullPage: true,
         });
       const choice = action.args[0];
-      if (choice === "continue") await btn("Lanjut bulan berikutnya").click();
+      if (choice === "continue") await btn("Continue to next month").click();
       else
         await page
           .getByRole("button", {
-            name:
-              choice === "capacity"
-                ? /^\+2 kapasitas/
-                : /^Tingkatkan kecepatan/,
+            name: choice === "capacity" ? /^\+2 capacity/ : /^Increase speed/,
           })
           .click();
       continue;
     }
     await pause();
     if (action.type === "place") {
-      if (!(await btn("Lihat seluruh area").isVisible()))
-        await btn("Atur tampilan peta").click();
-      await btn("Lihat seluruh area").click();
-      await btn("Bangun perangkat").click();
-      await page.getByRole("button", { name: /Pasang router/ }).click();
+      if (!(await btn("Show whole map").isVisible()))
+        await btn("Map controls").click();
+      await btn("Show whole map").click();
+      await btn("Build device").click();
+      await page.getByRole("button", { name: /Place router/ }).click();
       const preview = page.getByRole("button", {
-        name: "Geser pratinjau router",
+        name: "Move preview router",
       });
       const start = await preview.evaluate((el) => {
         const p = new DOMPoint(0, 0).matrixTransform(el.getScreenCTM());
@@ -110,12 +107,12 @@ try {
       await drag(start, await point(action.args[0], action.args[1]));
       await btn("OK").click();
     } else if (action.type === "connect") {
-      if (!(await btn("Lihat seluruh area").isVisible()))
-        await btn("Atur tampilan peta").click();
-      await btn("Lihat seluruh area").click();
-      await btn("Pilih kabel").click();
+      if (!(await btn("Show whole map").isVisible()))
+        await btn("Map controls").click();
+      await btn("Show whole map").click();
+      await btn("Choose cable").click();
       await btn(
-        `Kabel ${["Ethernet", "Fiber", "Backbone"][action.args[0]]}`,
+        `Cable ${["Ethernet", "Fiber", "Backbone"][action.args[0]]}`,
       ).click();
       await drag(
         await nodePoint(action.args[1]),
@@ -123,11 +120,11 @@ try {
       );
     } else if (action.type === "change") {
       const id = action.args[0];
-      await btn("Pilih kabel").click();
-      await btn("Kelola kabel").click();
+      await btn("Choose cable").click();
+      await btn("Manage cables").click();
       // The cable manager labels provide an endpoint name; inspection uses its first node.
       const text = await page.getByRole("dialog").innerText();
-      await btn("Selesai").click();
+      await btn("Done").click();
       const cable = run.actions.find(
         (a) =>
           a.type === "connect" &&
@@ -137,9 +134,9 @@ try {
       const card = page.locator(`[data-cable-detail="${id}"]`);
       await card.locator("summary").click();
       await btn(
-        `Ganti kabel ${id} ke ${["Ethernet", "Fiber", "Backbone"][action.args[1]]}`,
+        `Change cable ${id} to ${["Ethernet", "Fiber", "Backbone"][action.args[1]]}`,
       ).click();
-      await btn("Kembali ke peta").click();
+      await btn("Back to map").click();
     }
     if (await page.getByRole("alert").count())
       throw Error(await page.getByRole("alert").innerText());
@@ -147,7 +144,7 @@ try {
   await resume();
   await page.clock.runFor(Math.round((run.time - now) * 1000));
   const end = page.getByRole("dialog", {
-    name: campaign ? "Misi selesai!" : "Bulan 12 selesai",
+    name: campaign ? "Mission complete!" : "Month 12 complete",
   });
   await end.waitFor();
   reports.push({ time: run.time, summary: await end.innerText() });
@@ -177,10 +174,10 @@ try {
     ),
   );
   if (campaign) {
-    await btn("Kembali ke peta misi").click();
+    await btn("Back to mission map").click();
     await page.reload();
     await page.getByRole("button", { name: /Level 2:/ }).click();
-    if (!(await btn("Main level 2").isEnabled()))
+    if (!(await btn("Play level 2").isEnabled()))
       throw Error("Win did not persist or unlock map 2");
   }
   console.log(

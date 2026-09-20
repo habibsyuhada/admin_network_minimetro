@@ -1118,3 +1118,85 @@ dialog summary {
   box-shadow: none;
   color: #ffe0a0;
 }
+/* Device and cable pickers share the game's focus-trapped modal. */
+.build-modal .transit-choice,
+.build-modal .cable-type-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 4px;
+}
+.build-modal .transit-choice button {
+  flex: none;
+  min-height: 84px;
+  padding: 12px;
+  gap: 12px;
+}
+.build-modal .transit-choice button svg {
+  width: 44px;
+  height: 44px;
+}
+.build-modal .transit-choice button > span {
+  font-size: 16px;
+  text-align: left;
+}
+.build-modal .transit-choice button small {
+  display: block;
+  font-size: 12px;
+  color: #b8cdc0;
+  margin-top: 5px;
+}
+.build-modal .transit-choice button > small {
+  margin-left: auto;
+  color: #ffe0a0;
+  white-space: nowrap;
+}
+.build-modal .cable-type-buttons > button {
+  min-height: 70px;
+  padding: 12px 16px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.build-modal .cable-type-buttons > button > span {
+  background: transparent;
+  color: var(--route, #c6dfcd);
+  font-size: 16px;
+  padding: 0;
+}
+.build-modal .cable-type-buttons small {
+  font-size: 12px;
+  margin: 0;
+}
+.build-modal .cable-type-buttons .metro-clear {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  color: #c6dfcd;
+}
+.build-modal .cable-type-buttons .metro-clear span {
+  font-size: 13px;
+}
+@media (max-width: 370px) {
+  .build-modal .transit-choice button {
+    gap: 8px;
+    padding: 10px;
+  }
+  .build-modal .transit-choice button > span {
+    font-size: 14px;
+  }
+}
+
+.build-modal .cable-type-buttons {
+  align-items: stretch;
+}
+.build-modal .cable-type-buttons > button {
+  width: 100%;
+  flex: none;
+}
+.build-modal .cable-type-buttons > button > span {
+  margin: 0;
+  height: auto;
+}

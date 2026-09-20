@@ -7,11 +7,11 @@ test("campaign map selects missions, locks progression, and fits a phone", async
   await expect(page.getByRole("button", { name: /^Level \d/ })).toHaveCount(6);
   await page.getByRole("button", { name: /Level 2:/ }).click();
   await expect(
-    page.getByRole("button", { name: "Main level 2", exact: true }),
+    page.getByRole("button", { name: "Play level 2", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("region", { name: "Misi terpilih" }),
-  ).toContainText("Kampus Terhubung");
+    page.getByRole("region", { name: "Selected mission" }),
+  ).toContainText("Connected Campus");
   await page.getByRole("button", { name: /Level 1:/ }).click();
   expect(
     await page.evaluate(
@@ -31,22 +31,22 @@ test("campaign map selects missions, locks progression, and fits a phone", async
     path: `test-results/campaign-home-${test.info().project.name}.png`,
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Main level 1", exact: true }).click();
+  await page.getByRole("button", { name: "Play level 1", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Target: bertahan 3 bulan dan kirim 60 paket",
+    "Target: survive 3 months and deliver 60 packets",
   );
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
   await expect(page.getByTestId("gold")).toHaveText("1800 gold");
-  await page.getByRole("button", { name: "Jeda mode Flow" }).click();
+  await page.getByRole("button", { name: "Pause Flow" }).click();
   await page.screenshot({
     path: `test-results/campaign-game-${test.info().project.name}.png`,
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Menu permainan" }).click();
-  await page.getByRole("button", { name: "Akhiri sesi & ke menu" }).click();
+  await page.getByRole("button", { name: "Game menu" }).click();
+  await page.getByRole("button", { name: "End session & exit" }).click();
   await page.getByRole("button", { name: /Level 2:/ }).click();
   await expect(
-    page.getByRole("button", { name: "Main level 2", exact: true }),
+    page.getByRole("button", { name: "Play level 2", exact: true }),
   ).toBeDisabled();
 });
 test("saved mission progress unlocks the next map after reload", async ({
@@ -61,9 +61,9 @@ test("saved mission progress unlocks the next map after reload", async ({
   await page.goto("/");
   await page.getByRole("button", { name: /Level 2:/ }).click();
   await expect(
-    page.getByRole("button", { name: "Main level 2", exact: true }),
+    page.getByRole("button", { name: "Play level 2", exact: true }),
   ).toBeEnabled();
-  await page.getByRole("button", { name: "Main level 2", exact: true }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Play level 2", exact: true }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
   await expect(page.getByTestId("gold")).toHaveText("1700 gold");
 });

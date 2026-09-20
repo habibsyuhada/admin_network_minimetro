@@ -20,11 +20,9 @@ export async function addTransit(
   kind: "router" | "switch" = "router",
   offset = 0,
 ) {
-  await page.getByRole("button", { name: "Bangun perangkat" }).click();
-  await page
-    .getByRole("button", { name: new RegExp(`Pasang ${kind}`) })
-    .click();
-  const preview = page.getByRole("button", { name: `Geser pratinjau ${kind}` });
+  await page.getByRole("button", { name: "Build device" }).click();
+  await page.getByRole("button", { name: new RegExp(`Place ${kind}`) }).click();
+  const preview = page.getByRole("button", { name: `Move preview ${kind}` });
   await preview.focus();
   for (let i = 0; i < offset; i++) await preview.press("ArrowRight");
   await page.getByRole("button", { name: "OK", exact: true }).click();

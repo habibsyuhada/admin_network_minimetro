@@ -43,8 +43,8 @@ export default function NodeDetails({
     return (
       <>
         <p>
-          Pilih perangkat untuk melihat tujuan paketnya. Permainan dijeda selama
-          detail terbuka.
+          Choose a device to inspect its packet destinations. The simulation
+          pauses while details are open.
         </p>
         <div className="node-directory">
           {state.queues.map((queue, id) => (
@@ -59,7 +59,7 @@ export default function NodeDetails({
                 <b>{nodeName(id, nodes)}</b>
                 <small>{nodeCode(id, nodes)}</small>
               </span>
-              <strong>{queue.length} paket</strong>
+              <strong>{queue.length} packets</strong>
             </button>
           ))}
         </div>
@@ -79,32 +79,32 @@ export default function NodeDetails({
   return (
     <>
       <button className="secondary" onClick={() => onSelect(null)}>
-        Semua node
+        All nodes
       </button>
       <p>
-        <b>{nodeCode(node, nodes)}</b> · {state.queues[node].length} paket
-        menunggu · {incoming} paket berikon sama dalam pengangkut jaringan.
+        <b>{nodeCode(node, nodes)}</b> · {state.queues[node].length} packets
+        waiting · {incoming} matching packets in transit across the network.
       </p>
       {kind === 0 && (
         <p>
-          Perangkat: {CLIENT_VARIANTS[nodes[node].clientVariant ?? 0]}. Menerima
-          paket dengan ikon perangkat yang sama.
+          Device: {CLIENT_VARIANTS[nodes[node].clientVariant ?? 0]}. Receives
+          packets with the matching device icon.
         </p>
       )}
       <p>
         {state.cables.filter((c) => c.stops.includes(node)).length}/
-        {nodePorts(kind)} port terpakai.
+        {nodePorts(kind)} ports used.
       </p>
       {spec && (
         <p>
-          {spec.name} buatanmu.{" "}
+          {spec.name} built by you.{" "}
           {state.cables.filter((c) => c.stops.includes(node)).length}/
-          {spec.ports} port terpakai. Maintenance {spec.maintenance} gold/bulan.
-          Kapasitas antrean {nodeBuffer(nodes[node].shape)} paket. Paket
-          menunggu pengangkut berikutnya; bukan tujuan akhir.
+          {spec.ports} ports used. Maintenance {spec.maintenance} gold/month.
+          Queue capacity: {nodeBuffer(nodes[node].shape)} packets. Packets wait
+          for their next carrier here; this is a transit device.
         </p>
       )}
-      <h3>Kabel terhubung</h3>
+      <h3>Connected cables</h3>
       <div className="node-cables">
         {state.cables
           .filter((c) => c.stops.includes(node))
@@ -131,19 +131,19 @@ export default function NodeDetails({
                     <b>
                       {CABLE_TYPES[c.kind].name} #{c.id}
                     </b>
-                    <small>Ke {nodeName(peer, nodes)}</small>
+                    <small>To {nodeName(peer, nodes)}</small>
                     <small>
-                      {cableCapacity(state, c.kind)} paket · kecepatan{" "}
+                      {cableCapacity(state, c.kind)} packets · speed{" "}
                       {cableSpeed(state, c.kind)} · maintenance{" "}
-                      {cableMaintenance(state, c.kind)}/bulan
+                      {cableMaintenance(state, c.kind)}/month
                     </small>
                   </span>
                 </div>
                 <details className="cable-type-picker">
-                  <summary>Ganti tipe kabel</summary>
+                  <summary>Change cable type</summary>
                   <p>
-                    Bayar selisih harga; selisih tipe yang lebih murah
-                    dikembalikan. Kelebihan muatan kembali ke antrean asal.
+                    Pay the price difference, or receive a refund for a cheaper
+                    cable. Excess cargo returns to its departure queue.
                   </p>
                   {CABLE_TYPES.map((type, index) => {
                     const kind = index as CableKind;
@@ -154,41 +154,41 @@ export default function NodeDetails({
                         key={kind}
                         disabled={cost > state.gold}
                         onClick={() => onChangeCable(c.id, kind)}
-                        aria-label={`Ganti kabel ${c.id} ke ${type.name}`}
+                        aria-label={`Change cable ${c.id} to ${type.name}`}
                       >
                         <b style={{ color: type.color }}>{type.name}</b>
                         <small>
-                          {cableCapacity(state, kind)} paket · kecepatan{" "}
+                          {cableCapacity(state, kind)} packets · speed{" "}
                           {cableSpeed(state, kind)} ·{" "}
-                          {cableMaintenance(state, kind)}/bulan
+                          {cableMaintenance(state, kind)}/month
                         </small>
                         <small>
                           {cost > 0
-                            ? `Bayar ${cost} gold`
-                            : `Kembali ${-cost} gold`}
-                          {cost > state.gold ? " · Gold kurang" : ""}
+                            ? `Pay ${cost} gold`
+                            : `Refund ${-cost} gold`}
+                          {cost > state.gold ? " · Not enough gold" : ""}
                         </small>
                       </button>
                     );
                   })}
                 </details>
                 <button
-                  aria-label={`Hapus kabel ${c.id}`}
+                  aria-label={`Remove cable ${c.id}`}
                   onClick={() => onRemoveCable(c.id)}
                 >
-                  Hapus · refund {CABLE_TYPES[c.kind].cost} gold
+                  Remove · refund {CABLE_TYPES[c.kind].cost} gold
                 </button>
               </article>
             );
           })}
         {!state.cables.some((c) => c.stops.includes(node)) && (
-          <p>Belum ada kabel terhubung.</p>
+          <p>No cables connected yet.</p>
         )}
       </div>
-      <h3>Tujuan paket dari node ini</h3>
+      <h3>Packet destinations</h3>
       <p className="muted">
-        Paket diterima oleh node mana pun dengan ikon yang sama. Rute otomatis
-        memilih koneksi yang tersedia.
+        Any node with a matching icon can receive these packets. Routing
+        automatically selects an available connection.
       </p>
       <div className="node-destinations">
         {[...destinations]
@@ -207,34 +207,34 @@ export default function NodeDetails({
                 </svg>
                 <div>
                   <b>
-                    Ke{" "}
+                    To{" "}
                     {packetKind(destination) === 0
                       ? CLIENT_VARIANTS[packetVariant(destination)]
                       : DEVICE_NAMES[destination]}
                   </b>
                   <small>
                     {nodes.filter((n) => nodeService(n) === destination).length}{" "}
-                    node tersedia
+                    available nodes
                   </small>
                   <small className={!cable ? "missing-route" : ""}>
                     {cable && next !== undefined
                       ? `Via ${nodeName(next, nodes)} · ${CABLE_TYPES[cable.kind].name} #${cable.id}`
-                      : "Belum ada jalur ke tujuan"}
+                      : "No route to destination"}
                   </small>
                 </div>
-                <strong>{count} paket</strong>
+                <strong>{count} packets</strong>
               </div>
             );
           })}
       </div>
       {!destinations.size && (
         <p className="empty-queue">
-          Antrean kosong. Belum ada paket yang perlu diantar.
+          The queue is empty. No packets are waiting for delivery.
         </p>
       )}
       <p className="muted">
-        Paket transit tetap menunggu pengangkut berikutnya. Permainan dijeda
-        agar kamu bisa memeriksa jaringan.
+        Transit packets wait for the next carrier. The simulation is paused
+        while you inspect the network.
       </p>
     </>
   );

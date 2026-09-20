@@ -5,15 +5,15 @@ test("router preview moves before OK, rejects overlap, and Cancel spends nothing
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
-  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
+  await page.getByRole("button", { name: "Map controls" }).click();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  const purchase = page.getByRole("button", { name: /Pasang router/ });
-  await page.getByRole("button", { name: "Bangun perangkat" }).click();
+  const purchase = page.getByRole("button", { name: /Place router/ });
+  await page.getByRole("button", { name: "Build device" }).click();
   await purchase.click();
-  const draft = page.getByRole("button", { name: "Geser pratinjau router" });
+  const draft = page.getByRole("button", { name: "Move preview router" });
   await expect(draft).toBeVisible();
   await expect(page.locator("[data-node-id]")).toHaveCount(3);
   await expect(page.getByTestId("gold")).toHaveText("1600 gold");
@@ -45,7 +45,7 @@ test("router preview moves before OK, rejects overlap, and Cancel spends nothing
   await expect(
     page.getByRole("button", { name: "OK", exact: true }),
   ).toBeDisabled();
-  await expect(page.getByText(/Terlalu dekat/)).toBeVisible();
+  await expect(page.getByText(/Too close/)).toBeVisible();
   await move(200, 300);
   await expect(
     page.getByRole("button", { name: "OK", exact: true }),
@@ -65,10 +65,10 @@ test("router preview moves before OK, rejects overlap, and Cancel spends nothing
   await expect(page.getByTestId("gold")).toHaveText("1250 gold");
   await page.getByRole("button", { name: "Router 4", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Detail Router 4" }),
+    page.getByRole("dialog", { name: "Details: Router 4" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Kembali ke peta" }).click();
-  await page.getByRole("button", { name: "Bangun perangkat" }).click();
+  await page.getByRole("button", { name: "Back to map" }).click();
+  await page.getByRole("button", { name: "Build device" }).click();
   await purchase.click();
   await move(100, 350);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -85,17 +85,17 @@ test("monthly report credits only profit minus maintenance and never pays twice"
   await page.goto("/");
   await page.clock.pauseAt(new Date(100000));
   await page.clock.setFixedTime(new Date(42));
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
-  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
+  await page.getByRole("button", { name: "Map controls" }).click();
   await addTransit(page);
   await dragCable(page, 0, 3);
   await dragCable(page, 1, 3);
   await dragCable(page, 2, 3);
   await expect(page.getByTestId("gold")).toHaveText("1150 gold");
-  await page.getByRole("button", { name: "Kecepatan simulasi" }).click();
+  await page.getByRole("button", { name: "Simulation speed" }).click();
   await page.clock.runFor(30100);
-  const report = page.getByRole("dialog", { name: "Bulan 1 selesai" });
+  const report = page.getByRole("dialog", { name: "Month 1 complete" });
   await expect(report).toBeVisible();
   const text = (await report.textContent())!;
   const profit = Number(text.match(/Profit:\s*(\d+) gold/)![1]);
@@ -109,7 +109,7 @@ test("monthly report credits only profit minus maintenance and never pays twice"
   await expect(page.getByTestId("gold")).toHaveText(
     `${1150 + profit - maintenance} gold`,
   );
-  await report.getByRole("button", { name: "Lanjut bulan berikutnya" }).click();
+  await report.getByRole("button", { name: "Continue to next month" }).click();
   await expect(report).toHaveCount(0);
   await expect(page.getByTestId("gold")).toHaveText(
     `${1150 + profit - maintenance} gold`,
@@ -120,13 +120,13 @@ test("switch preview has its own price, icon and transit specification", async (
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
-  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
-  await page.getByRole("button", { name: "Bangun perangkat" }).click();
-  await page.getByRole("button", { name: /Pasang switch/ }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
+  await page.getByRole("button", { name: "Map controls" }).click();
+  await page.getByRole("button", { name: "Build device" }).click();
+  await page.getByRole("button", { name: /Place switch/ }).click();
   await expect(
-    page.getByRole("button", { name: "Geser pratinjau switch" }),
+    page.getByRole("button", { name: "Move preview switch" }),
   ).toBeVisible();
   await expect(page.getByTestId("gold")).toHaveText("1600 gold");
   await page.getByRole("button", { name: "OK", exact: true }).click();
@@ -134,10 +134,10 @@ test("switch preview has its own price, icon and transit specification", async (
   await dragCable(page, 0, 3);
   await dragCable(page, 3, 1);
   await page.getByRole("button", { name: "Switch 4", exact: true }).click();
-  const detail = page.getByRole("dialog", { name: "Detail Switch 4" });
+  const detail = page.getByRole("dialog", { name: "Details: Switch 4" });
   await expect(detail).toContainText("2/4 port");
-  await expect(detail).toContainText("16 paket");
-  await expect(detail).toContainText("15 gold/bulan");
+  await expect(detail).toContainText("16 packets");
+  await expect(detail).toContainText("15 gold/month");
   await page.screenshot({
     path: `test-results/switch-${test.info().project.name}.png`,
   });

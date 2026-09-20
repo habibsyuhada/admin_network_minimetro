@@ -59,7 +59,7 @@ test("subpath PWA update waits for old tabs and preserves settings across versio
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/game/`;
   try {
     await page.goto(url);
-    await page.getByRole("button", { name: "Matikan suara" }).click();
+    await page.getByRole("button", { name: "Mute sound" }).click();
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
     });
@@ -76,7 +76,7 @@ test("subpath PWA update waits for old tabs and preserves settings across versio
         ),
       )
       .toBe(true);
-    await expect(page.getByText(/Pembaruan tersedia/)).toBeVisible({
+    await expect(page.getByText(/An update is available/)).toBeVisible({
       timeout: 10000,
     });
     expect(
@@ -103,15 +103,15 @@ test("subpath PWA update waits for old tabs and preserves settings across versio
       )
       .toBe(1);
     await expect(
-      next.getByRole("button", { name: "Aktifkan suara" }),
+      next.getByRole("button", { name: "Enable sound" }),
     ).toBeVisible();
     await context.setOffline(true);
     await next.reload();
     await expect(
-      next.getByRole("button", { name: "Aktifkan suara" }),
+      next.getByRole("button", { name: "Enable sound" }),
     ).toBeVisible();
-    await next.getByRole("button", { name: "Main NOC Flow" }).click();
-    await next.getByRole("button", { name: "Ayo hubungkan" }).click();
+    await next.getByRole("button", { name: "Play NOC Flow" }).click();
+    await next.getByRole("button", { name: "Start connecting" }).click();
     await expect(
       next.getByRole("button", { name: "Client 1", exact: true }),
     ).toBeVisible();

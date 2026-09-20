@@ -2,7 +2,7 @@
   "id": "./",
   "name": "NOC Flow",
   "short_name": "NOC Flow",
-  "description": "Hubungkan client, server, dan database. Jaga paket data mengalir.",
+  "description": "Connect clients and services. Keep data flowing.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

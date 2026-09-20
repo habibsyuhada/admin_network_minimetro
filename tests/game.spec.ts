@@ -9,22 +9,22 @@ test("mobile game menu opens only Flow and keeps sound preferences", async ({
   await expect(
     page.getByRole("button", { name: "Mulai shift baru" }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "Matikan suara" }).click();
+  await page.getByRole("button", { name: "Mute sound" }).click();
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Aktifkan suara" }),
+    page.getByRole("button", { name: "Enable sound" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Panduan", exact: true }).click();
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Panduan operator" }),
+    page.getByRole("dialog", { name: "Operator guide" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Siap menghubungkan" }).click();
+  await page.getByRole("button", { name: "Ready to connect" }).click();
   await page.screenshot({
     path: `test-results/home-${test.info().project.name}.png`,
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
   await expect(
     page.getByRole("button", { name: "Client 1", exact: true }),
   ).toBeVisible();
@@ -34,11 +34,11 @@ test("mobile game menu opens only Flow and keeps sound preferences", async ({
   await expect(
     page.getByRole("button", { name: "Facebook 3", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Jeda mode Flow" }).click();
-  await page.getByRole("button", { name: "Menu permainan" }).click();
-  await page.getByRole("button", { name: "Akhiri sesi & ke menu" }).click();
+  await page.getByRole("button", { name: "Pause Flow" }).click();
+  await page.getByRole("button", { name: "Game menu" }).click();
+  await page.getByRole("button", { name: "End session & exit" }).click();
   await expect(
-    page.getByRole("button", { name: "Main NOC Flow" }),
+    page.getByRole("button", { name: "Play NOC Flow" }),
   ).toBeVisible();
 });
 
@@ -50,10 +50,10 @@ test("blocked storage does not prevent starting Flow", async ({ page }) => {
   });
   await page.goto("/");
   await expect(
-    page.getByText(/Progres, rekor, dan pengaturan belum bisa disimpan/),
+    page.getByText(/Progress, records, and settings could not be saved/),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Main NOC Flow" }).click();
-  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Play NOC Flow" }).click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
   await expect(
     page.getByRole("button", { name: "Client 1", exact: true }),
   ).toBeVisible();

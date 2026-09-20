@@ -13,8 +13,8 @@ export default function FullscreenButton() {
     <>
       <button
         className="icon-button fullscreen-button"
-        aria-label={active ? "Keluar layar penuh" : "Layar penuh"}
-        title={active ? "Keluar layar penuh" : "Layar penuh"}
+        aria-label={active ? "Exit fullscreen" : "Fullscreen"}
+        title={active ? "Exit fullscreen" : "Fullscreen"}
         onClick={async () => {
           try {
             if (document.fullscreenElement) await document.exitFullscreen();
@@ -28,7 +28,9 @@ export default function FullscreenButton() {
         {active ? <Minimize size={19} /> : <Maximize size={19} />}
       </button>
       {failed && (
-        <small role="status">Layar penuh tidak tersedia di browser ini.</small>
+        <small role="status">
+          Fullscreen is not available in this browser.
+        </small>
       )}
     </>
   );

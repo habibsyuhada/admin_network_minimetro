@@ -49,3 +49,13 @@ Three WebKit scenarios exceeded the initial 30-second suite timeout under concur
 Manual pause is separate from modal/input blocking. It freezes simulation ticks while allowing topology edits, node previews and camera controls. Speed cycles through 1x/2x/3x and scales fixed simulation steps, including generation, maintenance and overload. Closing inspectors and purchase previews preserves manual pause. Node details expose connected cables, their peer and full refund, with individual removal. Connection errors display an alert near the map, including the full transit node identity and port usage.
 
 Validation for this change: 33 unit tests pass; 18 targeted browser cases pass across Chromium desktop, Android emulation and WebKit, covering existing menu/cable flows plus frozen carriers, topology edits during pause, clock progression at 2x/3x, node-detail removal/refund, full switch rejection and reuse of freed ports. Build and TypeScript/format checks pass.
+
+## Client-specific packet icons, clustered waves, and physical ports
+
+Client packets now identify the device icon variant. Servers choose uniformly among active client variants; routing, delivery, node inspection, queue glyphs, and sold-node packet recovery use the same identity. Multiple clients of the same variant remain interchangeable destinations. PC bursts anchor subsequent clients 85-130 world units from the first, with 75-unit minimum separation and map bounds enforced; old endpoints retain 130-unit clearance.
+
+All automatic client/service nodes have one cable port. Router/switch limits remain 8/4. Duplicate cable types between a pair are allowed when both endpoints have free ports, with independent gold costs, refunds, carriers and parallel drawing lanes. Routing includes current cargo pressure so two identical waiting carriers can both load a backlog.
+
+36 unit tests pass, including variant-specific replies/delivery, 1,000 seeded growth samples, cluster bounds, identical parallel carrier loading, and endpoint port enforcement. Browser fixtures now build transit-based topologies instead of connecting multiple cables directly to service nodes.
+
+Browser validation: 51 scenarios passed across the full run and focused reruns; 3 platform-specific skips. The refund fixture was corrected to explicitly select Ethernet after Fiber; two WebKit management scenarios timed out under concurrent load and passed with one worker. Production build and type/format checks pass.

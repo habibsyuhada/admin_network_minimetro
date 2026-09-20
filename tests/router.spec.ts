@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { dragCable } from "./helpers";
+import { dragCable, addTransit } from "./helpers";
 
 test("router preview moves before OK, rejects overlap, and Cancel spends nothing", async ({
   page,
@@ -84,10 +84,11 @@ test("weekly report credits only profit minus maintenance and never pays twice",
   await page.clock.setFixedTime(new Date(42));
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
-  await dragCable(page, 0, 1);
-  await dragCable(page, 1, 2);
-  await dragCable(page, 2, 0);
-  await expect(page.getByTestId("gold")).toHaveText("700 gold");
+  await addTransit(page);
+  await dragCable(page, 0, 3);
+  await dragCable(page, 1, 3);
+  await dragCable(page, 2, 3);
+  await expect(page.getByTestId("gold")).toHaveText("550 gold");
   await page.clock.runFor(60200);
   const report = page.getByRole("dialog", { name: "Minggu 1 selesai" });
   await expect(report).toBeVisible();
@@ -95,20 +96,20 @@ test("weekly report credits only profit minus maintenance and never pays twice",
   const profit = Number(text.match(/Profit:\s*(\d+) gold/)![1]);
   const maintenance = Number(text.match(/Maintenance:\s*(\d+) gold/)![1]);
   expect(profit).toBeGreaterThan(0);
-  expect(maintenance).toBe(60);
+  expect(maintenance).toBe(90);
   await expect(page.getByTestId("gold")).toHaveText(
-    `${700 + profit - maintenance} gold`,
+    `${550 + profit - maintenance} gold`,
   );
   await page.clock.runFor(3000);
   await expect(page.getByTestId("gold")).toHaveText(
-    `${700 + profit - maintenance} gold`,
+    `${550 + profit - maintenance} gold`,
   );
   await report
     .getByRole("button", { name: "Lanjut minggu berikutnya" })
     .click();
   await expect(report).toHaveCount(0);
   await expect(page.getByTestId("gold")).toHaveText(
-    `${700 + profit - maintenance} gold`,
+    `${550 + profit - maintenance} gold`,
   );
 });
 

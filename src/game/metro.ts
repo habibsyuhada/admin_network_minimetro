@@ -52,6 +52,13 @@ export const isTransit = (shape: Shape): shape is TransitKind =>
   shape === 3 || shape === 4;
 export const nodeBuffer = (shape: Shape) =>
   isTransit(shape) ? TRANSIT[shape].buffer : 8;
+export const nodePorts = (shape: Shape) =>
+  isTransit(shape) ? TRANSIT[shape].ports : 1;
+export const nodeService = (node: Site) =>
+  node.shape === 0 && node.clientVariant ? 10 + node.clientVariant : node.shape;
+export const packetKind = (service: number) => (service >= 10 ? 0 : service);
+export const packetVariant = (service: number) =>
+  service >= 10 ? service - 10 : 0;
 export type Packet = { service: number };
 export type CableKind = 0 | 1 | 2;
 export const CABLE_TYPES = [
@@ -173,20 +180,11 @@ export function connectionError(
   )
     return "Perangkat belum tersedia.";
   if (a === b) return "Pilih dua perangkat yang berbeda.";
-  if (
-    s.cables.some(
-      (c) => c.kind === kind && c.stops.includes(a) && c.stops.includes(b),
-    )
-  )
-    return "Kabel jenis ini sudah menghubungkan kedua perangkat.";
   for (const id of [a, b]) {
-    const shape = s.nodes[id].shape;
-    if (
-      isTransit(shape) &&
-      s.cables.filter((c) => c.stops.includes(id)).length >=
-        TRANSIT[shape].ports
-    )
-      return `Port ${TRANSIT[shape].name} ${s.nodes[id].serial ?? id + 1} penuh (${TRANSIT[shape].ports}/${TRANSIT[shape].ports}). Hapus kabel di detail node untuk membebaskan port.`;
+    const n = s.nodes[id];
+    const ports = nodePorts(n.shape);
+    if (s.cables.filter((c) => c.stops.includes(id)).length >= ports)
+      return `Port ${isTransit(n.shape) ? TRANSIT[n.shape].name : n.shape === 0 ? CLIENT_VARIANTS[n.clientVariant ?? 0] : ["", "YouTube", "Facebook", "", "", "TikTok", "Instagram", "WhatsApp", "Netflix", "Spotify"][n.shape]} ${n.serial ?? id + 1} penuh (${ports}/${ports}). Hapus kabel di detail node untuk membebaskan port.`;
   }
   if (s.gold < CABLE_TYPES[kind].cost)
     return "Gold tidak cukup untuk memasang kabel ini.";
@@ -237,7 +235,10 @@ function edgeCost(s: Metro, c: Cable, from: number, service: number) {
   const loads =
     s.queues[from].filter((p) => p.service === service).length /
     cableCapacity(s, c.kind);
-  return travelTime(s, c) * (1 + loads) + 0.4;
+  return (
+    travelTime(s, c) * (1 + loads + c.cargo.length / cableCapacity(s, c.kind)) +
+    0.4
+  );
 }
 export function routeCable(
   s: Metro,
@@ -253,7 +254,7 @@ export function routeCable(
     for (let i = 0; i < best.length; i++)
       if (!visited.has(i) && (node < 0 || best[i] < best[node])) node = i;
     if (node < 0 || !Number.isFinite(best[node])) break;
-    if (s.nodes[node].shape === service) return first[node];
+    if (nodeService(s.nodes[node]) === service) return first[node];
     visited.add(node);
     for (const cable of s.cables) {
       if (!cable.stops.includes(node)) continue;
@@ -317,21 +318,36 @@ export function metroTick(state: Metro): Metro {
     const pcWave = random() < 0.5;
     const roll = random();
     const count = pcWave ? (roll < 0.6 ? 1 : roll < 0.9 ? 2 : 3) : 1;
+    const waveStart = s.nodes.length;
+    let anchor: Site | undefined;
     for (let i = 0; i < count && s.spawned < MAX_ENDPOINTS; i++) {
       const shape: Shape = pcWave
         ? 0
         : SERVICES[Math.floor(random() * SERVICES.length)];
       for (let attempt = 0; attempt < 80; attempt++) {
+        const angle = random() * Math.PI * 2;
+        const distance = 85 + random() * 45;
         const candidate = {
           shape,
-          x: 80 + random() * 840,
-          y: 80 + random() * 1040,
+          x: anchor
+            ? anchor.x + Math.cos(angle) * distance
+            : 80 + random() * 840,
+          y: anchor
+            ? anchor.y + Math.sin(angle) * distance
+            : 80 + random() * 1040,
         };
         if (
+          candidate.x < 40 ||
+          candidate.x > 960 ||
+          candidate.y < 40 ||
+          candidate.y > 1160
+        )
+          continue;
+        if (
           !s.nodes.every(
-            (n) =>
+            (n, index) =>
               Math.hypot(n.x - candidate.x, n.y - candidate.y) >=
-              (isTransit(n.shape) ? 75 : 130),
+              (index >= waveStart || isTransit(n.shape) ? 75 : 130),
           )
         )
           continue;
@@ -342,6 +358,7 @@ export function metroTick(state: Metro): Metro {
             ? { clientVariant: Math.floor(random() * CLIENT_VARIANTS.length) }
             : {}),
         });
+        if (pcWave && !anchor) anchor = candidate;
         s.queues.push([]);
         s.overload.push(0);
         s.spawned++;
@@ -357,7 +374,10 @@ export function metroTick(state: Metro): Metro {
       const shape = s.nodes[id].shape;
       if (isTransit(shape) || random() > Math.min(0.85, 0.4 + s.time / 900))
         continue;
-      const targets: Shape[] = shape === 0 ? activeServices : [0];
+      const targets: number[] =
+        shape === 0
+          ? activeServices
+          : [...new Set(s.nodes.filter((n) => n.shape === 0).map(nodeService))];
       if (targets.length)
         s.queues[id].push({
           service: targets[Math.floor(random() * targets.length)],
@@ -395,7 +415,7 @@ export function metroTick(state: Metro): Metro {
       c.wait = isTransit(arrivalShape) ? TRANSIT[arrivalShape].dwell : 0.4;
       const node = c.stops[c.at];
       for (const packet of c.cargo) {
-        if (s.nodes[node].shape === packet.service) {
+        if (nodeService(s.nodes[node]) === packet.service) {
           s.delivered++;
           s.profit += PACKET_PROFIT;
         } else s.queues[node].push(packet);
@@ -491,7 +511,7 @@ export function sellTransit(s: Metro, id: number): Metro {
   // Keep every packet waiting, without granting delivery profit for selling assets.
   for (const packet of cargo) {
     const candidates = s.nodes.flatMap((n, i) =>
-      i !== id && n.shape !== packet.service ? [i] : [],
+      i !== id && nodeService(n) !== packet.service ? [i] : [],
     );
     candidates.sort(
       (a, b) =>

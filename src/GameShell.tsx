@@ -280,7 +280,10 @@ export default function GameShell() {
                 </div>
               ))}
             </div>
-            <p>Semua variasi tetap menerima paket berikon PC.</p>
+            <p>
+              Setiap jenis client menerima paket dengan ikon perangkat yang
+              sama.
+            </p>
           </details>
           <ol className="handbook">
             <li>

@@ -1,5 +1,9 @@
 import {
   CLIENT_VARIANTS,
+  nodePorts,
+  nodeService,
+  packetKind,
+  packetVariant,
   type Site,
   type Metro,
   SITES,
@@ -64,7 +68,7 @@ export default function NodeDetails({
     );
   const incoming = state.cables
     .flatMap((c) => c.cargo)
-    .filter((p) => p.service === nodes[node].shape).length;
+    .filter((p) => p.service === nodeService(nodes[node])).length;
   return (
     <>
       <button className="secondary" onClick={() => onSelect(null)}>
@@ -76,10 +80,14 @@ export default function NodeDetails({
       </p>
       {kind === 0 && (
         <p>
-          Perangkat: {CLIENT_VARIANTS[nodes[node].clientVariant ?? 0]}. Semua
-          variasi client menerima paket berikon PC yang sama.
+          Perangkat: {CLIENT_VARIANTS[nodes[node].clientVariant ?? 0]}. Menerima
+          paket dengan ikon perangkat yang sama.
         </p>
       )}
+      <p>
+        {state.cables.filter((c) => c.stops.includes(node)).length}/
+        {nodePorts(kind)} port terpakai.
+      </p>
       {spec && (
         <p>
           {spec.name} buatanmu.{" "}
@@ -135,13 +143,21 @@ export default function NodeDetails({
             return (
               <div key={destination} data-destination={destination}>
                 <svg viewBox="-30 -30 60 60">
-                  <DeviceGlyph kind={destination} />
+                  <DeviceGlyph
+                    kind={packetKind(destination)}
+                    variant={packetVariant(destination)}
+                  />
                 </svg>
                 <div>
-                  <b>Ke {DEVICE_NAMES[destination]}</b>
+                  <b>
+                    Ke{" "}
+                    {packetKind(destination) === 0
+                      ? CLIENT_VARIANTS[packetVariant(destination)]
+                      : DEVICE_NAMES[destination]}
+                  </b>
                   <small>
-                    {nodes.filter((n) => n.shape === destination).length} node
-                    tersedia
+                    {nodes.filter((n) => nodeService(n) === destination).length}{" "}
+                    node tersedia
                   </small>
                   <small className={!cable ? "missing-route" : ""}>
                     {cable && next !== undefined

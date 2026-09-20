@@ -14,3 +14,17 @@ export async function dragCable(page: Page, a: number, b: number) {
   await page.mouse.move(end.x, end.y, { steps: 10 });
   await page.mouse.up();
 }
+
+export async function addTransit(
+  page: Page,
+  kind: "router" | "switch" = "router",
+  offset = 0,
+) {
+  await page
+    .getByRole("button", { name: new RegExp(`Pasang ${kind}`) })
+    .click();
+  const preview = page.getByRole("button", { name: `Geser pratinjau ${kind}` });
+  await preview.focus();
+  for (let i = 0; i < offset; i++) await preview.press("ArrowRight");
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+}

@@ -4,6 +4,8 @@ import Dialog from "./Dialog";
 import NodeDetails, { nodeName, nodeCode } from "./NodeDetails";
 import {
   CABLE_TYPES,
+  packetKind,
+  packetVariant,
   TRANSIT,
   isTransit,
   moveTransit,
@@ -419,11 +421,15 @@ export default function MetroGame({
                         height="13"
                         rx="3"
                         fill="#142c29"
-                        stroke={DEVICE_COLORS[packet.service]}
+                        stroke={DEVICE_COLORS[packetKind(packet.service)]}
                         strokeWidth=".6"
                       />
                       <g transform="scale(.29)">
-                        <DeviceGlyph kind={packet.service} compact />
+                        <DeviceGlyph
+                          kind={packetKind(packet.service)}
+                          variant={packetVariant(packet.service)}
+                          compact
+                        />
                       </g>
                     </g>
                   ))}
@@ -674,7 +680,7 @@ export default function MetroGame({
             Setiap kabel menghubungkan dua perangkat dan memiliki satu
             pengangkut sendiri. Setiap paket menuju jenis layanan, misalnya
             YouTube. Semua node berikon YouTube bisa menerima paketnya. PC
-            meminta layanan; layanan mengirim balasan berikon PC.
+            meminta layanan; layanan mengirim balasan sesuai ikon jenis client.
           </p>
           <ol className="handbook">
             <li>
@@ -715,8 +721,9 @@ export default function MetroGame({
             <li>
               Router: 150 gold, 8 port, buffer 16, maintenance 30/minggu.
               Switch: 80 gold, 4 port, buffer 10, maintenance 15/minggu;
-              bongkar-muat lebih cepat (0,2 detik). Setiap kabel memakai satu
-              port.
+              bongkar-muat lebih cepat (0,2 detik). Client dan layanan memiliki
+              1 port. Setiap kabel memakai satu port; kabel sejenis boleh
+              dipasang paralel antar router/switch.
             </li>
             <li>
               Tiap 35 detik muncul gelombang PC atau layanan (masing-masing

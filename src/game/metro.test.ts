@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   SITES,
+  nodeService,
   moveTransit,
   sellTransit,
   nodeRefund,
@@ -31,9 +32,15 @@ const steps = (s: Metro, n: number) => {
   for (let i = 0; i < n; i++) s = metroTick(s);
   return s;
 };
+const junctions = (...ids: number[]) => {
+  const s = newMetro(42);
+  s.gold = 5000;
+  for (const id of ids) s.nodes[id].shape = 3;
+  return s;
+};
 describe("point-to-point cable transport", () => {
   it("gives every cable its own carrier with exactly two endpoints", () => {
-    let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2);
+    let s = connectCable(connectCable(junctions(1), 0, 0, 1), 0, 1, 2);
     expect(s.cables.map((c) => c.stops)).toEqual([
       [0, 1],
       [1, 2],
@@ -57,7 +64,7 @@ describe("point-to-point cable transport", () => {
     }
   });
   it("unloads at a transfer node and waits for the next cable's carrier", () => {
-    let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2);
+    let s = connectCable(connectCable(junctions(1), 0, 0, 1), 0, 1, 2);
     s.cables[0].cargo = [{ service: 2 }];
     s.cables[0].progress = 0.99;
     s.cables[0].wait = 0;
@@ -82,18 +89,20 @@ describe("point-to-point cable transport", () => {
     expect(s.cables[0].stops).toEqual([0, 1]);
   });
   it("routes automatically by time and changes preference under queue pressure", () => {
-    let s = connectCable(connectCable(newMetro(42), 1, 0, 1), 2, 0, 1);
-    s.queues[0] = [{ service: 1 }];
-    expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
-    s.queues[0] = Array.from({ length: 50 }, () => ({ service: 1 }));
-    expect(routeCable(s, 0, 1)).toBe(s.cables[1].id);
-    expect(routeCable(s, 0, 2)).toBeNull();
+    let s = connectCable(connectCable(junctions(0, 1), 1, 0, 1), 2, 0, 1);
+    s = connectCable(s, 0, 1, 2);
+    s.queues[0] = [{ service: 2 }];
+    expect(routeCable(s, 0, 2)).toBe(s.cables[0].id);
+    s.queues[0] = Array.from({ length: 50 }, () => ({ service: 2 }));
+    expect(routeCable(s, 0, 2)).toBe(s.cables[1].id);
+    expect(routeCable(s, 0, 1)).toBeNull();
   });
   it("finds multihop services and reroutes after a cable is removed", () => {
-    let s = connectCable(
-      connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2),
-      1,
+    let s = placeRouter(junctions(0, 1), 200, 300);
+    s = connectCable(
+      connectCable(connectCable(connectCable(s, 0, 0, 1), 0, 1, 3), 1, 0, 3),
       0,
+      3,
       2,
     );
     expect(routeCable(s, 0, 2)).toBe(s.cables[2].id);
@@ -101,19 +110,19 @@ describe("point-to-point cable transport", () => {
     expect(routeCable(s, 0, 2)).toBe(s.cables[0].id);
   });
   it("removing an in-flight cable refunds the full price and returns all cargo to its departure node", () => {
-    let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 1, 1, 2);
-    s.queues[0] = [{ service: 1 }, { service: 1 }];
+    let s = connectCable(connectCable(junctions(1), 0, 0, 1), 1, 1, 2);
+    s.queues[0] = [{ service: 2 }, { service: 2 }];
     s = steps(s, 12);
     const original = s;
     expect(s.cables[0].cargo.length).toBe(2);
     s = removeCable(s, s.cables[0].id);
     expect(count(s)).toBe(count(original));
-    expect(s.queues[0]).toEqual([{ service: 1 }, { service: 1 }]);
+    expect(s.queues[0]).toEqual([{ service: 2 }, { service: 2 }]);
     expect(s.gold).toBe(original.gold + 100);
     expect(s.cables).toHaveLength(1);
     expect(s.cables[0]).toBe(original.cables[1]);
   });
-  it("rejects duplicate pairs, self-links, inactive nodes and insufficient gold", () => {
+  it("rejects full endpoint ports, self-links, inactive nodes and insufficient gold", () => {
     let s = connectCable(newMetro(42), 0, 0, 1);
     expect(connectCable(s, 0, 1, 0)).toBe(s);
     expect(connectCable(s, 0, 1, 1)).toBe(s);
@@ -170,7 +179,7 @@ describe("service icon routing", () => {
     expect(s.queues[3]).toEqual([]);
   });
   it("reroutes to another matching service when one connection is removed", () => {
-    let s = newMetro(42);
+    let s = junctions(0);
     s.nodes.push({ x: 200, y: 250, shape: 1 });
     s.queues.push([]);
     s.overload.push(0);
@@ -305,9 +314,9 @@ describe("gold economy", () => {
 
 describe("switch specifications and random growth", () => {
   it("charges switch price and maintenance and enforces physical port limits", () => {
-    let s = placeRouter({ ...newMetro(42), gold: 5000 }, 200, 300, 4);
+    let s = placeRouter({ ...junctions(0, 1), gold: 5000 }, 200, 300, 4);
     expect(s.gold).toBe(4920);
-    expect(maintenanceRate(s)).toBe(15);
+    expect(maintenanceRate(s)).toBe(75);
     expect(nodeBuffer(4)).toBe(10);
     expect(nodeBuffer(3)).toBe(16);
     s = connectCable(
@@ -347,6 +356,10 @@ describe("switch specifications and random growth", () => {
       if (added[0]?.shape === 0) {
         expect(added.every((n) => n.shape === 0)).toBe(true);
         pcSizes.add(added.length);
+        for (const n of added)
+          expect(
+            Math.hypot(n.x - added[0].x, n.y - added[0].y),
+          ).toBeLessThanOrEqual(130.001);
       } else if (added[0]) {
         services.add(added[0].shape);
         if ([1, 2].includes(added[0].shape)) duplicate = true;
@@ -357,7 +370,9 @@ describe("switch specifications and random growth", () => {
           .forEach((other) =>
             expect(
               Math.hypot(n.x - other.x, n.y - other.y),
-            ).toBeGreaterThanOrEqual(130),
+            ).toBeGreaterThanOrEqual(
+              i >= 3 && s.nodes.indexOf(other) >= 3 ? 75 : 130,
+            ),
           ),
       );
     }
@@ -456,4 +471,48 @@ describe("moving and selling transit nodes", () => {
     }
     expect(variants.size).toBe(16);
   });
+});
+
+describe("client icons and parallel links", () => {
+  it("routes and delivers only to the requested client variant", () => {
+    let s = junctions(0);
+    s.nodes[1] = { ...s.nodes[1], shape: 0, clientVariant: 1 };
+    s.nodes[2] = { ...s.nodes[2], shape: 0, clientVariant: 2 };
+    s = connectCable(connectCable(s, 0, 0, 1), 0, 0, 2);
+    expect(routeCable(s, 0, nodeService(s.nodes[2]))).toBe(2);
+    s.cables[0].cargo = [{ service: 12 }];
+    s.cables[0].progress = 0.999;
+    s.cables[0].wait = 0;
+    s = metroTick(s);
+    expect(s.delivered).toBe(0);
+    expect(s.queues[1]).toEqual([{ service: 12 }]);
+  });
+  it("uses both identical parallel carriers and refunds only the removed link", () => {
+    let s = junctions(0, 1);
+    s = connectCable(connectCable(connectCable(s, 0, 0, 1), 0, 0, 1), 0, 1, 2);
+    s.queues[0] = Array.from({ length: 8 }, () => ({ service: 2 }));
+    s = steps(s, 4);
+    expect(s.cables.slice(0, 2).map((c) => c.cargo.length)).toEqual([4, 4]);
+    const gold = s.gold;
+    s = removeCable(s, 1);
+    expect(s.gold).toBe(gold + 100);
+    expect(s.cables.map((c) => c.id)).toEqual([2, 3]);
+    expect(count(s)).toBe(8);
+  });
+});
+
+it("services generate replies for the distinct active client icons", () => {
+  let s = newMetro(42);
+  s.nodes[0].clientVariant = 2;
+  s.nodes.push({ ...s.nodes[0], x: 500, y: 500, clientVariant: 1 });
+  s.queues.push([]);
+  s.overload.push(0);
+  const icons = new Set<number>();
+  for (let i = 0; i < 100; i++) {
+    s.time = 2.9;
+    s.queues = s.queues.map(() => []);
+    s = metroTick(s);
+    for (const p of [...s.queues[1], ...s.queues[2]]) icons.add(p.service);
+  }
+  expect([...icons].sort()).toEqual([11, 12]);
 });

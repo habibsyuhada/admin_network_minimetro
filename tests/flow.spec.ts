@@ -1,4 +1,4 @@
-import { dragCable } from "./helpers";
+import { dragCable, addTransit } from "./helpers";
 import { test, expect } from "@playwright/test";
 
 test("point-to-point cables have separate carriers and can be removed individually", async ({
@@ -12,31 +12,26 @@ test("point-to-point cables have separate carriers and can be removed individual
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
   const tap = async (name: string) =>
     page.getByRole("button", { name, exact: true }).click();
-  await dragCable(page, 0, 1);
-  await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
-  // Tapping inspects a node and never extends or creates a cable.
-  await tap("Facebook 3");
-  await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
-  await expect(
-    page.getByRole("dialog", { name: "Detail Facebook 3" }),
-  ).toBeVisible();
-  await tap("Kembali ke peta");
-  await dragCable(page, 2, 1);
+  await page.getByRole("button", { name: "Jeda mode Flow" }).click();
+  await addTransit(page);
+  await addTransit(page, "switch", 10);
+  await dragCable(page, 3, 4);
+  await dragCable(page, 3, 4);
   await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
   await expect(page.locator("[data-carrier]")).toHaveCount(2);
-  await expect(page.locator('[data-carrier="1"]')).toContainText("/4");
   await tap("Kabel Fiber");
-  await dragCable(page, 0, 1);
+  await dragCable(page, 3, 4);
   await expect(page.locator('[data-carrier="3"]')).toContainText("/3");
   const colors = await page
     .locator("[data-route]")
     .evaluateAll((paths) => paths.map((p) => p.getAttribute("stroke")));
   expect(colors[0]).toBe(colors[1]);
   expect(colors[2]).not.toBe(colors[0]);
-  await dragCable(page, 0, 1);
-  await expect(page.getByRole("alert")).toBeVisible();
-  await expect(page.getByTestId("cable-count")).toHaveText("3 kabel aktif");
-  await tap("Jeda mode Flow");
+  await tap("Kabel Ethernet");
+  await dragCable(page, 0, 3);
+  await dragCable(page, 0, 4);
+  await expect(page.getByRole("alert")).toContainText("penuh (1/1)");
+  await expect(page.getByTestId("cable-count")).toHaveText("4 kabel aktif");
   const clock = await page.getByTestId("flow-clock").textContent();
   await page.waitForTimeout(1100);
   await expect(page.getByTestId("flow-clock")).toHaveText(clock!);
@@ -44,10 +39,10 @@ test("point-to-point cables have separate carriers and can be removed individual
   await tap("Kelola kabel");
   await tap("Hapus kabel 1");
   await tap("Selesai");
-  await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
+  await expect(page.getByTestId("cable-count")).toHaveText("3 kabel aktif");
   await expect(page.locator('[data-carrier="1"]')).toHaveCount(0);
   await expect(page.locator('[data-carrier="2"]')).toHaveCount(1);
-  await expect(page.getByTestId("gold")).toHaveText("700 gold");
+  await expect(page.getByTestId("gold")).toHaveText("370 gold");
   await page.screenshot({
     path: `test-results/cables-${test.info().project.name}.png`,
     fullPage: true,

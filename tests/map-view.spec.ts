@@ -1,4 +1,4 @@
-import { dragCable } from "./helpers";
+import { dragCable, addTransit } from "./helpers";
 import { test, expect } from "@playwright/test";
 test("camera stops at map edges and centers when zoomed out", async ({
   page,
@@ -69,10 +69,12 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   // Restore the wider starting view so both distant endpoints are visible.
   await page.getByRole("button", { name: "Kembali ke area awal" }).click();
-  await dragCable(page, 0, 1);
+  await addTransit(page);
+  await addTransit(page, "switch", 10);
+  await dragCable(page, 3, 4);
   await expect(map).toHaveAttribute("viewBox", initial!);
   await page.getByRole("button", { name: "Kabel Fiber", exact: true }).click();
-  await dragCable(page, 1, 0);
+  await dragCable(page, 4, 3);
   const a = await page.locator('[data-route="0"]').getAttribute("d");
   const b = await page.locator('[data-route="1"]').getAttribute("d");
   expect(a).not.toEqual(b);

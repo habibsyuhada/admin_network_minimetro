@@ -297,15 +297,15 @@ export default function GameShell() {
               berikutnya. Rute dipilih otomatis.
             </li>
             <li>
-              Modal awal 1.000 gold. Kabel berharga 100/200/250 gold; router 150
+              Modal awal 1.600 gold. Kabel berharga 100/200/250 gold; router 150
               gold. Router muncul sebagai pratinjau: geser, lalu OK atau Cancel.
-              Setiap paket terkirim memberi profit 25 gold. Tiap menit, profit
+              Setiap paket terkirim memberi profit 18 gold. Tiap menit, profit
               dikurangi maintenance masuk ke saldo. Penjualan kabel
               mengembalikan 100% harganya.
             </li>
             <li>
-              Antrean penuh memicu peringatan: PC/layanan 8, switch 10, router
-              16 paket. Kurangi dalam 20 detik sebelum jaringan kewalahan.
+              Antrean penuh memicu peringatan: PC/layanan 10, switch 16, router
+              24 paket. Kurangi dalam 25 detik sebelum jaringan kewalahan.
             </li>
           </ol>
           <button className="primary" onClick={() => setPanel(null)}>

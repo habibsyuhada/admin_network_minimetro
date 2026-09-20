@@ -57,7 +57,7 @@ for (const kind of ["router", "switch"])
     await page.getByRole("button", { name: "Jual node", exact: true }).click();
     const confirm = page.getByRole("dialog", { name: /Jual/ });
     await expect(confirm).toContainText(
-      kind === "router" ? "350 gold" : "280 gold",
+      kind === "router" ? "275 gold" : "240 gold",
     );
     await confirm.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(node).toBeVisible();
@@ -66,7 +66,9 @@ for (const kind of ["router", "switch"])
     await confirm
       .getByRole("button", { name: "Jual node", exact: true })
       .click();
-    await expect(page.getByTestId("gold")).toHaveText("1000 gold");
+    await expect(page.getByTestId("gold")).toHaveText(
+      kind === "router" ? "1525 gold" : "1560 gold",
+    );
     await expect(page.locator("[data-node-id]")).toHaveCount(3);
     await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
   });

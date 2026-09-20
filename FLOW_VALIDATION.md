@@ -59,3 +59,9 @@ All automatic client/service nodes have one cable port. Router/switch limits rem
 36 unit tests pass, including variant-specific replies/delivery, 1,000 seeded growth samples, cluster bounds, identical parallel carrier loading, and endpoint port enforcement. Browser fixtures now build transit-based topologies instead of connecting multiple cables directly to service nodes.
 
 Browser validation: 51 scenarios passed across the full run and focused reruns; 3 platform-specific skips. The refund fixture was corrected to explicitly select Ethernet after Fiber; two WebKit management scenarios timed out under concurrent load and passed with one worker. Production build and type/format checks pass.
+
+## Cable replacement, half-price transit sale, and monthly balance
+
+Node cable cards now show peer icons and allow type replacement at the price difference. IDs, endpoints and carrier position are retained; excess cargo returns to the departure queue if capacity shrinks. Transit node sale refunds 50% of node cost plus 100% of attached cable costs. All player-facing cycles are months, 60 simulation seconds each.
+
+Balance changes and multi-seed findings are documented in BALANCE_REPORT.md. 39 unit tests pass, including replacement conservation, affordability and escalating network upgrade maintenance. Twelve targeted browser cases pass across Chromium desktop/mobile and WebKit (the WebKit monthly ledger was rerun at 2x after timing out under load). A real browser interaction replay completed month 12 with 1,322 delivered packets and 7,365 gold, without state injection. Forty final simulated sessions cover 20 seeds and two strategies; 13/20 adaptive sessions completed month 12.

@@ -29,6 +29,7 @@ const nextSerial = (s: Metro) =>
 export const WORLD = { width: 1000, height: 1200 };
 export const SERVICES: Shape[] = [1, 2, 5, 6, 7, 8, 9];
 export const MAX_ENDPOINTS = 36;
+export const OVERLOAD_SECONDS = 25;
 export type TransitKind = 3 | 4;
 export const TRANSIT = {
   3: {
@@ -36,7 +37,7 @@ export const TRANSIT = {
     cost: 150,
     maintenance: 30,
     ports: 8,
-    buffer: 16,
+    buffer: 24,
     dwell: 0.4,
   },
   4: {
@@ -44,14 +45,14 @@ export const TRANSIT = {
     cost: 80,
     maintenance: 15,
     ports: 4,
-    buffer: 10,
+    buffer: 16,
     dwell: 0.2,
   },
 } as const;
 export const isTransit = (shape: Shape): shape is TransitKind =>
   shape === 3 || shape === 4;
 export const nodeBuffer = (shape: Shape) =>
-  isTransit(shape) ? TRANSIT[shape].buffer : 8;
+  isTransit(shape) ? TRANSIT[shape].buffer : 10;
 export const nodePorts = (shape: Shape) =>
   isTransit(shape) ? TRANSIT[shape].ports : 1;
 export const nodeService = (node: Site) =>
@@ -115,7 +116,7 @@ export type Cable = {
   cargo: Packet[];
 };
 export type Metro = {
-  version: 7;
+  version: 8;
   nodes: Site[];
   spawned: number;
   gold: number;
@@ -131,7 +132,7 @@ export type Metro = {
   nextCableId: number;
   capacityBonus: number;
   speedBonus: number;
-  week: number;
+  month: number;
   phase: "running" | "reward" | "over";
 };
 export const cableCapacity = (s: Metro, kind: CableKind) =>
@@ -140,14 +141,14 @@ export const cableSpeed = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].speed + s.speedBonus;
 export function newMetro(seed = Date.now() >>> 0): Metro {
   return {
-    version: 7,
+    version: 8,
     nodes: SITES.slice(0, 3).map((n, i) => ({
       ...n,
       serial: i + 1,
       ...(n.shape === 0 ? { clientVariant: 0 } : {}),
     })),
     spawned: 3,
-    gold: 1000,
+    gold: 1600,
     profit: 0,
     maintenanceUnits: 0,
     report: null,
@@ -160,7 +161,7 @@ export function newMetro(seed = Date.now() >>> 0): Metro {
     nextCableId: 1,
     capacityBonus: 0,
     speedBonus: 0,
-    week: 1,
+    month: 1,
     phase: "running",
   };
 }
@@ -225,6 +226,33 @@ export function removeCable(s: Metro, id: number): Metro {
     gold: s.gold + CABLE_TYPES[cable.kind].cost,
   };
 }
+export function cableChangeCost(s: Metro, id: number, kind: CableKind): number {
+  const cable = s.cables.find((c) => c.id === id);
+  return cable ? CABLE_TYPES[kind].cost - CABLE_TYPES[cable.kind].cost : 0;
+}
+export function changeCable(s: Metro, id: number, kind: CableKind): Metro {
+  const cable = s.cables.find((c) => c.id === id);
+  if (
+    s.phase !== "running" ||
+    !cable ||
+    !CABLE_TYPES[kind] ||
+    cable.kind === kind
+  )
+    return s;
+  const cost = cableChangeCost(s, id, kind);
+  if (s.gold < cost) return s;
+  const capacity = cableCapacity(s, kind);
+  const queues = s.queues.map((q) => [...q]);
+  queues[cable.stops[cable.at]].push(...cable.cargo.slice(capacity));
+  return {
+    ...s,
+    gold: s.gold - cost,
+    queues,
+    cables: s.cables.map((c) =>
+      c.id === id ? { ...c, kind, cargo: c.cargo.slice(0, capacity) } : c,
+    ),
+  };
+}
 function travelTime(s: Metro, c: Cable) {
   const [a, b] = c.stops.map((id) => s.nodes[id]);
   return Math.hypot(a.x - b.x, a.y - b.y) / cableSpeed(s, c.kind);
@@ -270,9 +298,21 @@ export function routeCable(
 }
 export const ROUTER_COST = 150;
 export const ROUTER_MAINTENANCE = 30;
-export const PACKET_PROFIT = 25;
+export const PACKET_PROFIT = 18;
+export const upgradeCost = (
+  s: Metro,
+  choice: "capacity" | "speed" | "continue",
+) =>
+  choice === "capacity"
+    ? 300 + s.capacityBonus * 150
+    : choice === "speed"
+      ? 250 + s.speedBonus * 15
+      : 0;
+export const cableMaintenance = (s: Metro, kind: CableKind) =>
+  CABLE_TYPES[kind].maintenance +
+  Math.ceil(s.capacityBonus * 2 + s.speedBonus / 10);
 export const maintenanceRate = (s: Metro) =>
-  s.cables.reduce((total, c) => total + CABLE_TYPES[c.kind].maintenance, 0) +
+  s.cables.reduce((total, c) => total + cableMaintenance(s, c.kind), 0) +
   s.nodes.reduce(
     (total, n) =>
       total + (isTransit(n.shape) ? TRANSIT[n.shape].maintenance : 0),
@@ -283,12 +323,12 @@ export function reward(
   s: Metro,
   choice: "continue" | "capacity" | "speed",
 ): Metro {
-  const cost = choice === "capacity" ? 300 : choice === "speed" ? 250 : 0;
+  const cost = upgradeCost(s, choice);
   if (s.phase !== "reward" || s.gold < cost) return s;
   return {
     ...s,
     phase: "running",
-    week: s.week + 1,
+    month: s.month + 1,
     profit: 0,
     maintenanceUnits: 0,
     gold: s.gold - cost,
@@ -312,7 +352,7 @@ export function metroTick(state: Metro): Metro {
     return s.seed / 4294967296;
   };
   if (
-    Math.floor(s.time / 35) > Math.floor(state.time / 35) &&
+    Math.floor(s.time / 45) > Math.floor(state.time / 45) &&
     s.spawned < MAX_ENDPOINTS
   ) {
     const pcWave = random() < 0.5;
@@ -372,7 +412,7 @@ export function metroTick(state: Metro): Metro {
   if (Math.floor(s.time / 3) > Math.floor(state.time / 3))
     for (let id = 0; id < s.nodes.length; id++) {
       const shape = s.nodes[id].shape;
-      if (isTransit(shape) || random() > Math.min(0.85, 0.4 + s.time / 900))
+      if (isTransit(shape) || random() > Math.min(0.65, 0.32 + s.time / 2400))
         continue;
       const targets: number[] =
         shape === 0
@@ -427,13 +467,13 @@ export function metroTick(state: Metro): Metro {
       ? s.overload[i] + 0.1
       : Math.max(0, s.overload[i] - 0.2),
   );
-  if (s.time >= s.week * 60) {
+  if (s.time >= s.month * 60) {
     const maintenance = maintenanceDue(s);
     s.report = { profit: s.profit, maintenance, net: s.profit - maintenance };
     s.gold += s.report.net;
     s.phase = s.gold < 0 ? "over" : "reward";
   }
-  if (s.overload.some((t) => t >= 20)) s.phase = "over";
+  if (s.overload.some((t) => t >= OVERLOAD_SECONDS)) s.phase = "over";
   return s;
 }
 
@@ -493,7 +533,7 @@ export function nodeRefund(s: Metro, id: number): number {
   const node = s.nodes[id];
   if (!node || !isTransit(node.shape)) return 0;
   return (
-    TRANSIT[node.shape].cost +
+    Math.floor(TRANSIT[node.shape].cost / 2) +
     s.cables
       .filter((c) => c.stops.includes(id))
       .reduce((sum, c) => sum + CABLE_TYPES[c.kind].cost, 0)

@@ -149,7 +149,7 @@ test("new distant nodes stay in the large map and can be located through details
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
   const map = page.getByRole("group", { name: "Peta Flow interaktif" });
   const initial = await map.getAttribute("viewBox");
-  await page.clock.runFor(35200);
+  await page.clock.runFor(45200);
   expect(await page.locator("[data-node-id]").count()).toBeGreaterThanOrEqual(
     4,
   );

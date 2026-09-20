@@ -4,6 +4,9 @@ import Dialog from "./Dialog";
 import NodeDetails, { nodeName, nodeCode } from "./NodeDetails";
 import {
   CABLE_TYPES,
+  OVERLOAD_SECONDS,
+  changeCable,
+  upgradeCost,
   packetKind,
   packetVariant,
   TRANSIT,
@@ -195,12 +198,12 @@ export default function MetroGame({
           <strong data-testid="delivered">{s.delivered}</strong>
         </div>
         <div className="metro-calendar">
-          <small>MINGGU {s.week}</small>
+          <small>BULAN {s.month}</small>
           <strong data-testid="flow-clock">
             {String(Math.floor(s.time / 60)).padStart(2, "0")}:
             {String(Math.floor(s.time % 60)).padStart(2, "0")}
           </strong>
-          <progress aria-label="Progres minggu" value={s.time % 60} max={60} />
+          <progress aria-label="Progres bulan" value={s.time % 60} max={60} />
         </div>
       </section>
       <div className="metro-map-wrap">
@@ -400,7 +403,7 @@ export default function MetroGame({
                   <circle
                     r="32"
                     className="metro-danger-ring"
-                    strokeDasharray={`${(s.overload[id] / 20) * 201} 201`}
+                    strokeDasharray={`${(s.overload[id] / OVERLOAD_SECONDS) * 201} 201`}
                     transform="rotate(-90)"
                   />
                 )}
@@ -559,12 +562,12 @@ export default function MetroGame({
           role="status"
         >
           {s.overload[danger] > 0
-            ? `Perangkat ${danger + 1} penuh · ${Math.max(0, Math.ceil(20 - s.overload[danger]))} detik untuk mengurangi antrean`
+            ? `Perangkat ${danger + 1} penuh · ${Math.max(0, Math.ceil(OVERLOAD_SECONDS - s.overload[danger]))} detik untuk mengurangi antrean`
             : "Antar paket ke node dengan ikon layanan yang sama"}
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
-        <div className="economy-bar" aria-label="Keuangan minggu ini">
+        <div className="economy-bar" aria-label="Keuangan bulan ini">
           <strong data-testid="gold">{s.gold} gold</strong>
           <span>Profit: {s.profit}</span>
           <span>Maintenance: {maintenanceDue(s)}</span>
@@ -656,7 +659,7 @@ export default function MetroGame({
         </div>
         <div className="cable-inventory">
           <span data-testid="cable-count">{s.cables.length} kabel aktif</span>
-          <span>Maintenance penuh: {maintenanceRate(s)} / minggu</span>
+          <span>Maintenance penuh: {maintenanceRate(s)} / bulan</span>
           <button
             aria-label="Detail node"
             disabled={frozen}
@@ -712,27 +715,27 @@ export default function MetroGame({
               Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
               Backbone: 8 paket, lebih lambat. Angka ini bertambah saat upgrade.
               Router seharga 150 gold langsung muncul sebagai pratinjau. Geser,
-              lalu OK untuk membeli atau Cancel. Modal awal 1.000 gold. Setiap
-              paket terkirim menghasilkan 25 gold. Profit dikurangi maintenance
+              lalu OK untuk membeli atau Cancel. Modal awal 1.600 gold. Setiap
+              paket terkirim menghasilkan 18 gold. Profit dikurangi maintenance
               dibayarkan setiap menit. Kabel berbiaya 100/200/250 gold;
-              maintenance kabel 20/35/40 dan router 30 gold per minggu, dihitung
+              maintenance kabel 20/35/40 dan router 30 gold per bulan, dihitung
               sesuai lama aktif. Node yang muncul otomatis gratis.
             </li>
             <li>
-              Router: 150 gold, 8 port, buffer 16, maintenance 30/minggu.
-              Switch: 80 gold, 4 port, buffer 10, maintenance 15/minggu;
-              bongkar-muat lebih cepat (0,2 detik). Client dan layanan memiliki
-              1 port. Setiap kabel memakai satu port; kabel sejenis boleh
-              dipasang paralel antar router/switch.
+              Router: 150 gold, 8 port, buffer 24, maintenance 30/bulan. Switch:
+              80 gold, 4 port, buffer 16, maintenance 15/bulan; bongkar-muat
+              lebih cepat (0,2 detik). Client dan layanan memiliki 1 port.
+              Setiap kabel memakai satu port; kabel sejenis boleh dipasang
+              paralel antar router/switch.
             </li>
             <li>
-              Tiap 35 detik muncul gelombang PC atau layanan (masing-masing
+              Tiap 45 detik muncul gelombang PC atau layanan (masing-masing
               50%). Gelombang PC: 1 PC 60%, 2 PC 30%, 3 PC 10%. Layanan dipilih
               merata dari 7 jenis dan boleh berulang. Maksimal 36 node otomatis.
             </li>
             <li>
-              Antrean penuh memulai hitung mundur: PC/layanan 8, switch 10,
-              router 16 paket. Kurangi antrean sebelum 20 detik habis!
+              Antrean penuh memulai hitung mundur: PC/layanan 10, switch 16,
+              router 24 paket. Kurangi antrean sebelum 25 detik habis!
             </li>
           </ol>
           <p className="muted">
@@ -794,6 +797,10 @@ export default function MetroGame({
             state={s}
             node={detailNode}
             onSelect={setDetailNode}
+            onChangeCable={(id, kind) => {
+              setS((v) => changeCable(v, id, kind));
+              setTip("Tipe kabel diganti. Selisih harga diperhitungkan.");
+            }}
             onRemoveCable={(id) => {
               setS((v) => removeCable(v, id));
               setBuildError(null);
@@ -811,9 +818,9 @@ export default function MetroGame({
           onClose={() => setSale(null)}
         >
           <p>
-            Harga node dan{" "}
+            50% harga node ditambah refund penuh untuk{" "}
             {s.cables.filter((c) => c.stops.includes(sale)).length} kabel yang
-            terhubung dikembalikan penuh: <b>{nodeRefund(s, sale)} gold</b>.
+            terhubung: <b>{nodeRefund(s, sale)} gold</b>.
           </p>
           <p>
             Paket yang masih menunggu atau diangkut dialihkan ke node tersisa.
@@ -826,7 +833,7 @@ export default function MetroGame({
               setSale(null);
               setDetailNode(null);
               setTip(
-                "Node dan kabel terhubung dijual. Harga beli dikembalikan penuh.",
+                "Node dijual seharga 50%. Kabel terhubung dikembalikan penuh.",
               );
             }}
           >
@@ -878,7 +885,7 @@ export default function MetroGame({
         </Dialog>
       )}
       {s.phase === "reward" && (
-        <Dialog title={`Minggu ${s.week} selesai`}>
+        <Dialog title={`Bulan ${s.month} selesai`}>
           <p>
             Profit: <b>{s.report?.profit} gold</b>
             <br />
@@ -886,26 +893,31 @@ export default function MetroGame({
             <br />
             Hasil bersih: <b>{s.report?.net} gold</b>
           </p>
+          <p>
+            Upgrade berlaku untuk seluruh jaringan. Kapasitas +2 menambah
+            maintenance 4 gold/kabel/bulan; kecepatan +15 menambah sekitar 1–2
+            gold/kabel/bulan.
+          </p>
           <p>Sudah masuk saldo. Saldo sekarang: {s.gold} gold.</p>
           <button
             className="primary"
             onClick={() => setS((v) => reward(v, "continue"))}
           >
-            Lanjut minggu berikutnya
+            Lanjut bulan berikutnya
           </button>
           <button
             className="secondary"
-            disabled={s.gold < 300}
+            disabled={s.gold < upgradeCost(s, "capacity")}
             onClick={() => setS((v) => reward(v, "capacity"))}
           >
-            +2 kapasitas · 300 gold
+            +2 kapasitas · {upgradeCost(s, "capacity")} gold
           </button>
           <button
             className="secondary"
-            disabled={s.gold < 250}
+            disabled={s.gold < upgradeCost(s, "speed")}
             onClick={() => setS((v) => reward(v, "speed"))}
           >
-            Tingkatkan kecepatan · 250 gold
+            Tingkatkan kecepatan · {upgradeCost(s, "speed")} gold
           </button>
         </Dialog>
       )}

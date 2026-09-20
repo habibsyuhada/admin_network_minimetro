@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   SITES,
+  changeCable,
+  cableChangeCost,
+  upgradeCost,
+  cableMaintenance,
   nodeService,
   moveTransit,
   sellTransit,
@@ -133,9 +137,9 @@ describe("point-to-point cable transport", () => {
     expect(connectionError(s, 0, 1, 2)).not.toBeNull();
     expect(removeCable(s, 1)).toBe(s);
   });
-  it("settles weekly gold and applies capacity/speed upgrades to cable types", () => {
+  it("settles monthly gold and applies capacity/speed upgrades to cable types", () => {
     let s = newMetro(42);
-    s.time = 34.9;
+    s.time = 44.9;
     s = metroTick(s);
     expect(s.queues.length).toBeGreaterThanOrEqual(4);
     s.time = 59.9;
@@ -150,8 +154,8 @@ describe("point-to-point cable transport", () => {
   });
   it("fails only after sustained overload and recovers when queues shrink", () => {
     let s = newMetro(42);
-    s.queues[0] = Array.from({ length: 8 }, () => ({ service: 1 }));
-    s.overload[0] = 19.8;
+    s.queues[0] = Array.from({ length: 10 }, () => ({ service: 1 }));
+    s.overload[0] = 24.8;
     s = metroTick(s);
     expect(s.phase).toBe("running");
     expect(metroTick({ ...s, queues: [[], [], []] }).overload[0]).toBeLessThan(
@@ -213,7 +217,7 @@ describe("player-built routers", () => {
     const s = placeRouter(initial, 200, 300);
     expect(initial.nodes).toHaveLength(3);
     expect(s.nodes[3]).toMatchObject({ x: 200, y: 300, shape: 3 });
-    expect(s.gold).toBe(850);
+    expect(s.gold).toBe(1450);
     expect(s.queues[3]).toEqual([]);
     expect(routerError({ ...s, gold: 0 }, 500, 500)).not.toBeNull();
   });
@@ -238,7 +242,7 @@ describe("player-built routers", () => {
       expect(s.queues[3]).toEqual([]);
       expect(s.queues.flat().some((p) => p.service === 3)).toBe(false);
     }
-    s.time = 34.9;
+    s.time = 44.9;
     s = metroTick(s);
     expect(s.nodes.length).toBeGreaterThanOrEqual(5);
     expect(s.nodes[3].shape).toBe(3);
@@ -259,23 +263,23 @@ describe("gold economy", () => {
       maintenanceUnits: 120000,
     };
     const paid = metroTick(before);
-    expect(paid.gold).toBe(1300);
+    expect(paid.gold).toBe(1900);
     expect(paid.report).toEqual({ profit: 500, maintenance: 200, net: 300 });
     expect(paid.phase).toBe("reward");
     expect(metroTick(paid)).toBe(paid);
     const next = reward(paid, "continue");
-    expect(next.gold).toBe(1300);
+    expect(next.gold).toBe(1900);
     expect(next.profit).toBe(0);
     expect(next.maintenanceUnits).toBe(0);
   });
   it("accrues running maintenance, retains it on sale, and charges only confirmed assets", () => {
     let s = connectCable(placeRouter(newMetro(42), 200, 300), 0, 0, 3);
-    expect(s.gold).toBe(750);
+    expect(s.gold).toBe(1350);
     expect(maintenanceRate(s)).toBe(50);
     s = steps(s, 120);
     expect(maintenanceDue(s)).toBe(10);
     const sold = removeCable(s, s.cables[0].id);
-    expect(sold.gold).toBe(850);
+    expect(sold.gold).toBe(1450);
     expect(sold.maintenanceUnits).toBe(s.maintenanceUnits);
     expect(maintenanceRate(sold)).toBe(30);
   });
@@ -285,8 +289,8 @@ describe("gold economy", () => {
     s.cables[0].progress = 0.999;
     s.cables[0].wait = 0;
     s = metroTick(s);
-    expect(s.profit).toBe(25);
-    expect(s.gold).toBe(900);
+    expect(s.profit).toBe(18);
+    expect(s.gold).toBe(1500);
     const poor = { ...s, gold: 99 };
     expect(connectCable(poor, 0, 1, 2)).toBe(poor);
     const rewardState = { ...s, gold: 299, phase: "reward" as const };
@@ -317,8 +321,8 @@ describe("switch specifications and random growth", () => {
     let s = placeRouter({ ...junctions(0, 1), gold: 5000 }, 200, 300, 4);
     expect(s.gold).toBe(4920);
     expect(maintenanceRate(s)).toBe(75);
-    expect(nodeBuffer(4)).toBe(10);
-    expect(nodeBuffer(3)).toBe(16);
+    expect(nodeBuffer(4)).toBe(16);
+    expect(nodeBuffer(3)).toBe(24);
     s = connectCable(
       connectCable(connectCable(connectCable(s, 0, 3, 0), 0, 3, 1), 0, 3, 2),
       1,
@@ -347,7 +351,7 @@ describe("switch specifications and random growth", () => {
     for (let seed = 0; seed < 1000; seed++) {
       const original = {
         ...newMetro(Math.imul(seed, 2654435761) >>> 0),
-        time: 34.9,
+        time: 44.9,
       };
       const s = metroTick(original);
       const added = s.nodes.slice(3);
@@ -382,7 +386,7 @@ describe("switch specifications and random growth", () => {
   });
   it("caps automatic population independently of player nodes", () => {
     let s = placeRouter(
-      { ...newMetro(42), spawned: MAX_ENDPOINTS - 1, time: 34.9 },
+      { ...newMetro(42), spawned: MAX_ENDPOINTS - 1, time: 44.9 },
       200,
       300,
       4,
@@ -390,7 +394,7 @@ describe("switch specifications and random growth", () => {
     s = metroTick(s);
     expect(s.spawned).toBe(MAX_ENDPOINTS);
     expect(s.nodes).toHaveLength(5);
-    const next = metroTick({ ...s, time: 69.9, week: 2 });
+    const next = metroTick({ ...s, time: 89.9, month: 2 });
     expect(next.nodes).toHaveLength(5);
   });
 });
@@ -426,9 +430,9 @@ describe("moving and selling transit nodes", () => {
     const before = count(s),
       gold = s.gold,
       serial = s.nodes[4].serial;
-    expect(nodeRefund(s, 3)).toBe(450);
+    expect(nodeRefund(s, 3)).toBe(375);
     const sold = sellTransit(s, 3);
-    expect(sold.gold).toBe(gold + 450);
+    expect(sold.gold).toBe(gold + 375);
     expect(count(sold)).toBe(before);
     expect(sold.profit).toBe(s.profit);
     expect(sold.nodes[3].serial).toBe(serial);
@@ -453,14 +457,14 @@ describe("moving and selling transit nodes", () => {
     const sold = sellTransit(s, 3);
     expect(count(sold)).toBe(1);
     expect(sold.queues[2]).toHaveLength(1);
-    expect(sold.gold).toBe(1000);
+    expect(sold.gold).toBe(1525);
   });
   it("assigns all 16 reproducible visual client variants without changing the PC service type", () => {
     const variants = new Set<number>();
     for (let i = 0; i < 1000; i++) {
       const s = metroTick({
         ...newMetro(Math.imul(i, 2654435761) >>> 0),
-        time: 34.9,
+        time: 44.9,
       });
       for (const n of s.nodes.slice(3))
         if (n.shape === 0) {
@@ -515,4 +519,38 @@ it("services generate replies for the distinct active client icons", () => {
     for (const p of [...s.queues[1], ...s.queues[2]]) icons.add(p.service);
   }
   expect([...icons].sort()).toEqual([11, 12]);
+});
+
+describe("cable replacement", () => {
+  it("charges only the difference and preserves the link and moving cargo", () => {
+    let s = connectCable(newMetro(42), 0, 0, 1);
+    s.cables[0].progress = 0.5;
+    s.cables[0].cargo = [{ service: 1 }];
+    s.maintenanceUnits = 321;
+    const changed = changeCable(s, 1, 1);
+    expect(cableChangeCost(s, 1, 1)).toBe(100);
+    expect(changed.gold).toBe(s.gold - 100);
+    expect(changed.cables[0]).toEqual({ ...s.cables[0], kind: 1 });
+    expect(changed.maintenanceUnits).toBe(321);
+    expect(changeCable({ ...s, gold: 99 }, 1, 1).gold).toBe(99);
+    expect(changeCable(s, 1, 0)).toBe(s);
+  });
+  it("returns excess cargo on a smaller replacement and never invents profit", () => {
+    const s = connectCable(newMetro(42), 2, 0, 1);
+    s.cables[0].cargo = Array.from({ length: 8 }, () => ({ service: 1 }));
+    const changed = changeCable(s, 1, 1);
+    expect(changed.gold).toBe(s.gold + 50);
+    expect(changed.cables[0].cargo).toHaveLength(3);
+    expect(changed.queues[0]).toHaveLength(5);
+    expect(count(changed)).toBe(count(s));
+    expect(changed.profit).toBe(0);
+    expect(removeCable(changed, 1).gold).toBe(newMetro(42).gold);
+  });
+  it("scales network upgrades and their maintenance without repricing accrued costs", () => {
+    const s = { ...newMetro(42), phase: "reward" as const };
+    const upgraded = reward(s, "capacity");
+    expect(upgradeCost(upgraded, "capacity")).toBe(600);
+    expect(cableMaintenance(upgraded, 0)).toBe(24);
+    expect(upgraded.month).toBe(2);
+  });
 });

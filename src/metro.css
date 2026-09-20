@@ -918,3 +918,41 @@
   flex-shrink: 0;
   padding: 4px;
 }
+
+.node-cable-card {
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #35514a;
+  border-radius: 12px;
+}
+.cable-peer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cable-peer svg {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+.cable-peer small {
+  font-size: 11px;
+  color: #a2bfae;
+}
+.cable-type-picker {
+  margin: 12px 0;
+}
+.cable-type-picker summary {
+  cursor: pointer;
+  padding: 10px 0;
+  color: #f2d779;
+}
+.cable-type-picker button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 8px 0;
+}
+.cable-type-picker p {
+  font-size: 12px;
+}

@@ -31,7 +31,7 @@ test("pause permits topology edits and speed scales simulation time", async ({
   await page
     .getByRole("button", { name: "Hapus kabel 1", exact: true })
     .click();
-  await expect(page.getByTestId("gold")).toHaveText("820 gold");
+  await expect(page.getByTestId("gold")).toHaveText("1420 gold");
   await page.getByRole("button", { name: "Kembali ke peta" }).click();
   await page.clock.runFor(2000);
   await expect(page.getByTestId("flow-clock")).toHaveText("00:01");
@@ -63,7 +63,7 @@ test("full switch reports its identity and deleting a cable frees a port", async
   await expect(page.getByRole("alert")).toContainText(
     "Port Switch 4 penuh (4/4)",
   );
-  await expect(page.getByTestId("gold")).toHaveText("370 gold");
+  await expect(page.getByTestId("gold")).toHaveText("970 gold");
   const paths = await page
     .locator("[data-route]")
     .evaluateAll((es) => es.map((e) => e.getAttribute("d")));
@@ -78,7 +78,7 @@ test("full switch reports its identity and deleting a cable frees a port", async
   await dragCable(page, 3, 4);
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByTestId("cable-count")).toHaveText("4 kabel aktif");
-  await expect(page.getByTestId("gold")).toHaveText("370 gold");
+  await expect(page.getByTestId("gold")).toHaveText("970 gold");
   await page.screenshot({
     path: `test-results/parallel-${test.info().project.name}.png`,
     fullPage: true,

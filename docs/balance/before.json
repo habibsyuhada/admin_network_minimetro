@@ -1,0 +1,654 @@
+[
+  {
+    "seed": 42,
+    "strategy": "cheap",
+    "month": 4,
+    "time": 200.1,
+    "phase": "over",
+    "gold": 1603,
+    "delivered": 121,
+    "waiting": 45,
+    "peak": 27,
+    "maxWait": 20.000000000000014,
+    "nodes": 8,
+    "routers": 3,
+    "bottleneck": {
+      "x": 200,
+      "y": 280,
+      "shape": 3,
+      "serial": 4
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 801,
+        "profit": 450,
+        "maintenance": 99,
+        "net": 351,
+        "delivered": 18,
+        "nodes": 4,
+        "waiting": 4,
+        "peak": 5,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 1027,
+        "profit": 850,
+        "maintenance": 174,
+        "net": 676,
+        "delivered": 52,
+        "nodes": 6,
+        "waiting": 13,
+        "peak": 12,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 1603,
+        "profit": 1275,
+        "maintenance": 249,
+        "net": 1026,
+        "delivered": 103,
+        "nodes": 8,
+        "waiting": 34,
+        "peak": 19,
+        "maxWait": 0.4
+      }
+    ]
+  },
+  {
+    "seed": 123,
+    "strategy": "cheap",
+    "month": 4,
+    "time": 198.7,
+    "phase": "over",
+    "gold": 1869,
+    "delivered": 159,
+    "waiting": 54,
+    "peak": 27,
+    "maxWait": 20.000000000000014,
+    "nodes": 11,
+    "routers": 3,
+    "bottleneck": {
+      "x": 519.729985413266,
+      "y": 456.2059142068029,
+      "shape": 3,
+      "serial": 7
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 826,
+        "profit": 475,
+        "maintenance": 99,
+        "net": 376,
+        "delivered": 19,
+        "nodes": 4,
+        "waiting": 6,
+        "peak": 6,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 842,
+        "profit": 850,
+        "maintenance": 184,
+        "net": 666,
+        "delivered": 53,
+        "nodes": 8,
+        "waiting": 29,
+        "peak": 12,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 1869,
+        "profit": 1850,
+        "maintenance": 273,
+        "net": 1577,
+        "delivered": 127,
+        "nodes": 11,
+        "waiting": 53,
+        "peak": 22,
+        "maxWait": 7.899999999999988
+      }
+    ]
+  },
+  {
+    "seed": 987,
+    "strategy": "cheap",
+    "month": 3,
+    "time": 177.3,
+    "phase": "over",
+    "gold": 361,
+    "delivered": 105,
+    "waiting": 56,
+    "peak": 28,
+    "maxWait": 20.000000000000014,
+    "nodes": 10,
+    "routers": 3,
+    "bottleneck": {
+      "x": 199.82409159652886,
+      "y": 853.4955735877156,
+      "shape": 3,
+      "serial": 8
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 801,
+        "profit": 450,
+        "maintenance": 99,
+        "net": 351,
+        "delivered": 18,
+        "nodes": 4,
+        "waiting": 10,
+        "peak": 9,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 911,
+        "profit": 850,
+        "maintenance": 190,
+        "net": 660,
+        "delivered": 52,
+        "nodes": 7,
+        "waiting": 31,
+        "peak": 13,
+        "maxWait": 0
+      }
+    ]
+  },
+  {
+    "seed": 2026,
+    "strategy": "cheap",
+    "month": 4,
+    "time": 199.9,
+    "phase": "over",
+    "gold": 1471,
+    "delivered": 132,
+    "waiting": 57,
+    "peak": 21,
+    "maxWait": 20.000000000000014,
+    "nodes": 10,
+    "routers": 3,
+    "bottleneck": {
+      "shape": 1,
+      "x": 580.2538023330271,
+      "y": 969.7267837263644,
+      "serial": 5
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 951,
+        "profit": 600,
+        "maintenance": 99,
+        "net": 501,
+        "delivered": 24,
+        "nodes": 4,
+        "waiting": 7,
+        "peak": 7,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 865,
+        "profit": 800,
+        "maintenance": 186,
+        "net": 614,
+        "delivered": 56,
+        "nodes": 6,
+        "waiting": 20,
+        "peak": 11,
+        "maxWait": 2.400000000000001
+      },
+      {
+        "month": 3,
+        "gold": 1471,
+        "profit": 1275,
+        "maintenance": 269,
+        "net": 1006,
+        "delivered": 107,
+        "nodes": 10,
+        "waiting": 41,
+        "peak": 16,
+        "maxWait": 11.399999999999975
+      }
+    ]
+  },
+  {
+    "seed": 45678,
+    "strategy": "cheap",
+    "month": 3,
+    "time": 131.6,
+    "phase": "over",
+    "gold": 1006,
+    "delivered": 69,
+    "waiting": 31,
+    "peak": 11,
+    "maxWait": 20.099999999999998,
+    "nodes": 8,
+    "routers": 2,
+    "bottleneck": {
+      "shape": 2,
+      "x": 328.8667079247534,
+      "y": 990.3782967664301,
+      "serial": 5
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 776,
+        "profit": 425,
+        "maintenance": 99,
+        "net": 326,
+        "delivered": 17,
+        "nodes": 4,
+        "waiting": 15,
+        "peak": 8,
+        "maxWait": 0.1
+      },
+      {
+        "month": 2,
+        "gold": 1006,
+        "profit": 1075,
+        "maintenance": 195,
+        "net": 880,
+        "delivered": 60,
+        "nodes": 8,
+        "waiting": 26,
+        "peak": 11,
+        "maxWait": 10.799999999999978
+      }
+    ]
+  },
+  {
+    "seed": 42,
+    "strategy": "adaptive",
+    "month": 4,
+    "time": 213.7,
+    "phase": "over",
+    "gold": 292,
+    "delivered": 132,
+    "waiting": 40,
+    "peak": 32,
+    "maxWait": 20.000000000000014,
+    "nodes": 9,
+    "routers": 4,
+    "bottleneck": {
+      "x": 200,
+      "y": 280,
+      "shape": 3,
+      "serial": 4
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 695,
+        "profit": 450,
+        "maintenance": 105,
+        "net": 345,
+        "delivered": 18,
+        "nodes": 4,
+        "waiting": 5,
+        "peak": 6,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 715,
+        "profit": 825,
+        "maintenance": 205,
+        "net": 620,
+        "delivered": 51,
+        "nodes": 6,
+        "waiting": 14,
+        "peak": 10,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 1142,
+        "profit": 1425,
+        "maintenance": 298,
+        "net": 1127,
+        "delivered": 108,
+        "nodes": 8,
+        "waiting": 40,
+        "peak": 17,
+        "maxWait": 0.2
+      }
+    ]
+  },
+  {
+    "seed": 123,
+    "strategy": "adaptive",
+    "month": 4,
+    "time": 234.9,
+    "phase": "over",
+    "gold": 212,
+    "delivered": 237,
+    "waiting": 53,
+    "peak": 27,
+    "maxWait": 20.000000000000014,
+    "nodes": 12,
+    "routers": 4,
+    "bottleneck": {
+      "x": 42.75479233294062,
+      "y": 677.7204741237254,
+      "shape": 3,
+      "serial": 11
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 745,
+        "profit": 500,
+        "maintenance": 105,
+        "net": 395,
+        "delivered": 20,
+        "nodes": 4,
+        "waiting": 6,
+        "peak": 6,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 711,
+        "profit": 875,
+        "maintenance": 209,
+        "net": 666,
+        "delivered": 55,
+        "nodes": 8,
+        "waiting": 34,
+        "peak": 12,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 1562,
+        "profit": 1925,
+        "maintenance": 374,
+        "net": 1551,
+        "delivered": 132,
+        "nodes": 11,
+        "waiting": 48,
+        "peak": 23,
+        "maxWait": 3.600000000000002
+      }
+    ]
+  },
+  {
+    "seed": 987,
+    "strategy": "adaptive",
+    "month": 4,
+    "time": 207.7,
+    "phase": "over",
+    "gold": 554,
+    "delivered": 158,
+    "waiting": 70,
+    "peak": 28,
+    "maxWait": 20.000000000000014,
+    "nodes": 10,
+    "routers": 4,
+    "bottleneck": {
+      "x": 199.82409159652886,
+      "y": 853.4955735877156,
+      "shape": 3,
+      "serial": 8
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 695,
+        "profit": 450,
+        "maintenance": 105,
+        "net": 345,
+        "delivered": 18,
+        "nodes": 4,
+        "waiting": 8,
+        "peak": 9,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 753,
+        "profit": 875,
+        "maintenance": 217,
+        "net": 658,
+        "delivered": 53,
+        "nodes": 7,
+        "waiting": 28,
+        "peak": 13,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 1154,
+        "profit": 1450,
+        "maintenance": 349,
+        "net": 1101,
+        "delivered": 111,
+        "nodes": 10,
+        "waiting": 63,
+        "peak": 20,
+        "maxWait": 6.199999999999994
+      }
+    ]
+  },
+  {
+    "seed": 2026,
+    "strategy": "adaptive",
+    "month": 4,
+    "time": 225.9,
+    "phase": "over",
+    "gold": 54,
+    "delivered": 171,
+    "waiting": 90,
+    "peak": 36,
+    "maxWait": 20.000000000000014,
+    "nodes": 13,
+    "routers": 4,
+    "bottleneck": {
+      "x": 200,
+      "y": 280,
+      "shape": 3,
+      "serial": 4
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 845,
+        "profit": 600,
+        "maintenance": 105,
+        "net": 495,
+        "delivered": 24,
+        "nodes": 4,
+        "waiting": 7,
+        "peak": 7,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 761,
+        "profit": 825,
+        "maintenance": 209,
+        "net": 616,
+        "delivered": 57,
+        "nodes": 6,
+        "waiting": 19,
+        "peak": 12,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 954,
+        "profit": 1275,
+        "maintenance": 332,
+        "net": 943,
+        "delivered": 108,
+        "nodes": 10,
+        "waiting": 32,
+        "peak": 20,
+        "maxWait": 0.4
+      }
+    ]
+  },
+  {
+    "seed": 45678,
+    "strategy": "adaptive",
+    "month": 12,
+    "time": 720,
+    "phase": "reward",
+    "gold": 52894,
+    "delivered": 2907,
+    "waiting": 82,
+    "peak": 34,
+    "maxWait": 13.399999999999968,
+    "nodes": 28,
+    "routers": 7,
+    "bottleneck": {
+      "x": 484.0580085899063,
+      "y": 682.5026059150696,
+      "shape": 3,
+      "serial": 11
+    },
+    "reports": [
+      {
+        "month": 1,
+        "gold": 670,
+        "profit": 425,
+        "maintenance": 105,
+        "net": 320,
+        "delivered": 17,
+        "nodes": 4,
+        "waiting": 15,
+        "peak": 6,
+        "maxWait": 0
+      },
+      {
+        "month": 2,
+        "gold": 978,
+        "profit": 1125,
+        "maintenance": 217,
+        "net": 908,
+        "delivered": 62,
+        "nodes": 8,
+        "waiting": 32,
+        "peak": 15,
+        "maxWait": 0
+      },
+      {
+        "month": 3,
+        "gold": 1358,
+        "profit": 1650,
+        "maintenance": 370,
+        "net": 1280,
+        "delivered": 128,
+        "nodes": 10,
+        "waiting": 40,
+        "peak": 21,
+        "maxWait": 0.6
+      },
+      {
+        "month": 4,
+        "gold": 2944,
+        "profit": 2750,
+        "maintenance": 464,
+        "net": 2286,
+        "delivered": 238,
+        "nodes": 12,
+        "waiting": 49,
+        "peak": 21,
+        "maxWait": 6.799999999999992
+      },
+      {
+        "month": 5,
+        "gold": 4660,
+        "profit": 4625,
+        "maintenance": 709,
+        "net": 3916,
+        "delivered": 423,
+        "nodes": 15,
+        "waiting": 47,
+        "peak": 31,
+        "maxWait": 6.799999999999992
+      },
+      {
+        "month": 6,
+        "gold": 8087,
+        "profit": 5250,
+        "maintenance": 873,
+        "net": 4377,
+        "delivered": 633,
+        "nodes": 17,
+        "waiting": 73,
+        "peak": 32,
+        "maxWait": 13.399999999999968
+      },
+      {
+        "month": 7,
+        "gold": 13531,
+        "profit": 7825,
+        "maintenance": 1031,
+        "net": 6794,
+        "delivered": 946,
+        "nodes": 19,
+        "waiting": 66,
+        "peak": 32,
+        "maxWait": 13.399999999999968
+      },
+      {
+        "month": 8,
+        "gold": 19891,
+        "profit": 8150,
+        "maintenance": 1140,
+        "net": 7010,
+        "delivered": 1272,
+        "nodes": 20,
+        "waiting": 85,
+        "peak": 34,
+        "maxWait": 13.399999999999968
+      },
+      {
+        "month": 9,
+        "gold": 27854,
+        "profit": 9600,
+        "maintenance": 1187,
+        "net": 8413,
+        "delivered": 1656,
+        "nodes": 22,
+        "waiting": 68,
+        "peak": 34,
+        "maxWait": 13.399999999999968
+      },
+      {
+        "month": 10,
+        "gold": 35469,
+        "profit": 9550,
+        "maintenance": 1235,
+        "net": 8315,
+        "delivered": 2038,
+        "nodes": 25,
+        "waiting": 73,
+        "peak": 34,
+        "maxWait": 13.399999999999968
+      },
+      {
+        "month": 11,
+        "gold": 43638,
+        "profit": 10450,
+        "maintenance": 1331,
+        "net": 9119,
+        "delivered": 2456,
+        "nodes": 26,
+        "waiting": 74,
+        "peak": 34,
+        "maxWait": 13.399999999999968
+      }
+    ]
+  }
+]

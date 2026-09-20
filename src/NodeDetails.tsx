@@ -1,5 +1,10 @@
 import {
   CLIENT_VARIANTS,
+  cableChangeCost,
+  cableMaintenance,
+  type CableKind,
+  cableCapacity,
+  cableSpeed,
   nodePorts,
   nodeService,
   packetKind,
@@ -25,11 +30,13 @@ export default function NodeDetails({
   node,
   onSelect,
   onRemoveCable,
+  onChangeCable,
 }: {
   state: Metro;
   node: number | null;
   onSelect: (id: number | null) => void;
   onRemoveCable: (id: number) => void;
+  onChangeCable: (id: number, kind: CableKind) => void;
 }) {
   const nodes = state.nodes;
   if (node === null)
@@ -92,38 +99,88 @@ export default function NodeDetails({
         <p>
           {spec.name} buatanmu.{" "}
           {state.cables.filter((c) => c.stops.includes(node)).length}/
-          {spec.ports} port terpakai. Maintenance {spec.maintenance}{" "}
-          gold/minggu. Kapasitas antrean {nodeBuffer(nodes[node].shape)} paket.
-          Paket menunggu pengangkut berikutnya; bukan tujuan akhir.
+          {spec.ports} port terpakai. Maintenance {spec.maintenance} gold/bulan.
+          Kapasitas antrean {nodeBuffer(nodes[node].shape)} paket. Paket
+          menunggu pengangkut berikutnya; bukan tujuan akhir.
         </p>
       )}
       <h3>Kabel terhubung</h3>
       <div className="node-cables">
         {state.cables
           .filter((c) => c.stops.includes(node))
-          .map((c) => (
-            <div key={c.id}>
-              <span>
-                <b>
-                  {CABLE_TYPES[c.kind].name} #{c.id}
-                </b>
-                <small>
-                  Ke{" "}
-                  {nodeName(
-                    c.stops.find((id) => id !== node)!,
-                    nodes,
-                  )}
-                </small>
-                <small>Refund {CABLE_TYPES[c.kind].cost} gold</small>
-              </span>
-              <button
-                aria-label={`Hapus kabel ${c.id}`}
-                onClick={() => onRemoveCable(c.id)}
+          .map((c) => {
+            const peer = c.stops.find((id) => id !== node)!;
+            return (
+              <article
+                className="node-cable-card"
+                key={c.id}
+                data-cable-detail={c.id}
               >
-                Hapus
-              </button>
-            </div>
-          ))}
+                <div className="cable-peer">
+                  <svg
+                    viewBox="-30 -30 60 60"
+                    role="img"
+                    aria-label={nodeName(peer, nodes)}
+                  >
+                    <DeviceGlyph
+                      kind={nodes[peer].shape}
+                      variant={nodes[peer].clientVariant}
+                    />
+                  </svg>
+                  <span>
+                    <b>
+                      {CABLE_TYPES[c.kind].name} #{c.id}
+                    </b>
+                    <small>Ke {nodeName(peer, nodes)}</small>
+                    <small>
+                      {cableCapacity(state, c.kind)} paket · kecepatan{" "}
+                      {cableSpeed(state, c.kind)} · maintenance{" "}
+                      {cableMaintenance(state, c.kind)}/bulan
+                    </small>
+                  </span>
+                </div>
+                <details className="cable-type-picker">
+                  <summary>Ganti tipe kabel</summary>
+                  <p>
+                    Bayar selisih harga; selisih tipe yang lebih murah
+                    dikembalikan. Kelebihan muatan kembali ke antrean asal.
+                  </p>
+                  {CABLE_TYPES.map((type, index) => {
+                    const kind = index as CableKind;
+                    if (kind === c.kind) return null;
+                    const cost = cableChangeCost(state, c.id, kind);
+                    return (
+                      <button
+                        key={kind}
+                        disabled={cost > state.gold}
+                        onClick={() => onChangeCable(c.id, kind)}
+                        aria-label={`Ganti kabel ${c.id} ke ${type.name}`}
+                      >
+                        <b style={{ color: type.color }}>{type.name}</b>
+                        <small>
+                          {cableCapacity(state, kind)} paket · kecepatan{" "}
+                          {cableSpeed(state, kind)} ·{" "}
+                          {cableMaintenance(state, kind)}/bulan
+                        </small>
+                        <small>
+                          {cost > 0
+                            ? `Bayar ${cost} gold`
+                            : `Kembali ${-cost} gold`}
+                          {cost > state.gold ? " · Gold kurang" : ""}
+                        </small>
+                      </button>
+                    );
+                  })}
+                </details>
+                <button
+                  aria-label={`Hapus kabel ${c.id}`}
+                  onClick={() => onRemoveCable(c.id)}
+                >
+                  Hapus · refund {CABLE_TYPES[c.kind].cost} gold
+                </button>
+              </article>
+            );
+          })}
         {!state.cables.some((c) => c.stops.includes(node)) && (
           <p>Belum ada kabel terhubung.</p>
         )}

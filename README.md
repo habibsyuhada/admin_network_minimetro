@@ -16,7 +16,7 @@ Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangka
 | Fiber | Oranye | 3 paket | Cepat | 200 |
 | Backbone | Ungu | 8 paket | Lambat | 250 |
 
-Modal awal 1.000 gold. Profit 25 gold per paket yang sampai ke tujuan akhir, dibayarkan setiap menit setelah dikurangi maintenance. Maintenance per minggu: Ethernet 20, Fiber 35, Backbone 40, router 30 dan switch 15 gold; dihitung per tick sesuai lama aktif, lalu dibulatkan ke atas satu gold saat settlement. Saldo negatif saat settlement mengakhiri sesi. Upgrade mingguan opsional: +2 kapasitas seharga 300 gold atau kecepatan seharga 250 gold. Gelombang perangkat muncul setiap 35 detik, maksimal 36 node otomatis. Ambang antrean PC/layanan 8, switch 10, router 16 paket; penuh selama 20 detik mengakhiri permainan.
+Modal awal 1.600 gold. Profit 18 gold per paket yang sampai ke tujuan akhir, dibayarkan setiap menit setelah dikurangi maintenance. Maintenance per bulan: Ethernet 20, Fiber 35, Backbone 40, router 30 dan switch 15 gold; dihitung per tick sesuai lama aktif, lalu dibulatkan ke atas satu gold saat settlement. Saldo negatif saat settlement mengakhiri sesi. Satu bulan berlangsung 60 detik simulasi. Upgrade bulanan opsional: +2 kapasitas mulai 300 gold (naik 300 setiap pembelian kapasitas) atau +15 kecepatan mulai 250 gold (naik 225 setiap pembelian kecepatan). Maintenance setiap kabel bertambah ceil(2 x bonus kapasitas + bonus kecepatan / 10) gold/bulan; biaya yang sudah berjalan tidak dihitung ulang. Gelombang perangkat muncul setiap 45 detik, maksimal 36 node otomatis. Ambang antrean PC/layanan 10, switch 16, router 24 paket; penuh selama 25 detik mengakhiri permainan.
 
 **Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Sebanyak 100% harga beli dikembalikan; maintenance yang sudah berjalan tetap ditagih; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
 
@@ -58,10 +58,10 @@ Node aktif dan posisi router disimpan dalam state sesi, sehingga penambahan rout
 
 Setiap kemunculan memilih gelombang PC (50%) atau satu layanan (50%). Dalam gelombang PC, jumlahnya 1 (60%), 2 (30%), atau 3 (10%). Node layanan dipilih merata dari tujuh jenis, termasuk yang sudah ada. Client dalam satu gelombang ditempatkan 85-130 unit dari client pertama, dengan jarak minimal 75 unit satu sama lain. Kelompok baru tetap berjarak minimal 130 unit dari endpoint lama. Posisi acak menghindari node lain; bila area penuh, jumlah aktual dapat lebih kecil. Batas 36 hanya berlaku untuk node otomatis, bukan router/switch buatan pemain.
 
-| Perangkat | Harga | Maintenance/minggu | Port kabel | Ambang antrean | Bongkar-muat |
+| Perangkat | Harga | Maintenance/bulan | Port kabel | Ambang antrean | Bongkar-muat |
 |---|---:|---:|---:|---:|---:|
-| Router | 150 | 30 | 8 | 16 | 0,4 detik |
-| Switch | 80 | 15 | 4 | 10 | 0,2 detik saat tiba |
+| Router | 150 | 30 | 8 | 24 | 0,4 detik |
+| Switch | 80 | 15 | 4 | 16 | 0,2 detik saat tiba |
 
 Client dan layanan (YouTube, Facebook, dan lainnya) hanya memiliki 1 port. Router tetap 8 port dan switch 4 port. Setiap kabel (termasuk kabel paralel) memakai satu port pada masing-masing ujung. Menghapus kabel membebaskan port. Keduanya memakai pratinjau geser dengan OK/Cancel dan bukan sumber atau tujuan paket.
 
@@ -69,7 +69,7 @@ Client dan layanan (YouTube, Facebook, dan lainnya) hanya memiliki 1 port. Route
 
 Buka detail router/switch lalu pilih **Pindahkan**. Geser pratinjau, kemudian **OK** atau **Cancel**. Pemindahan gratis; kabel dan pengangkut mengikuti posisi baru tanpa kehilangan muatan. Label node tetap sama setelah node lain dijual.
 
-**Jual node** meminta konfirmasi dan mengembalikan 100% harga node beserta seluruh kabel yang terhubung. Paket tersisa dipindahkan ke node lain tanpa dihitung sebagai pengiriman berhasil; maintenance yang sudah berjalan tetap ditagih. PC dan layanan otomatis tidak dapat dijual.
+**Jual node** meminta konfirmasi dan mengembalikan 50% harga node ditambah 100% harga kabel yang terhubung. Paket tersisa dipindahkan ke node lain tanpa dihitung sebagai pengiriman berhasil; maintenance yang sudah berjalan tetap ditagih. PC dan layanan otomatis tidak dapat dijual.
 
 Client memiliki 16 variasi ikon: desktop, laptop, ponsel, tablet, konsol, Smart TV, printer, CCTV, jam pintar, speaker pintar, kios, headset VR, handheld, mini PC, workstation, dan terminal kasir. Variasi dipilih acak saat PC muncul, dan paket tujuan client mengikuti ikon masing-masing jenis perangkat. Galeri tersedia di Panduan.
 
@@ -78,3 +78,9 @@ Client memiliki 16 variasi ikon: desktop, laptop, ponsel, tablet, konsol, Smart 
 Tombol Jeda/Lanjut menghentikan atau menjalankan simulasi tanpa menutup peta. Saat dijeda, pemain tetap dapat membuat kabel, membeli/memindahkan/menjual router atau switch, dan memeriksa node. Pengangkut, antrean, kemunculan node, overload, serta maintenance tidak berkembang selama jeda. Tombol kecepatan berputar 1x, 2x, 3x untuk seluruh waktu simulasi. Menutup detail atau pratinjau tidak membatalkan jeda manual.
 
 Detail node menampilkan kabel yang terhubung, perangkat di ujung lainnya, dan refund harga penuh. Tombol Hapus hanya menghapus kabel tersebut dan mengembalikan muatannya. Kegagalan koneksi menampilkan pesan error di dekat peta; port penuh menyebut nama node, kapasitas port, dan petunjuk membebaskan port melalui detail node.
+
+## Mengganti tipe kabel
+
+Detail node memperlihatkan ikon dan nama perangkat pada ujung kabel. Buka **Ganti tipe kabel**, lalu pilih jenis pengganti. Biaya adalah selisih harga kabel; pindah ke tipe lebih murah mengembalikan selisihnya. Sambungan, ID kabel, dan posisi pengangkut dipertahankan tanpa memerlukan port tambahan. Jika kapasitas baru lebih kecil, kelebihan muatan kembali ke antrean asal perjalanan. Maintenance berikutnya mengikuti tipe baru.
+
+Jual router mengembalikan 75 gold, jual switch 40 gold. Kabel yang ikut dilepas tetap dikembalikan penuh. Lihat [laporan keseimbangan](BALANCE_REPORT.md) untuk hasil pengujian 12 bulan dan batas interpretasinya. Jalankan `node scripts/balance.mjs` untuk mengulang simulasi, atau `node scripts/play-season.mjs` saat server lokal aktif untuk memainkan strategi yang sama melalui browser.

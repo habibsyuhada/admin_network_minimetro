@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Network,
 } from "lucide-react";
+import { CLIENT_VARIANTS } from "./game/metro";
 import MetroGame from "./MetroGame";
 import Dialog from "./Dialog";
 import FullscreenButton from "./FullscreenButton";
@@ -267,6 +268,20 @@ export default function GameShell() {
               </div>
             ))}
           </div>
+          <details className="client-catalog">
+            <summary>16 variasi client</summary>
+            <div className="client-gallery">
+              {CLIENT_VARIANTS.map((name, variant) => (
+                <div key={name}>
+                  <svg viewBox="-30 -30 60 60">
+                    <DeviceGlyph kind={0} variant={variant} />
+                  </svg>
+                  <span>{name}</span>
+                </div>
+              ))}
+            </div>
+            <p>Semua variasi tetap menerima paket berikon PC.</p>
+          </details>
           <ol className="handbook">
             <li>
               Pilih Ethernet, Fiber, atau Backbone. Tarik satu kabel antara dua
@@ -283,7 +298,7 @@ export default function GameShell() {
               gold. Router muncul sebagai pratinjau: geser, lalu OK atau Cancel.
               Setiap paket terkirim memberi profit 25 gold. Tiap menit, profit
               dikurangi maintenance masuk ke saldo. Penjualan kabel
-              mengembalikan 50% harganya.
+              mengembalikan 100% harganya.
             </li>
             <li>
               Antrean penuh memicu peringatan: PC/layanan 8, switch 10, router

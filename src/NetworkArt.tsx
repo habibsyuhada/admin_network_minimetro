@@ -37,9 +37,11 @@ export const DEVICE_COLORS = [
 export function DeviceGlyph({
   kind,
   compact = false,
+  variant = 0,
 }: {
   kind: number;
   compact?: boolean;
+  variant?: number;
 }) {
   const color = DEVICE_COLORS[kind];
   return (
@@ -64,10 +66,7 @@ export function DeviceGlyph({
         />
       )}
       {kind === 0 ? (
-        <>
-          <rect x="-15" y="-13" width="30" height="21" rx="3" fill="#203c35" />
-          <path d="M-8 15H8M0 8V15M-10 -7H0M-10 -2H6" />
-        </>
+        <ClientGlyph variant={variant} />
       ) : kind === 3 ? (
         <>
           <rect x="-17" y="-10" width="34" height="23" rx="5" fill="#3c3724" />
@@ -148,4 +147,132 @@ export function DeviceGlyph({
       )}
     </g>
   );
+}
+
+function ClientGlyph({ variant }: { variant: number }) {
+  switch (variant) {
+    case 1:
+      return (
+        <>
+          <rect x="-14" y="-13" width="28" height="19" rx="2" />
+          <path d="M-14 6L-19 13H19L14 6ZM-4 10H4" />
+        </>
+      );
+    case 2:
+      return (
+        <>
+          <rect x="-9" y="-18" width="18" height="36" rx="4" />
+          <path d="M-3 -13H3M-2 13H2" />
+        </>
+      );
+    case 3:
+      return (
+        <>
+          <rect x="-14" y="-18" width="28" height="36" rx="4" />
+          <path d="M-8 -12H8V10H-8ZM-2 14H2" />
+        </>
+      );
+    case 4:
+      return (
+        <>
+          <path d="M-10 -8H10Q17 -8 19 10Q18 17 9 8H-9Q-18 17 -19 10Q-17 -8 -10 -8Z" />
+          <path d="M-10 -3V5M-14 1H-6" />
+          <circle cx="10" cy="-1" r="1.5" />
+          <circle cx="14" cy="3" r="1.5" />
+        </>
+      );
+    case 5:
+      return (
+        <>
+          <rect x="-18" y="-13" width="36" height="25" rx="2" />
+          <path d="M-11 12L-15 17M11 12L15 17M-4 -7L6 -1L-4 5Z" />
+        </>
+      );
+    case 6:
+      return (
+        <>
+          <path d="M-10 -6V-17H10V-6M-11 8H-17V-6H17V8H11M-10 3H10V17H-10ZM-5 8H5M-5 12H5" />
+          <circle cx="12" cy="-1" r="1" />
+        </>
+      );
+    case 7:
+      return (
+        <>
+          <path d="M-16 -12H7L16 -4L11 6L-17 -2ZM-4 3V13H13M-12 -15H9" />
+          <circle cx="9" cy="-1" r="2" />
+        </>
+      );
+    case 8:
+      return (
+        <>
+          <path d="M-7 -9L-5 -19H5L7 -9M-7 9L-5 19H5L7 9" />
+          <rect x="-11" y="-10" width="22" height="20" rx="6" />
+          <path d="M0 -5V0L4 3" />
+        </>
+      );
+    case 9:
+      return (
+        <>
+          <rect x="-11" y="-17" width="22" height="34" rx="9" />
+          <ellipse cy="-10" rx="7" ry="3" />
+          <path d="M-6 0H6M-6 5H6M-5 10H5" />
+        </>
+      );
+    case 10:
+      return (
+        <>
+          <path d="M-11 -18H11V7H-11ZM-7 7L-11 18H11L7 7M-6 -12H6V0H-6" />
+        </>
+      );
+    case 11:
+      return (
+        <>
+          <rect x="-18" y="-10" width="36" height="22" rx="8" />
+          <path d="M-10 12L-5 5H5L10 12M-18 -4L-22 -8M18 -4L22 -8" />
+          <circle cx="-8" cy="-2" r="4" />
+          <circle cx="8" cy="-2" r="4" />
+        </>
+      );
+    case 12:
+      return (
+        <>
+          <rect x="-20" y="-12" width="40" height="24" rx="8" />
+          <rect x="-10" y="-8" width="20" height="16" rx="2" />
+          <path d="M-15 -3V3M-18 0H-12" />
+          <circle cx="15" cy="-2" r="1" />
+          <circle cx="15" cy="3" r="1" />
+        </>
+      );
+    case 13:
+      return (
+        <>
+          <rect x="-15" y="-11" width="30" height="22" rx="5" />
+          <path d="M-9 -5H9M-9 1H2M-9 6H-4" />
+          <circle cx="9" cy="5" r="2" />
+        </>
+      );
+    case 14:
+      return (
+        <>
+          <rect x="-20" y="-13" width="26" height="20" rx="2" />
+          <path d="M-13 13H-1M-7 7V13" />
+          <rect x="10" y="-16" width="11" height="31" rx="2" />
+          <path d="M13 -10H18M13 -5H18" />
+          <circle cx="15.5" cy="9" r="1" />
+        </>
+      );
+    case 15:
+      return (
+        <>
+          <path d="M-14 -14H12V1H-14ZM-10 1L-17 13H17L8 1M-6 6H7M-9 10H10M0 -14V-19" />
+        </>
+      );
+    default:
+      return (
+        <>
+          <rect x="-15" y="-13" width="30" height="21" rx="3" fill="#203c35" />
+          <path d="M-8 15H8M0 8V15M-10 -7H0M-10 -2H6" />
+        </>
+      );
+  }
 }

@@ -1,5 +1,31 @@
 export type Shape = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export type Site = { x: number; y: number; shape: Shape };
+export type Site = {
+  x: number;
+  y: number;
+  shape: Shape;
+  clientVariant?: number;
+  serial?: number;
+};
+export const CLIENT_VARIANTS = [
+  "Desktop",
+  "Laptop",
+  "Ponsel",
+  "Tablet",
+  "Konsol",
+  "Smart TV",
+  "Printer",
+  "Kamera CCTV",
+  "Jam pintar",
+  "Speaker pintar",
+  "Kios",
+  "Headset VR",
+  "Handheld",
+  "Mini PC",
+  "Workstation",
+  "Terminal kasir",
+];
+const nextSerial = (s: Metro) =>
+  Math.max(0, ...s.nodes.map((n, i) => n.serial ?? i + 1)) + 1;
 export const WORLD = { width: 1000, height: 1200 };
 export const SERVICES: Shape[] = [1, 2, 5, 6, 7, 8, 9];
 export const MAX_ENDPOINTS = 36;
@@ -82,7 +108,7 @@ export type Cable = {
   cargo: Packet[];
 };
 export type Metro = {
-  version: 6;
+  version: 7;
   nodes: Site[];
   spawned: number;
   gold: number;
@@ -107,8 +133,12 @@ export const cableSpeed = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].speed + s.speedBonus;
 export function newMetro(seed = Date.now() >>> 0): Metro {
   return {
-    version: 6,
-    nodes: SITES.slice(0, 3).map((n) => ({ ...n })),
+    version: 7,
+    nodes: SITES.slice(0, 3).map((n, i) => ({
+      ...n,
+      serial: i + 1,
+      ...(n.shape === 0 ? { clientVariant: 0 } : {}),
+    })),
     spawned: 3,
     gold: 1000,
     profit: 0,
@@ -194,7 +224,7 @@ export function removeCable(s: Metro, id: number): Metro {
     ...s,
     queues,
     cables: s.cables.filter((c) => c.id !== id),
-    gold: s.gold + Math.floor(CABLE_TYPES[cable.kind].cost / 2),
+    gold: s.gold + CABLE_TYPES[cable.kind].cost,
   };
 }
 function travelTime(s: Metro, c: Cable) {
@@ -305,7 +335,13 @@ export function metroTick(state: Metro): Metro {
           )
         )
           continue;
-        s.nodes.push(candidate);
+        s.nodes.push({
+          ...candidate,
+          serial: nextSerial(s),
+          ...(shape === 0
+            ? { clientVariant: Math.floor(random() * CLIENT_VARIANTS.length) }
+            : {}),
+        });
         s.queues.push([]);
         s.overload.push(0);
         s.spawned++;
@@ -386,9 +422,12 @@ export function routerError(
   x: number,
   y: number,
   kind: TransitKind = 3,
+  ignoreId?: number,
 ): string | null {
   if (s.phase !== "running") return "Permainan sedang dijeda.";
-  if (s.gold < TRANSIT[kind].cost)
+  if (ignoreId !== undefined && s.nodes[ignoreId]?.shape !== kind)
+    return "Perangkat ini tidak dapat dipindahkan.";
+  if (ignoreId === undefined && s.gold < TRANSIT[kind].cost)
     return `Gold tidak cukup untuk memasang ${TRANSIT[kind].name}.`;
   if (
     !Number.isFinite(x) ||
@@ -398,8 +437,10 @@ export function routerError(
     x > WORLD.width - 40 ||
     y > WORLD.height - 40
   )
-    return "Tempatkan router di dalam batas peta.";
-  if (s.nodes.some((n) => Math.hypot(n.x - x, n.y - y) < 75))
+    return "Tempatkan perangkat di dalam batas peta.";
+  if (
+    s.nodes.some((n, i) => i !== ignoreId && Math.hypot(n.x - x, n.y - y) < 75)
+  )
     return "Terlalu dekat dengan perangkat lain. Pilih area yang lebih kosong.";
   return null;
 }
@@ -412,9 +453,66 @@ export function placeRouter(
   if (routerError(s, x, y, kind)) return s;
   return {
     ...s,
-    nodes: [...s.nodes, { x, y, shape: kind }],
+    nodes: [...s.nodes, { x, y, shape: kind, serial: nextSerial(s) }],
     queues: [...s.queues, []],
     overload: [...s.overload, 0],
     gold: s.gold - TRANSIT[kind].cost,
+  };
+}
+
+export function moveTransit(s: Metro, id: number, x: number, y: number): Metro {
+  const node = s.nodes[id];
+  if (!node || !isTransit(node.shape) || routerError(s, x, y, node.shape, id))
+    return s;
+  return {
+    ...s,
+    nodes: s.nodes.map((n, i) => (i === id ? { ...n, x, y } : n)),
+  };
+}
+export function nodeRefund(s: Metro, id: number): number {
+  const node = s.nodes[id];
+  if (!node || !isTransit(node.shape)) return 0;
+  return (
+    TRANSIT[node.shape].cost +
+    s.cables
+      .filter((c) => c.stops.includes(id))
+      .reduce((sum, c) => sum + CABLE_TYPES[c.kind].cost, 0)
+  );
+}
+export function sellTransit(s: Metro, id: number): Metro {
+  const node = s.nodes[id];
+  if (s.phase !== "running" || !node || !isTransit(node.shape)) return s;
+  const removed = s.cables.filter((c) => c.stops.includes(id));
+  const queues = s.queues.map((q) => [...q]);
+  const cargo = [...queues[id], ...removed.flatMap((c) => c.cargo)];
+  const neighbors = new Set(
+    removed.flatMap((c) => c.stops).filter((i) => i !== id),
+  );
+  // Keep every packet waiting, without granting delivery profit for selling assets.
+  for (const packet of cargo) {
+    const candidates = s.nodes.flatMap((n, i) =>
+      i !== id && n.shape !== packet.service ? [i] : [],
+    );
+    candidates.sort(
+      (a, b) =>
+        Number(neighbors.has(b)) - Number(neighbors.has(a)) ||
+        Math.hypot(s.nodes[a].x - node.x, s.nodes[a].y - node.y) -
+          Math.hypot(s.nodes[b].x - node.x, s.nodes[b].y - node.y),
+    );
+    if (!candidates.length) return s;
+    queues[candidates[0]].push(packet);
+  }
+  return {
+    ...s,
+    gold: s.gold + nodeRefund(s, id),
+    nodes: s.nodes.filter((_, i) => i !== id),
+    queues: queues.filter((_, i) => i !== id),
+    overload: s.overload.filter((_, i) => i !== id),
+    cables: s.cables
+      .filter((c) => !c.stops.includes(id))
+      .map((c) => ({
+        ...c,
+        stops: c.stops.map((n) => (n > id ? n - 1 : n)) as [number, number],
+      })),
   };
 }

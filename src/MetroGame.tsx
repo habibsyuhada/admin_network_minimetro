@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play, Settings2, Network } from "lucide-react";
 import Dialog from "./Dialog";
-import NodeDetails, { nodeName } from "./NodeDetails";
+import NodeDetails, { nodeName, nodeCode } from "./NodeDetails";
 import {
   CABLE_TYPES,
   TRANSIT,
+  isTransit,
+  moveTransit,
+  sellTransit,
+  nodeRefund,
   type TransitKind,
   nodeBuffer,
   maintenanceDue,
@@ -21,12 +25,7 @@ import {
   reward,
 } from "./game/metro";
 import "./metro.css";
-import {
-  DeviceGlyph,
-  DEVICE_NAMES,
-  DEVICE_CODES,
-  DEVICE_COLORS,
-} from "./NetworkArt";
+import { DeviceGlyph, DEVICE_COLORS } from "./NetworkArt";
 import { playCue } from "./game/audio";
 import useMapCamera from "./useMapCamera";
 import { laneSegment, linePath, MAP_BOUNDS } from "./game/mapView";
@@ -41,8 +40,19 @@ export default function MetroGame({
   best.current = Math.max(best.current, s.delivered);
   const [buildKind, setBuildKind] = useState<TransitKind>(3);
   const spec = TRANSIT[buildKind];
-  const [draft, setDraft] = useState<{ x: number; y: number } | null>(null);
+  const [draft, setDraft] = useState<{
+    x: number;
+    y: number;
+    moveId?: number;
+  } | null>(null);
   const placing = draft !== null;
+  const [sale, setSale] = useState<number | null>(null);
+  const renderNodes = s.nodes.map((n, i) =>
+    draft?.moveId === i ? { ...n, x: draft.x, y: draft.y } : n,
+  );
+  const draftError = draft
+    ? routerError(s, draft.x, draft.y, buildKind, draft.moveId)
+    : null;
   const placement = useRef<{ id: number; x: number; y: number } | null>(null);
   const [selected, setSelected] = useState<CableKind>(0);
   const [paused, setPaused] = useState(false);
@@ -62,7 +72,12 @@ export default function MetroGame({
     y: number;
   } | null>(null);
   const frozen =
-    paused || help || confirm || showNodes || s.phase !== "running";
+    paused ||
+    help ||
+    confirm ||
+    showNodes ||
+    sale !== null ||
+    s.phase !== "running";
   const stopped = frozen || placing;
   useEffect(() => {
     const hide = () => {
@@ -202,6 +217,7 @@ export default function MetroGame({
             if (draft && placement.current?.id === e.pointerId) {
               const p = position(e.clientX, e.clientY);
               setDraft({
+                ...draft,
                 x: Math.max(40, Math.min(960, p.x - placement.current.x)),
                 y: Math.max(40, Math.min(1160, p.y - placement.current.y)),
               });
@@ -287,14 +303,14 @@ export default function MetroGame({
             <g key={i} className="route-layer" aria-hidden="true">
               <path
                 className="metro-route route-casing"
-                d={linePath(s.cables, i, s.nodes)}
+                d={linePath(s.cables, i, renderNodes)}
                 stroke="#101f20"
                 strokeWidth="9"
               />
               <path
                 className="metro-route"
                 data-route={i}
-                d={linePath(s.cables, i, s.nodes)}
+                d={linePath(s.cables, i, renderNodes)}
                 stroke={CABLE_TYPES[s.cables[i].kind].color}
                 strokeWidth={selected === s.cables[i].kind ? 6 : 5}
               />
@@ -311,14 +327,18 @@ export default function MetroGame({
             />
           )}
           {s.queues.map((q, id) => {
+            if (draft?.moveId === id) return null;
             const n = s.nodes[id];
             return (
               <g
                 key={id}
                 data-node-id={id}
+                data-client-variant={
+                  n.shape === 0 ? (n.clientVariant ?? 0) : undefined
+                }
                 transform={`translate(${n.x},${n.y})`}
                 role="button"
-                aria-label={`${DEVICE_NAMES[n.shape]} ${id + 1}`}
+                aria-label={nodeName(id, s.nodes)}
                 tabIndex={frozen ? -1 : 0}
                 className="metro-node"
                 onKeyDown={(e) => {
@@ -349,9 +369,9 @@ export default function MetroGame({
                     transform="rotate(-90)"
                   />
                 )}
-                <DeviceGlyph kind={n.shape} />
+                <DeviceGlyph kind={n.shape} variant={n.clientVariant} />
                 <text y="-34" className="metro-node-id">
-                  {DEVICE_CODES[n.shape]}-{String(id + 1).padStart(2, "0")}
+                  {nodeCode(id, s.nodes)}
                 </text>
                 <g aria-hidden="true" transform="translate(-24, 35)">
                   {q.slice(0, 6).map((packet, index) => (
@@ -401,6 +421,7 @@ export default function MetroGame({
                 if (delta[e.key]) {
                   e.preventDefault();
                   setDraft({
+                    ...draft,
                     x: Math.max(40, Math.min(960, draft.x + delta[e.key][0])),
                     y: Math.max(40, Math.min(1160, draft.y + delta[e.key][1])),
                   });
@@ -421,11 +442,7 @@ export default function MetroGame({
               <circle
                 r="37"
                 fill="#25362bcc"
-                stroke={
-                  routerError(s, draft.x, draft.y, buildKind)
-                    ? "#f48b73"
-                    : "#f2d779"
-                }
+                stroke={draftError ? "#f48b73" : "#f2d779"}
                 strokeDasharray="5 4"
               />
               <DeviceGlyph kind={buildKind} />
@@ -439,7 +456,7 @@ export default function MetroGame({
             const from = l.stops[l.at],
               to = l.stops[l.at === 0 ? 1 : 0];
             if (to === undefined) return null;
-            const [a, b] = laneSegment(s.cables, i, from, to, s.nodes);
+            const [a, b] = laneSegment(s.cables, i, from, to, renderNodes);
             const x = a.x + (b.x - a.x) * l.progress,
               y = a.y + (b.y - a.y) * l.progress;
             return (
@@ -517,16 +534,24 @@ export default function MetroGame({
         {draft ? (
           <div className="router-confirm">
             <p role="status">
-              {routerError(s, draft.x, draft.y, buildKind) ??
-                `Geser ${spec.name} ke posisi pilihanmu. Harga ${spec.cost} gold. Simulasi dijeda.`}
+              {draftError ??
+                (draft.moveId !== undefined
+                  ? `Pindahkan ${spec.name}. Gratis; kabel tetap terhubung. OK untuk menyimpan, Cancel untuk kembali.`
+                  : `Geser ${spec.name} ke posisi pilihanmu. Harga ${spec.cost} gold. Simulasi dijeda.`)}
             </p>
             <button
-              disabled={frozen || !!routerError(s, draft.x, draft.y, buildKind)}
+              disabled={frozen || !!draftError}
               onClick={() => {
-                setS((v) => placeRouter(v, draft.x, draft.y, buildKind));
+                setS((v) =>
+                  draft.moveId !== undefined
+                    ? moveTransit(v, draft.moveId, draft.x, draft.y)
+                    : placeRouter(v, draft.x, draft.y, buildKind),
+                );
                 setDraft(null);
                 setTip(
-                  `${spec.name} terpasang. Tarik kabel untuk menghubungkannya.`,
+                  draft.moveId !== undefined
+                    ? `${spec.name} dipindahkan. Kabel tetap terhubung.`
+                    : `${spec.name} terpasang. Tarik kabel untuk menghubungkannya.`,
                 );
               }}
             >
@@ -704,16 +729,74 @@ export default function MetroGame({
               Lihat node di peta
             </button>
           )}
+          {detailNode !== null && isTransit(s.nodes[detailNode].shape) && (
+            <div className="node-actions">
+              <button
+                className="secondary"
+                onClick={() => {
+                  const node = s.nodes[detailNode];
+                  if (!isTransit(node.shape)) return;
+                  setBuildKind(node.shape);
+                  camera.focus(node);
+                  setDraft({ x: node.x, y: node.y, moveId: detailNode });
+                  setShowNodes(false);
+                }}
+              >
+                Pindahkan
+              </button>
+              <button
+                className="secondary"
+                onClick={() => {
+                  setSale(detailNode);
+                  setShowNodes(false);
+                }}
+              >
+                Jual node
+              </button>
+            </div>
+          )}
           <NodeDetails state={s} node={detailNode} onSelect={setDetailNode} />
           <button className="primary" onClick={() => setShowNodes(false)}>
             Kembali ke peta
           </button>
         </Dialog>
       )}
+      {sale !== null && (
+        <Dialog
+          title={`Jual ${nodeName(sale, s.nodes)}?`}
+          onClose={() => setSale(null)}
+        >
+          <p>
+            Harga node dan{" "}
+            {s.cables.filter((c) => c.stops.includes(sale)).length} kabel yang
+            terhubung dikembalikan penuh: <b>{nodeRefund(s, sale)} gold</b>.
+          </p>
+          <p>
+            Paket yang masih menunggu atau diangkut dialihkan ke node tersisa.
+            Maintenance yang sudah berjalan tetap dihitung.
+          </p>
+          <button
+            className="primary"
+            onClick={() => {
+              setS((v) => sellTransit(v, sale));
+              setSale(null);
+              setDetailNode(null);
+              setTip(
+                "Node dan kabel terhubung dijual. Harga beli dikembalikan penuh.",
+              );
+            }}
+          >
+            Jual node
+          </button>
+          <button className="secondary" onClick={() => setSale(null)}>
+            Cancel
+          </button>
+        </Dialog>
+      )}
       {confirm && (
         <Dialog title="Kelola kabel" onClose={() => setConfirm(false)}>
           <p>
-            Hapus kabel untuk menjualnya kembali dengan harga 50%. Muatan
+            Hapus kabel untuk menjualnya kembali dengan harga penuh. Muatan
             dikembalikan ke perangkat asal perjalanan; kabel lainnya tetap
             terpasang.
           </p>
@@ -725,12 +808,8 @@ export default function MetroGame({
                     {CABLE_TYPES[c.kind].name} #{c.id}
                   </b>
                   <small>
-                    {c.stops
-                      .map(
-                        (id) => `${DEVICE_NAMES[s.nodes[id].shape]} ${id + 1}`,
-                      )
-                      .join(" ↔ ")}{" "}
-                    · {c.cargo.length}/{cableCapacity(s, c.kind)} paket
+                    {c.stops.map((id) => nodeName(id, s.nodes)).join(" ↔ ")} ·{" "}
+                    {c.cargo.length}/{cableCapacity(s, c.kind)} paket
                   </small>
                 </div>
                 <button
@@ -739,7 +818,7 @@ export default function MetroGame({
                   onClick={() => {
                     setS((v) => removeCable(v, c.id));
                     setTip(
-                      "Kabel dijual. 50% harga dikembalikan; muatan kembali ke node asal.",
+                      "Kabel dijual. 100% harga dikembalikan; muatan kembali ke node asal.",
                     );
                   }}
                 >

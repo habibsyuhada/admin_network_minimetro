@@ -1,4 +1,5 @@
 import {
+  CLIENT_VARIANTS,
   type Site,
   type Metro,
   SITES,
@@ -11,9 +12,9 @@ import {
 import { DeviceGlyph, DEVICE_NAMES, DEVICE_CODES } from "./NetworkArt";
 
 export const nodeName = (id: number, nodes: Site[] = SITES) =>
-  `${DEVICE_NAMES[nodes[id].shape]} ${id + 1}`;
+  `${DEVICE_NAMES[nodes[id].shape]} ${nodes[id].serial ?? id + 1}`;
 export const nodeCode = (id: number, nodes: Site[] = SITES) =>
-  `${DEVICE_CODES[nodes[id].shape]}-${String(id + 1).padStart(2, "0")}`;
+  `${DEVICE_CODES[nodes[id].shape]}-${String(nodes[id].serial ?? id + 1).padStart(2, "0")}`;
 
 export default function NodeDetails({
   state,
@@ -36,7 +37,10 @@ export default function NodeDetails({
           {state.queues.map((queue, id) => (
             <button key={id} onClick={() => onSelect(id)}>
               <svg viewBox="-30 -30 60 60">
-                <DeviceGlyph kind={nodes[id].shape} />
+                <DeviceGlyph
+                  kind={nodes[id].shape}
+                  variant={nodes[id].clientVariant}
+                />
               </svg>
               <span>
                 <b>{nodeName(id, nodes)}</b>
@@ -68,6 +72,12 @@ export default function NodeDetails({
         <b>{nodeCode(node, nodes)}</b> · {state.queues[node].length} paket
         menunggu · {incoming} paket berikon sama dalam pengangkut jaringan.
       </p>
+      {kind === 0 && (
+        <p>
+          Perangkat: {CLIENT_VARIANTS[nodes[node].clientVariant ?? 0]}. Semua
+          variasi client menerima paket berikon PC yang sama.
+        </p>
+      )}
       {spec && (
         <p>
           {spec.name} buatanmu.{" "}

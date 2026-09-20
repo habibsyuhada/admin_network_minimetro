@@ -18,7 +18,7 @@ Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangka
 
 Modal awal 1.000 gold. Profit 25 gold per paket yang sampai ke tujuan akhir, dibayarkan setiap menit setelah dikurangi maintenance. Maintenance per minggu: Ethernet 20, Fiber 35, Backbone 40, router 30 dan switch 15 gold; dihitung per tick sesuai lama aktif, lalu dibulatkan ke atas satu gold saat settlement. Saldo negatif saat settlement mengakhiri sesi. Upgrade mingguan opsional: +2 kapasitas seharga 300 gold atau kecepatan seharga 250 gold. Gelombang perangkat muncul setiap 35 detik, maksimal 36 node otomatis. Ambang antrean PC/layanan 8, switch 10, router 16 paket; penuh selama 20 detik mengakhiri permainan.
 
-**Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Sebanyak 50% harga beli dikembalikan; maintenance yang sudah berjalan tetap ditagih; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
+**Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Sebanyak 100% harga beli dikembalikan; maintenance yang sudah berjalan tetap ditagih; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
 
 **Detail node** menampilkan daftar perangkat dan antrean yang dikelompokkan berdasarkan tujuan, termasuk jumlah paket, kabel berikutnya, dan tujuan yang belum terhubung. Klik node di peta untuk langsung memeriksanya, atau buka Detail node untuk daftar semua perangkat. Simulasi dijeda selama panel terbuka.
 
@@ -64,3 +64,11 @@ Setiap kemunculan memilih gelombang PC (50%) atau satu layanan (50%). Dalam gelo
 | Switch | 80 | 15 | 4 | 10 | 0,2 detik saat tiba |
 
 Setiap kabel (termasuk kabel paralel) memakai satu port. Menghapus kabel membebaskan port. Keduanya memakai pratinjau geser dengan OK/Cancel dan bukan sumber atau tujuan paket.
+
+## Pindah, jual, dan variasi client
+
+Buka detail router/switch lalu pilih **Pindahkan**. Geser pratinjau, kemudian **OK** atau **Cancel**. Pemindahan gratis; kabel dan pengangkut mengikuti posisi baru tanpa kehilangan muatan. Label node tetap sama setelah node lain dijual.
+
+**Jual node** meminta konfirmasi dan mengembalikan 100% harga node beserta seluruh kabel yang terhubung. Paket tersisa dipindahkan ke node lain tanpa dihitung sebagai pengiriman berhasil; maintenance yang sudah berjalan tetap ditagih. PC dan layanan otomatis tidak dapat dijual.
+
+Client memiliki 16 variasi ikon: desktop, laptop, ponsel, tablet, konsol, Smart TV, printer, CCTV, jam pintar, speaker pintar, kios, headset VR, handheld, mini PC, workstation, dan terminal kasir. Variasi dipilih acak saat PC muncul, tetapi semuanya tetap menerima paket berikon PC. Galeri tersedia di Panduan.

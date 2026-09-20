@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   SITES,
+  moveTransit,
+  sellTransit,
+  nodeRefund,
+  CLIENT_VARIANTS,
   SERVICES,
   MAX_ENDPOINTS,
   TRANSIT,
@@ -96,7 +100,7 @@ describe("point-to-point cable transport", () => {
     s = removeCable(s, s.cables[2].id);
     expect(routeCable(s, 0, 2)).toBe(s.cables[0].id);
   });
-  it("removing an in-flight cable refunds half the price and returns all cargo to its departure node", () => {
+  it("removing an in-flight cable refunds the full price and returns all cargo to its departure node", () => {
     let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 1, 1, 2);
     s.queues[0] = [{ service: 1 }, { service: 1 }];
     s = steps(s, 12);
@@ -105,7 +109,7 @@ describe("point-to-point cable transport", () => {
     s = removeCable(s, s.cables[0].id);
     expect(count(s)).toBe(count(original));
     expect(s.queues[0]).toEqual([{ service: 1 }, { service: 1 }]);
-    expect(s.gold).toBe(original.gold + 50);
+    expect(s.gold).toBe(original.gold + 100);
     expect(s.cables).toHaveLength(1);
     expect(s.cables[0]).toBe(original.cables[1]);
   });
@@ -199,7 +203,7 @@ describe("player-built routers", () => {
     expect(placeRouter(initial, NaN, 300)).toBe(initial);
     const s = placeRouter(initial, 200, 300);
     expect(initial.nodes).toHaveLength(3);
-    expect(s.nodes[3]).toEqual({ x: 200, y: 300, shape: 3 });
+    expect(s.nodes[3]).toMatchObject({ x: 200, y: 300, shape: 3 });
     expect(s.gold).toBe(850);
     expect(s.queues[3]).toEqual([]);
     expect(routerError({ ...s, gold: 0 }, 500, 500)).not.toBeNull();
@@ -262,7 +266,7 @@ describe("gold economy", () => {
     s = steps(s, 120);
     expect(maintenanceDue(s)).toBe(10);
     const sold = removeCable(s, s.cables[0].id);
-    expect(sold.gold).toBe(800);
+    expect(sold.gold).toBe(850);
     expect(sold.maintenanceUnits).toBe(s.maintenanceUnits);
     expect(maintenanceRate(sold)).toBe(30);
   });
@@ -373,5 +377,83 @@ describe("switch specifications and random growth", () => {
     expect(s.nodes).toHaveLength(5);
     const next = metroTick({ ...s, time: 69.9, week: 2 });
     expect(next.nodes).toHaveLength(5);
+  });
+});
+
+describe("moving and selling transit nodes", () => {
+  it("moves for free while preserving cables, cargo, queues and identity", () => {
+    let s = connectCable(placeRouter(newMetro(42), 200, 300), 0, 0, 3);
+    s.cables[0].cargo = [{ service: 1 }];
+    s.cables[0].progress = 0.5;
+    s.queues[3] = [{ service: 2 }];
+    s.gold = 0;
+    const moved = moveTransit(s, 3, 220, 370);
+    expect(moved.nodes[3]).toMatchObject({
+      x: 220,
+      y: 370,
+      shape: 3,
+      serial: 4,
+    });
+    expect(moved.gold).toBe(0);
+    expect(moved.cables).toBe(s.cables);
+    expect(moved.queues).toBe(s.queues);
+    expect(moveTransit(s, 3, 70, 90)).toBe(s);
+    expect(moveTransit(s, 3, -1, 300)).toBe(s);
+    expect(moveTransit(s, 0, 220, 370)).toBe(s);
+  });
+  it("refunds node and attached cables once, preserves packets and remaps retained links", () => {
+    let s = placeRouter(placeRouter(newMetro(42), 200, 300), 600, 400, 4);
+    s = connectCable(connectCable(connectCable(s, 0, 0, 3), 1, 3, 4), 0, 4, 1);
+    s.queues[3] = [{ service: 1 }, { service: 0 }];
+    s.cables[0].cargo = [{ service: 1 }];
+    s.cables[1].cargo = [{ service: 2 }];
+    s.maintenanceUnits = 1000;
+    const before = count(s),
+      gold = s.gold,
+      serial = s.nodes[4].serial;
+    expect(nodeRefund(s, 3)).toBe(450);
+    const sold = sellTransit(s, 3);
+    expect(sold.gold).toBe(gold + 450);
+    expect(count(sold)).toBe(before);
+    expect(sold.profit).toBe(s.profit);
+    expect(sold.nodes[3].serial).toBe(serial);
+    expect(sold.nodes[3].shape).toBe(4);
+    expect(sold.cables).toHaveLength(1);
+    expect(sold.cables[0].stops).toEqual([3, 1]);
+    expect(sold.maintenanceUnits).toBe(1000);
+    expect(
+      sold.queues.every((q, i) =>
+        q.every((p) => p.service !== sold.nodes[i].shape),
+      ),
+    ).toBe(true);
+    expect(sellTransit(sold, 0)).toBe(sold);
+    const soldAgain = sellTransit(sold, 3);
+    expect(sellTransit(soldAgain, 3)).toBe(soldAgain);
+  });
+  it("returns cable cargo to a disconnected node safely when that node is later sold", () => {
+    let s = connectCable(placeRouter(newMetro(42), 200, 300), 0, 3, 1);
+    s.cables[0].cargo = [{ service: 1 }];
+    s = removeCable(s, s.cables[0].id);
+    expect(s.queues[3]).toHaveLength(1);
+    const sold = sellTransit(s, 3);
+    expect(count(sold)).toBe(1);
+    expect(sold.queues[2]).toHaveLength(1);
+    expect(sold.gold).toBe(1000);
+  });
+  it("assigns all 16 reproducible visual client variants without changing the PC service type", () => {
+    const variants = new Set<number>();
+    for (let i = 0; i < 1000; i++) {
+      const s = metroTick({
+        ...newMetro(Math.imul(i, 2654435761) >>> 0),
+        time: 34.9,
+      });
+      for (const n of s.nodes.slice(3))
+        if (n.shape === 0) {
+          variants.add(n.clientVariant!);
+          expect(n.clientVariant).toBeGreaterThanOrEqual(0);
+          expect(n.clientVariant).toBeLessThan(CLIENT_VARIANTS.length);
+        }
+    }
+    expect(variants.size).toBe(16);
   });
 });

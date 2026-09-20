@@ -825,3 +825,34 @@
   font-size: 8px;
   margin-top: 3px;
 }
+
+.node-actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.node-actions .secondary {
+  flex: 1;
+  margin: 0;
+}
+.client-catalog summary {
+  cursor: pointer;
+  padding: 12px 0;
+  color: #dce3b9;
+}
+.client-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 6px;
+}
+.client-gallery > div {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  font-size: 10px;
+  color: #b7cdbc;
+}
+.client-gallery svg {
+  width: 48px;
+  height: 48px;
+}

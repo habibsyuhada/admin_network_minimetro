@@ -79,6 +79,7 @@ test("all sixteen client icons are available in the guide", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await page.getByText("Device icons", { exact: true }).click();
   await page.getByText("16 client types", { exact: true }).click();
   await expect(page.locator(".client-gallery > div")).toHaveCount(16);
   await expect(page.locator(".client-gallery")).toContainText("Headset VR");

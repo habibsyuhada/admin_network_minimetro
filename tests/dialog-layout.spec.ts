@@ -41,7 +41,7 @@ test("headers and actions stay fixed across home and gameplay dialogs", async ({
     .click();
   await check(page, "Play level 1");
   await page.getByRole("button", { name: "Play level 1", exact: true }).click();
-  await page.getByText("Read the full rules", { exact: true }).click();
+  await page.getByRole("button", { name: "Next tip", exact: true }).click();
   await check(page, "Start connecting");
   await page.screenshot({
     path: `test-results/fixed-help-${test.info().project.name}.png`,

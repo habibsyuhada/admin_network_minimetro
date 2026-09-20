@@ -1,3 +1,4 @@
+import VisualGuide from "./VisualGuide";
 import { ItemIcon, Gold } from "./GameIcons";
 import OffscreenNodes from "./OffscreenNodes";
 import useGameFeedback from "./useGameFeedback";
@@ -1068,103 +1069,22 @@ export default function MetroGame({
           onClose={() => setHelp(false)}
         >
           {level && (
-            <p className="mission-brief">
+            <div className="guide-mission">
               <b>{level.name}</b>
-              <br />
-              {level.description}
-              <br />
-              Target: survive {level.months} months and deliver {level.packets}{" "}
-              packets. Starting gold: {level.gold} gold.
-            </p>
+              <span>
+                {level.months} months · {level.packets} packets ·{" "}
+                <Gold amount={level.gold} />
+              </span>
+              <span className="sr-only">
+                Target: survive {level.months} months and deliver{" "}
+                {level.packets} packets
+              </span>
+            </div>
           )}
-          <p>
-            Each cable connects two devices and has its own carrier. Packets
-            travel to a service type, such as YouTube. Any matching service node
-            can receive them. Clients request services, and services send
-            replies matching the client icon.
-          </p>
-          <p>
-            Drag cables between nodes. Use <b>Build</b> to add a router or
-            switch. Pause to design your network.
-          </p>
-          <details>
-            <summary>Read the full rules</summary>
-            <p>
-              At month end you may buy one upgrade item. Equip or unequip it in
-              node details or Inventory. Bonuses are local; the same bonus at
-              both ends of a cable does not stack. Sold devices return their
-              items. Port Expansion cannot be removed while its extra ports are
-              in use.
-            </p>
-            <p>
-              Packets use destination icons, not request/response pairs. Cache
-              Servers receive physical refill packets from a reachable service,
-              then handle five matching deliveries locally. Service Gateways can
-              change their service icon in node details. Relay, Wireless Bridge,
-              Cache Server, Distribution Hub and Service Gateway unlock as you
-              advance through the campaign.
-            </p>
-            <ol className="handbook">
-              <li>
-                Pause to design your topology without moving packets. The
-                1x/2x/3x button changes the speed of the entire simulation,
-                including node spawns and maintenance.
-              </li>
-              <li>
-                Drag empty space to pan the map. Pinch or open the camera
-                controls to zoom. Tap the percentage to reset the view, or Map
-                to see the whole area.
-              </li>
-              <li>
-                Choose a cable type, then drag from one device to another. Tap a
-                device to inspect it. Start from any device to create another
-                branch.
-              </li>
-              <li>
-                Each carrier stays on its own cable. The cargo/capacity
-                indicator represents bandwidth. Transit packets wait for the
-                next carrier; routing accounts for travel time and queues.
-              </li>
-              <li>
-                Open Node details to see packets grouped by destination and
-                check whether a route is available.
-              </li>
-              <li>
-                Ethernet carries 4 packets at balanced speed. Fiber carries 3
-                and is faster; Backbone carries 8 and is slower. Upgrades
-                increase these values. Routers cost 150 gold: drag the preview,
-                then choose OK or Cancel. Endless mode starts with 1,600 gold.
-                Delivered packets earn 18 gold. Profit minus maintenance is paid
-                monthly. Cables cost 100/200/250 gold; monthly maintenance is
-                20/35/40 per cable and 30 per router, prorated by active time.
-                Automatically spawned nodes are free.
-              </li>
-              <li>
-                Router: 150 gold, 8 ports, 24-packet buffer, 30 gold/month
-                maintenance. Switch: 80 gold, 4 ports, 16-packet buffer, 15
-                gold/month maintenance, and faster loading (0.2 seconds).
-                Clients and services have one port. Each cable uses one port at
-                each end. Parallel cables of the same type are allowed between
-                routers/switches.
-              </li>
-              <li>
-                In Endless mode, a client or service wave appears every 45
-                seconds (50% each). Client waves contain 1/2/3 devices with
-                probabilities of 60%/30%/10%. Services are chosen evenly from
-                seven types, with duplicates allowed. The limit is 36 automatic
-                nodes. Campaign maps have their own spawn settings.
-              </li>
-              <li>
-                A full queue starts a countdown: 10 packets for
-                clients/services, 16 for switches, and 24 for routers. Reduce
-                the queue before 25 seconds run out!
-              </li>
-            </ol>
-          </details>
-          <p className="muted">
-            Active sessions are not saved after a reload. The game pauses
-            automatically in the background.
-          </p>
+          <VisualGuide />
+          <small className="guide-save-note">
+            Active runs reset when you reload.
+          </small>
           <button className="primary" onClick={() => setHelp(false)}>
             Start connecting
           </button>

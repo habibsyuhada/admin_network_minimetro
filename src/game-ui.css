@@ -1756,3 +1756,106 @@ dialog[open] {
   gap: 14px;
   margin: 16px 0;
 }
+
+.visual-guide {
+  margin: 8px 0;
+  text-align: center;
+}
+.guide-art {
+  background: #1c3634;
+  border-radius: 18px;
+  border: 1px solid #3e5b4e;
+}
+.guide-art > svg {
+  width: 100%;
+  max-height: 220px;
+  display: block;
+}
+.guide-art text {
+  fill: #d4e7cc;
+  font-size: 11px;
+  text-anchor: middle;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+.guide-art .dark-label {
+  fill: #17382d;
+  font-size: 14px;
+}
+.guide-art .equation {
+  fill: #f3d68b;
+  font-size: 21px;
+}
+.visual-guide h3 {
+  margin: 14px 0 6px;
+  font-size: 20px;
+  color: #edf5df;
+}
+.visual-guide > p {
+  margin: 0;
+  min-height: 44px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.guide-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 0;
+}
+.guide-navigation > button {
+  width: 42px;
+  min-width: 42px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+.guide-dots {
+  display: flex;
+}
+.guide-dots button {
+  padding: 8px 4px;
+  width: 26px;
+  min-height: 44px;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+.guide-dots button span {
+  display: block;
+  height: 7px;
+  width: 7px;
+  margin: auto;
+  background: #607b70;
+  border-radius: 50%;
+}
+.guide-dots button[aria-current] span {
+  background: #b9f595;
+  width: 16px;
+  border-radius: 6px;
+}
+.guide-mission {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 12px;
+  font-size: 12px;
+  color: #bdd1c3;
+}
+.guide-mission b {
+  color: #f1d594;
+}
+.guide-save-note {
+  display: block;
+  font-size: 10px;
+  color: #8dab9e;
+  text-align: center;
+  margin: 8px 0;
+}
+@media (max-height: 500px) {
+  .guide-art > svg {
+    max-height: 130px;
+  }
+}

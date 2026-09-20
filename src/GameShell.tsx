@@ -1,3 +1,4 @@
+import VisualGuide from "./VisualGuide";
 import { setMusicEnabled, unlockMusic } from "./game/music";
 import { useEffect, useState } from "react";
 import {
@@ -188,66 +189,37 @@ export default function GameShell() {
       )}
       {panel === "help" && (
         <Dialog title="Operator guide" onClose={() => setPanel(null)}>
-          <p>
-            Meet the month and packet targets to unlock the next map. Earn extra
-            stars by delivering 25% more packets and keeping at least 50% of
-            your starting gold. Mission progress is saved on this device; active
-            sessions are not saved.
-          </p>
-          <p>
-            Connect devices with colored cables. Deliver packets to matching
-            service icons. Any YouTube node can receive YouTube packets. Open
-            Node details to inspect queues by icon.
-          </p>
-          <div className="device-legend">
-            {DEVICE_NAMES.map((name, i) => (
-              <div key={name}>
-                <svg viewBox="-30 -30 60 60">
-                  <DeviceGlyph kind={i} />
-                </svg>
-                <span>{name}</span>
-              </div>
-            ))}
-          </div>
-          <details className="client-catalog">
-            <summary>16 client types</summary>
-            <div className="client-gallery">
-              {CLIENT_VARIANTS.map((name, variant) => (
+          <VisualGuide />
+          <details>
+            <summary>Device icons</summary>
+            <div className="device-legend">
+              {DEVICE_NAMES.map((name, i) => (
                 <div key={name}>
                   <svg viewBox="-30 -30 60 60">
-                    <DeviceGlyph kind={0} variant={variant} />
+                    <DeviceGlyph kind={i} />
                   </svg>
                   <span>{name}</span>
                 </div>
               ))}
             </div>
-            <p>
-              Each client type receives packets with its matching device icon.
-            </p>
+            <details className="client-catalog">
+              <summary>16 client types</summary>
+              <div className="client-gallery">
+                {CLIENT_VARIANTS.map((name, variant) => (
+                  <div key={name}>
+                    <svg viewBox="-30 -30 60 60">
+                      <DeviceGlyph kind={0} variant={variant} />
+                    </svg>
+                    <span>{name}</span>
+                  </div>
+                ))}
+              </div>
+              <p>
+                Each client type receives packets with its matching device icon.
+              </p>
+            </details>
           </details>
-          <ol className="handbook">
-            <li>
-              Choose Ethernet, Fiber, or Backbone. Drag a cable between two
-              devices. Tap a node to inspect it. Each cable has its own carrier.
-            </li>
-            <li>
-              Carriers travel back and forth along their own cable. Cargo
-              capacity represents bandwidth. Transit packets wait for the next
-              carrier, and routes are selected automatically.
-            </li>
-            <li>
-              Endless mode starts with 1,600 gold. Cables cost 100/200/250 gold
-              and routers cost 150 gold. Drag the device preview, then choose OK
-              or Cancel. Each delivered packet earns 18 gold. Every month,
-              profit minus maintenance is added to your balance. Selling cables
-              refunds their full price.
-            </li>
-            <li>
-              Full queues trigger a warning: 10 packets for clients/services, 16
-              for switches, and 24 for routers. Reduce the queue within 25
-              seconds to avoid an overload.
-            </li>
-          </ol>
+
           <button className="primary" onClick={() => setPanel(null)}>
             Ready to connect
           </button>

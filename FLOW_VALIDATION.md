@@ -100,3 +100,10 @@ Validation: 56 unit tests pass, including terrain geometry/schedules, bridge slo
 The terrain-aware adaptive simulation completed all six campaign seeds in months 3, 4, 6, 8, 11 and 12. Current results are in docs/balance/environment-routes.json; rerun with node scripts/play-environment.mjs. This verifies a valid strategy exists, not final player difficulty. Downtown capital/traffic and Highlands traffic were adjusted after adding terrain. Earlier balance reports in this file describe earlier rules and are historical.
 
 Active sessions and inventory remain memory-only; only profile/progression persists across reloads. No deployment or remote push was performed.
+
+
+## Simplified mobile home
+
+The initial screen now shows the level board, selected level name, and one large Play action. Mission descriptions, starting gold, goals and star rules are shown only in a dismissible mission dialog. Progress totals and the packet record moved to Settings; Guide, Endless and Sound use a compact bottom menu. The board expands into available portrait space and becomes a two-column landscape layout.
+
+Production build and type/format checks pass. Six campaign browser checks pass on Chromium, Android and WebKit/iPhone emulation, covering locked levels, mission detail dismissal, game entry and saved unlocks. Additional 360x640 and 844x390 browser checks found no horizontal or vertical home overflow and confirmed Endless entry. Portrait and landscape screenshots were visually reviewed.

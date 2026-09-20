@@ -1,4 +1,6 @@
-import { Lock, Play, Star, Flag, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import Dialog from "./Dialog";
+import { Lock, Play, Star, Flag, ChevronRight, Info } from "lucide-react";
 import { LEVELS, levelUnlocked, type CampaignProgress } from "./game/levels";
 import { DeviceGlyph } from "./NetworkArt";
 const positions = [
@@ -20,6 +22,7 @@ export default function CampaignMap({
   progress: CampaignProgress;
   onPlay: (id: string) => void;
 }) {
+  const [details, setDetails] = useState(false);
   const level = LEVELS.find((l) => l.id === selected)!;
   const open = levelUnlocked(selected, progress);
   return (
@@ -52,7 +55,7 @@ export default function CampaignMap({
             d="M76 213Q130 205 196 171T320 213V95L184 62 72 101"
           />
         </svg>
-        <span className="world-label">NOC ISLANDS</span>
+
         {LEVELS.map((l, i) => {
           const unlocked = levelUnlocked(l.id, progress),
             stars = progress[l.id] ?? 0;
@@ -67,7 +70,10 @@ export default function CampaignMap({
                   "--island": l.color,
                 } as React.CSSProperties
               }
-              onClick={() => onSelect(l.id)}
+              onClick={() => {
+                onSelect(l.id);
+                setDetails(true);
+              }}
               aria-label={`Level ${i + 1}: ${l.name}${unlocked ? "" : ", locked"}`}
               aria-pressed={selected === l.id}
             >
@@ -95,48 +101,76 @@ export default function CampaignMap({
           );
         })}
       </section>
-      <section
-        className="mission-card"
-        style={{ "--island": level.color } as React.CSSProperties}
-        aria-label="Selected mission"
-      >
-        <div className="mission-heading">
-          <div>
-            <small>{level.subtitle}</small>
-            <h2>{level.name}</h2>
-          </div>
-          <Flag size={26} />
-        </div>
-        <p>{level.description}</p>
-        <div className="mission-goals">
+      <div className="home-launch" aria-hidden={details || undefined}>
+        <div className="home-current-level">
           <span>
-            <b>{level.months}</b> months
+            LEVEL {LEVELS.indexOf(level) + 1} <b>{level.name}</b>
           </span>
-          <span>
-            <b>{level.packets}</b> packets
-          </span>
-          <span>
-            <b>{level.gold.toLocaleString("en-US")}</b> gold
-          </span>
+          <button
+            className="icon-button"
+            aria-label="Mission details"
+            onClick={() => setDetails(true)}
+          >
+            <Info size={20} />
+          </button>
         </div>
         <button
-          className="play-button"
+          className="play-button home-play"
           disabled={!open}
-          onClick={() => onPlay(level.id)}
           aria-label={`Play level ${LEVELS.indexOf(level) + 1}`}
+          onClick={() => onPlay(level.id)}
         >
-          <Play size={19} fill="currentColor" />
-          {open
-            ? progress[level.id]
-              ? "PLAY AGAIN"
-              : "START MISSION"
-            : "COMPLETE THE PREVIOUS LEVEL"}
-          <ChevronRight size={20} />
+          {open ? <Play size={23} fill="currentColor" /> : <Lock size={23} />}
+          {open ? "PLAY" : "LOCKED"}
+          <ChevronRight size={23} />
         </button>
-        <small className="mission-stars-hint">
-          ★ Complete mission · ★ +25% packets · ★ Keep 50% of starting gold
-        </small>
-      </section>
+      </div>
+      {details && (
+        <Dialog title="Mission details" onClose={() => setDetails(false)}>
+          <section
+            className="mission-card"
+            style={{ "--island": level.color } as React.CSSProperties}
+            aria-label="Selected mission"
+          >
+            <div className="mission-heading">
+              <div>
+                <small>{level.subtitle}</small>
+                <h2>{level.name}</h2>
+              </div>
+              <Flag size={26} />
+            </div>
+            <p>{level.description}</p>
+            <div className="mission-goals">
+              <span>
+                <b>{level.months}</b> months
+              </span>
+              <span>
+                <b>{level.packets}</b> packets
+              </span>
+              <span>
+                <b>{level.gold.toLocaleString("en-US")}</b> gold
+              </span>
+            </div>
+            <button
+              className="play-button"
+              disabled={!open}
+              onClick={() => onPlay(level.id)}
+              aria-label={`Play level ${LEVELS.indexOf(level) + 1}`}
+            >
+              <Play size={19} fill="currentColor" />
+              {open
+                ? progress[level.id]
+                  ? "PLAY AGAIN"
+                  : "START MISSION"
+                : "COMPLETE THE PREVIOUS LEVEL"}
+              <ChevronRight size={20} />
+            </button>
+            <small className="mission-stars-hint">
+              ★ Complete mission · ★ +25% packets · ★ Keep 50% of starting gold
+            </small>
+          </section>
+        </Dialog>
+      )}
     </>
   );
 }

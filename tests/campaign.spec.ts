@@ -5,6 +5,17 @@ test("campaign map selects missions, locks progression, and fits a phone", async
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "NOC FLOW." })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Level \d/ })).toHaveCount(6);
+  await expect(
+    page.getByRole("region", { name: "Selected mission" }),
+  ).toHaveCount(0);
+  expect(
+    await page
+      .locator("main")
+      .evaluate((el) => el.scrollHeight - el.clientHeight),
+  ).toBeLessThanOrEqual(1);
+  await page.screenshot({
+    path: `test-results/home-clean-${test.info().project.name}.png`,
+  });
   await page.getByRole("button", { name: /Level 2:/ }).click();
   await expect(
     page.getByRole("button", { name: "Play level 2", exact: true }),
@@ -12,6 +23,7 @@ test("campaign map selects missions, locks progression, and fits a phone", async
   await expect(
     page.getByRole("region", { name: "Selected mission" }),
   ).toContainText("Campus");
+  await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: /Level 1:/ }).click();
   expect(
     await page.evaluate(

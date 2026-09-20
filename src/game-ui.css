@@ -1273,3 +1273,157 @@ dialog select {
   overflow: auto;
   padding: 2px;
 }
+
+/* Home: a single game board, one primary action, details on demand. */
+.game-home {
+  gap: 8px;
+  overflow-y: auto;
+}
+.home-wordmark {
+  flex: 1;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #8caaa8;
+}
+.game-home .home-title {
+  justify-content: center;
+  text-align: center;
+  padding: 6px 0 14px;
+}
+.game-home .home-title h1 {
+  font-size: clamp(38px, 10vw, 54px);
+  margin: 0;
+}
+.game-home .campaign-world {
+  flex: 1 0 240px;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.game-home .world-water {
+  border-radius: 0;
+  opacity: 0.75;
+}
+.game-home .island-land {
+  width: 72px;
+  height: 62px;
+}
+.game-home .island-button {
+  width: 82px;
+  height: 82px;
+}
+.game-home .island-button.locked .island-land {
+  opacity: 0.6;
+}
+.game-home .island-button.locked .island-stars {
+  opacity: 0.35;
+}
+.home-launch {
+  flex-shrink: 0;
+  padding: 4px 14px 12px;
+}
+.home-current-level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.home-current-level > span {
+  color: #9ab7b4;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+.home-current-level b {
+  display: block;
+  color: #edf5e5;
+  font-size: 20px;
+  letter-spacing: 0;
+  margin-top: 3px;
+}
+.home-current-level .icon-button {
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  background: transparent;
+  box-shadow: none;
+}
+.home-launch .home-play {
+  min-height: 60px;
+  font-size: 22px;
+  border-radius: 20px;
+  padding: 12px 22px;
+  letter-spacing: 2px;
+}
+.game-home .home-bottom-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 12px;
+}
+.game-home .home-bottom-bar button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 64px;
+  min-height: 52px;
+  padding: 5px;
+  font-size: 10px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  color: #a6c6c0;
+}
+.game-home .mission-card {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+.game-home .mission-card > p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.game-home .mission-stars-hint {
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 16px;
+}
+@media (max-height: 540px) and (min-width: 600px) {
+  .game-home {
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    grid-template-rows: 44px 1fr auto;
+    gap: 8px 24px;
+  }
+  .game-home .home-toolbar {
+    grid-column: 1 / -1;
+  }
+  .game-home .home-title {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    padding-top: 6px;
+  }
+  .game-home .home-title h1 {
+    font-size: 34px;
+  }
+  .game-home .campaign-world {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    min-height: 230px;
+  }
+  .game-home .home-launch {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    padding: 65px 0 8px;
+  }
+  .game-home .home-bottom-bar {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}

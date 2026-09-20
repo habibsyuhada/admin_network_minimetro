@@ -5,7 +5,7 @@ import {
   VolumeX,
   Download,
   BookOpen,
-  Trophy,
+  Infinity as InfinityIcon,
 } from "lucide-react";
 import { CLIENT_VARIANTS } from "./game/metro";
 import CampaignMap from "./CampaignMap";
@@ -102,13 +102,7 @@ export default function GameShell() {
   return (
     <main className="game-home">
       <header className="home-toolbar">
-        <span className="operator-tag">
-          <i /> OPERATOR <b>{Object.keys(profile.progress).length}/6</b>
-        </span>
-        <span className="campaign-total">
-          <Trophy size={16} />
-          {Object.values(profile.progress).reduce((a, b) => a + b, 0)} / 18 ★
-        </span>
+        <span className="home-wordmark">NOC / 01</span>
         <button
           className="icon-button"
           aria-label="Settings"
@@ -119,7 +113,6 @@ export default function GameShell() {
       </header>
       <section className="home-title">
         <div>
-          <span className="overline">BUILD. CONNECT. GROW.</span>
           <h1 aria-label="NOC FLOW.">
             NOC{" "}
             <span>
@@ -127,11 +120,6 @@ export default function GameShell() {
             </span>
           </h1>
         </div>
-        <span className="season-badge">
-          EXPEDITION
-          <br />
-          <b>01</b>
-        </span>
       </section>
       <CampaignMap
         selected={selectedLevel}
@@ -145,30 +133,21 @@ export default function GameShell() {
           setFlow(true);
         }}
       />
-      <button
-        className="endless-play"
-        aria-label="Play NOC Flow"
-        onClick={() => {
-          unlockAudio();
-          playCue("tap");
-          setActiveLevel(undefined);
-          setFlow(true);
-        }}
-      >
-        <span>∞</span>
-        <div>
-          <b>ENDLESS MODE</b>
-          <small>
-            No goals · best {profile.best.toLocaleString("en-US")} packets
-          </small>
-        </div>
-        <span>›</span>
-      </button>
       <nav className="home-bottom-bar" aria-label="Game menu">
         <button onClick={() => setPanel("help")}>
-          <BookOpen size={18} /> Guide
+          <BookOpen size={21} /> Guide
         </button>
-        <span>MISSION MAP</span>
+        <button
+          aria-label="Play NOC Flow"
+          onClick={() => {
+            unlockAudio();
+            playCue("tap");
+            setActiveLevel(undefined);
+            setFlow(true);
+          }}
+        >
+          <InfinityIcon size={24} /> Endless
+        </button>
         <button
           aria-label={profile.sound ? "Mute sound" : "Enable sound"}
           onClick={() => {
@@ -178,7 +157,7 @@ export default function GameShell() {
             setProfile((v) => ({ ...v, sound: !v.sound }));
           }}
         >
-          {profile.sound ? <Volume2 size={18} /> : <VolumeX size={18} />} Sound
+          {profile.sound ? <Volume2 size={21} /> : <VolumeX size={21} />} Sound
         </button>
       </nav>
       {saveFailed && (
@@ -263,6 +242,14 @@ export default function GameShell() {
           <p className="muted">
             Reloading ends the active session. Your packet record is saved on
             this device when you return to the menu.
+          </p>
+          <p className="muted">
+            {Object.keys(profile.progress).length}/6 maps completed ·{" "}
+            {Object.values(profile.progress).reduce((a, b) => a + b, 0)}/18
+            stars
+          </p>
+          <p className="muted">
+            Best run: {profile.best.toLocaleString("en-US")} packets
           </p>
           <FullscreenButton />
           {install && (

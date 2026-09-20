@@ -112,3 +112,12 @@ Production build and type/format checks pass. Six campaign browser checks pass o
 ## Campus building enlargement
 
 All three Campus building footprints are 4x their previous area (2x width and height). Library and Dorms were repositioned to preserve corridors within the existing world. No economy or goal changes were needed after matched before/after simulations across ten seeds: both sets completed 10/10, with mean completion increasing from 4.2 to 4.4 months. See MAP_SCHEMA.md and the campus balance JSON reports. All 56 unit tests pass, including the updated building crossing check. Production build passes. Mobile initial/whole-map screenshots were inspected at 390x844, with all footprints within world bounds.
+
+
+## Gameplay visual and sound feedback
+
+Connected/built/moved/upgraded nodes emit short expanding rings; carriers arriving with cargo emit a smaller cyan ring. Overload rings pulse while simulation runs; victory stars animate once. Effects are decorative, capped at twelve simultaneous node pulses, expire after 700ms, and honor reduced-motion preferences. No game rules or random traffic are changed.
+
+Sound cues now cover deliveries, automatic spawns, construction, cable errors, upgrades/equipment, removal, overload onset, monthly reports, victory and failure. Synthesized tones require a user gesture; delivery/warning cooldowns and a sixteen-voice cap prevent sound pileups at accelerated simulation speeds. Completed audio nodes disconnect. Mute silences scheduled voices immediately; no new sounds play while the document is hidden. Gameplay menu includes a persistent Sound toggle using the existing profile preference. No background music is added.
+
+Validation: audio lifecycle unit tests cover gesture gating, throttling, mute, hidden documents, cleanup and unavailable AudioContext. Browser checks on Chromium, Android and iPhone/WebKit emulation cover visible effects while muted, pulse expiration, preference persistence and reduced motion. Mobile effect screenshot inspected. Speaker/headphone sound quality remains a physical-device listening check; browser assertions verify playback logic rather than subjective sound quality.

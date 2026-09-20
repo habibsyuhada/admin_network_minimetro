@@ -84,6 +84,13 @@ export default function GameShell() {
     return (
       <MetroGame
         levelId={activeLevel}
+        sound={profile.sound}
+        onToggleSound={() => {
+          setAudioEnabled(!profile.sound);
+          unlockAudio();
+          setProfile((v) => ({ ...v, sound: !v.sound }));
+          if (!profile.sound) playCue("tap");
+        }}
         onComplete={(id, stars) =>
           setProfile((v) => ({
             ...v,

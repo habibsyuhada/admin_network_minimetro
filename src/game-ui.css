@@ -1458,3 +1458,56 @@ dialog select {
   font-size: 12px;
   color: #bdd2c4;
 }
+
+.node-feedback {
+  fill: none;
+  stroke: #b9f595;
+  stroke-width: 3;
+  animation: node-feedback 0.65s ease-out both;
+}
+.node-feedback.arrival {
+  stroke: #7de6ec;
+  stroke-width: 2;
+}
+@keyframes node-feedback {
+  from {
+    r: 30;
+    opacity: 0.9;
+  }
+  to {
+    r: 54;
+    opacity: 0;
+  }
+}
+.metro-danger-ring {
+  animation: danger-glow 1.2s ease-in-out infinite alternate;
+}
+@keyframes danger-glow {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.effects-paused .metro-danger-ring {
+  animation-play-state: paused;
+}
+.victory-emblem {
+  animation: victory-reveal 0.45s ease-out both;
+}
+@keyframes victory-reveal {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .node-feedback {
+    opacity: 0.65;
+  }
+}

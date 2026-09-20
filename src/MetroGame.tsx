@@ -1,3 +1,4 @@
+import useGameFeedback from "./useGameFeedback";
 import ItemPanel from "./ItemPanel";
 import EnvironmentArt from "./EnvironmentArt";
 import { ITEMS } from "./game/items";
@@ -59,13 +60,18 @@ export default function MetroGame({
   onMenu,
   levelId,
   onComplete,
+  sound = true,
+  onToggleSound,
 }: {
+  sound?: boolean;
+  onToggleSound?: () => void;
   onMenu: (delivered: number) => void;
   levelId?: string;
   onComplete?: (id: string, stars: number) => void;
 }) {
   const level = getLevel(levelId);
   const [s, setS] = useState(() => newMetro(level?.seed, level?.id));
+  const pulses = useGameFeedback(s);
   const awarded = useRef(false);
   useEffect(() => {
     if (s.phase === "complete" && level && !awarded.current) {
@@ -174,6 +180,7 @@ export default function MetroGame({
     if (error) {
       setTip(error);
       setBuildError(error);
+      playCue("error");
       return;
     }
     setBuildError(null);
@@ -223,7 +230,7 @@ export default function MetroGame({
   };
   return (
     <main
-      className="metro-game"
+      className={`metro-game ${stopped ? "effects-paused" : ""}`}
       style={
         { "--map-accent": level?.color ?? "#9fe8ba" } as React.CSSProperties
       }
@@ -463,6 +470,20 @@ export default function MetroGame({
               />
             </g>
           ))}
+          <g className="feedback-layer" pointerEvents="none" aria-hidden="true">
+            {pulses.map((p) => {
+              const n = s.nodes.find((n) => n.serial === p.serial);
+              return n ? (
+                <circle
+                  key={p.key}
+                  cx={n.x}
+                  cy={n.y}
+                  r="32"
+                  className={`node-feedback ${p.kind}`}
+                />
+              ) : null;
+            })}
+          </g>
           {pointer && (
             <line
               className="metro-preview"
@@ -1005,6 +1026,13 @@ export default function MetroGame({
                 onClick={() => setGamePanel("inventory")}
               >
                 Inventory · {s.inventory.length} items
+              </button>
+              <button
+                className="secondary"
+                onClick={onToggleSound}
+                aria-label={sound ? "Mute sound" : "Enable sound"}
+              >
+                Sound: {sound ? "On" : "Off"}
               </button>
               <button
                 className="secondary"

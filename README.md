@@ -72,3 +72,9 @@ Buka detail router/switch lalu pilih **Pindahkan**. Geser pratinjau, kemudian **
 **Jual node** meminta konfirmasi dan mengembalikan 100% harga node beserta seluruh kabel yang terhubung. Paket tersisa dipindahkan ke node lain tanpa dihitung sebagai pengiriman berhasil; maintenance yang sudah berjalan tetap ditagih. PC dan layanan otomatis tidak dapat dijual.
 
 Client memiliki 16 variasi ikon: desktop, laptop, ponsel, tablet, konsol, Smart TV, printer, CCTV, jam pintar, speaker pintar, kios, headset VR, handheld, mini PC, workstation, dan terminal kasir. Variasi dipilih acak saat PC muncul, tetapi semuanya tetap menerima paket berikon PC. Galeri tersedia di Panduan.
+
+## Jeda desain dan kecepatan
+
+Tombol Jeda/Lanjut menghentikan atau menjalankan simulasi tanpa menutup peta. Saat dijeda, pemain tetap dapat membuat kabel, membeli/memindahkan/menjual router atau switch, dan memeriksa node. Pengangkut, antrean, kemunculan node, overload, serta maintenance tidak berkembang selama jeda. Tombol kecepatan berputar 1x, 2x, 3x untuk seluruh waktu simulasi. Menutup detail atau pratinjau tidak membatalkan jeda manual.
+
+Detail node menampilkan kabel yang terhubung, perangkat di ujung lainnya, dan refund harga penuh. Tombol Hapus hanya menghapus kabel tersebut dan mengembalikan muatannya. Kegagalan koneksi menampilkan pesan error di dekat peta; port penuh menyebut nama node, kapasitas port, dan petunjuk membebaskan port melalui detail node.

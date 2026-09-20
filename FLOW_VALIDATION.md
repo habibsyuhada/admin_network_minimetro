@@ -43,3 +43,9 @@ Existing routers and switches can be repositioned using a paused, free preview w
 Sixteen seeded client icon variants share the same PC service type. The guide includes a complete icon gallery. Unit checks cover free movement, invalid placement, connected and disconnected node sale, cargo preservation, refund totals, endpoint remapping and all variant outcomes. Browser checks cover moving and cancelling both device kinds, cable previews, sale cancellation/confirmation and the client gallery.
 
 Three WebKit scenarios exceeded the initial 30-second suite timeout under concurrent load; focused reruns with a 60-second budget and one worker passed. The longer move/cancel/sale scenarios now explicitly allow 60 seconds.
+
+## Editable pause, simulation speed, and node cable management
+
+Manual pause is separate from modal/input blocking. It freezes simulation ticks while allowing topology edits, node previews and camera controls. Speed cycles through 1x/2x/3x and scales fixed simulation steps, including generation, maintenance and overload. Closing inspectors and purchase previews preserves manual pause. Node details expose connected cables, their peer and full refund, with individual removal. Connection errors display an alert near the map, including the full transit node identity and port usage.
+
+Validation for this change: 33 unit tests pass; 18 targeted browser cases pass across Chromium desktop, Android emulation and WebKit, covering existing menu/cable flows plus frozen carriers, topology edits during pause, clock progression at 2x/3x, node-detail removal/refund, full switch rejection and reuse of freed ports. Build and TypeScript/format checks pass.

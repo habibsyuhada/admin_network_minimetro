@@ -56,6 +56,8 @@ export default function MetroGame({
   const placement = useRef<{ id: number; x: number; y: number } | null>(null);
   const [selected, setSelected] = useState<CableKind>(0);
   const [paused, setPaused] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [buildError, setBuildError] = useState<string | null>(null);
   const [help, setHelp] = useState(true);
   const [confirm, setConfirm] = useState(false);
   const [showNodes, setShowNodes] = useState(false);
@@ -72,13 +74,8 @@ export default function MetroGame({
     y: number;
   } | null>(null);
   const frozen =
-    paused ||
-    help ||
-    confirm ||
-    showNodes ||
-    sale !== null ||
-    s.phase !== "running";
-  const stopped = frozen || placing;
+    help || confirm || showNodes || sale !== null || s.phase !== "running";
+  const stopped = paused || frozen || placing;
   useEffect(() => {
     const hide = () => {
       if (document.hidden) setPaused(true);
@@ -108,7 +105,7 @@ export default function MetroGame({
       accumulator = 0;
     const timer = window.setInterval(() => {
       const now = performance.now();
-      accumulator += Math.min(0.5, (now - last) / 1000);
+      accumulator += Math.min(0.5, (now - last) / 1000) * speed;
       last = now;
       if (document.hidden) {
         accumulator = 0;
@@ -123,13 +120,15 @@ export default function MetroGame({
         });
     }, 50);
     return () => clearInterval(timer);
-  }, [stopped]);
+  }, [stopped, speed]);
   const build = (a: number, b: number) => {
     const error = connectionError(s, selected, a, b);
     if (error) {
       setTip(error);
+      setBuildError(error);
       return;
     }
+    setBuildError(null);
     setS((v) => connectCable(v, selected, a, b));
     playCue("link");
     setTip(
@@ -159,6 +158,8 @@ export default function MetroGame({
     setDraft(null);
     setSelected(0);
     setPaused(false);
+    setSpeed(1);
+    setBuildError(null);
     setConfirm(false);
     setTip("Tarik kabel antar perangkat. Ketuk node untuk detail.");
   };
@@ -168,13 +169,23 @@ export default function MetroGame({
         <span className="metro-wordmark">
           <Network size={20} /> NOC / FLOW
         </span>
-        <button
-          aria-label="Jeda mode Flow"
-          onClick={() => setPaused(true)}
-          disabled={frozen}
-        >
-          <Pause size={20} />
-        </button>
+        <div className="simulation-controls" aria-label="Waktu simulasi">
+          <button
+            aria-label={paused ? "Lanjutkan Flow" : "Jeda mode Flow"}
+            aria-pressed={paused}
+            onClick={() => setPaused((v) => !v)}
+            disabled={frozen || placing}
+          >
+            {paused ? <Play size={18} /> : <Pause size={18} />}
+          </button>
+          <button
+            aria-label="Kecepatan simulasi"
+            onClick={() => setSpeed((v) => (v === 1 ? 2 : v === 2 ? 3 : 1))}
+            disabled={frozen || placing}
+          >
+            {speed}x
+          </button>
+        </div>
       </header>
       <section className="metro-score" aria-label="Statistik Flow">
         <div>
@@ -191,6 +202,28 @@ export default function MetroGame({
         </div>
       </section>
       <div className="metro-map-wrap">
+        {paused && !help && s.phase === "running" && (
+          <div className="planning-banner" role="status">
+            <span>Simulasi dijeda. Kamu tetap bisa mendesain topologi.</span>
+            <button onClick={() => onMenu(best.current)}>
+              Akhiri sesi &amp; ke menu
+            </button>
+          </div>
+        )}
+        {buildError && (
+          <div className="connection-error" role="alert">
+            <span>
+              <b>Kabel gagal terhubung.</b> {buildError}
+            </span>
+            <button
+              aria-label="Tutup pesan error"
+              onClick={() => setBuildError(null)}
+            >
+              Tutup
+            </button>
+          </div>
+        )}
+
         <div className="metro-map-title">
           <span>01 — LOCAL AREA NETWORK</span>
           <span>{s.queues.length} perangkat</span>
@@ -645,6 +678,11 @@ export default function MetroGame({
           </p>
           <ol className="handbook">
             <li>
+              Tekan Jeda untuk mendesain topologi tanpa paket bergerak. Tombol
+              1x/2x/3x mengatur kecepatan seluruh simulasi, termasuk kemunculan
+              node dan maintenance.
+            </li>
+            <li>
               Geser area kosong untuk menggerakkan peta. Cubit dengan dua jari
               atau gunakan tombol − / + untuk zoom. Tekan persentase untuk
               kembali ke area awal. Tombol Peta menampilkan seluruh area.
@@ -699,16 +737,6 @@ export default function MetroGame({
           </button>
         </Dialog>
       )}
-      {paused && !help && s.phase === "running" && (
-        <Dialog title="Flow dijeda" onClose={() => setPaused(false)}>
-          <button className="primary" onClick={() => setPaused(false)}>
-            <Play size={18} /> Lanjutkan Flow
-          </button>
-          <button className="secondary" onClick={() => onMenu(best.current)}>
-            <ArrowLeft size={18} /> Akhiri sesi & ke menu
-          </button>
-        </Dialog>
-      )}
       {showNodes && (
         <Dialog
           title={
@@ -755,7 +783,16 @@ export default function MetroGame({
               </button>
             </div>
           )}
-          <NodeDetails state={s} node={detailNode} onSelect={setDetailNode} />
+          <NodeDetails
+            state={s}
+            node={detailNode}
+            onSelect={setDetailNode}
+            onRemoveCable={(id) => {
+              setS((v) => removeCable(v, id));
+              setBuildError(null);
+              setTip("Kabel dihapus. Harga beli dikembalikan penuh.");
+            }}
+          />
           <button className="primary" onClick={() => setShowNodes(false)}>
             Kembali ke peta
           </button>

@@ -20,10 +20,12 @@ export default function NodeDetails({
   state,
   node,
   onSelect,
+  onRemoveCable,
 }: {
   state: Metro;
   node: number | null;
   onSelect: (id: number | null) => void;
+  onRemoveCable: (id: number) => void;
 }) {
   const nodes = state.nodes;
   if (node === null)
@@ -87,6 +89,37 @@ export default function NodeDetails({
           Paket menunggu pengangkut berikutnya; bukan tujuan akhir.
         </p>
       )}
+      <h3>Kabel terhubung</h3>
+      <div className="node-cables">
+        {state.cables
+          .filter((c) => c.stops.includes(node))
+          .map((c) => (
+            <div key={c.id}>
+              <span>
+                <b>
+                  {CABLE_TYPES[c.kind].name} #{c.id}
+                </b>
+                <small>
+                  Ke{" "}
+                  {nodeName(
+                    c.stops.find((id) => id !== node)!,
+                    nodes,
+                  )}
+                </small>
+                <small>Refund {CABLE_TYPES[c.kind].cost} gold</small>
+              </span>
+              <button
+                aria-label={`Hapus kabel ${c.id}`}
+                onClick={() => onRemoveCable(c.id)}
+              >
+                Hapus
+              </button>
+            </div>
+          ))}
+        {!state.cables.some((c) => c.stops.includes(node)) && (
+          <p>Belum ada kabel terhubung.</p>
+        )}
+      </div>
       <h3>Tujuan paket dari node ini</h3>
       <p className="muted">
         Paket diterima oleh node mana pun dengan ikon yang sama. Rute otomatis

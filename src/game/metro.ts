@@ -186,7 +186,7 @@ export function connectionError(
       s.cables.filter((c) => c.stops.includes(id)).length >=
         TRANSIT[shape].ports
     )
-      return `${TRANSIT[shape].name} sudah memakai semua ${TRANSIT[shape].ports} port.`;
+      return `Port ${TRANSIT[shape].name} ${s.nodes[id].serial ?? id + 1} penuh (${TRANSIT[shape].ports}/${TRANSIT[shape].ports}). Hapus kabel di detail node untuk membebaskan port.`;
   }
   if (s.gold < CABLE_TYPES[kind].cost)
     return "Gold tidak cukup untuk memasang kabel ini.";

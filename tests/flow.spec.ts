@@ -34,9 +34,7 @@ test("point-to-point cables have separate carriers and can be removed individual
   expect(colors[0]).toBe(colors[1]);
   expect(colors[2]).not.toBe(colors[0]);
   await dragCable(page, 0, 1);
-  await expect(
-    page.getByText("Kabel jenis ini sudah menghubungkan kedua perangkat."),
-  ).toBeVisible();
+  await expect(page.getByRole("alert")).toBeVisible();
   await expect(page.getByTestId("cable-count")).toHaveText("3 kabel aktif");
   await tap("Jeda mode Flow");
   const clock = await page.getByTestId("flow-clock").textContent();

@@ -317,7 +317,7 @@ describe("switch specifications and random growth", () => {
       0,
     );
     expect(s.cables).toHaveLength(4);
-    expect(connectionError(s, 1, 3, 1)).toContain("4 port");
+    expect(connectionError(s, 1, 3, 1)).toContain("penuh (4/4)");
     expect(connectCable(s, 1, 3, 1)).toBe(s);
     expect(TRANSIT[3].ports).toBe(8);
   });

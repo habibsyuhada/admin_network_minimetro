@@ -186,7 +186,7 @@
   border-color: var(--route);
   background: #fff9;
 }
-.metro-line-buttons span {
+.metro-line-buttons > button > span {
   display: grid;
   place-items: center;
   background: var(--route);
@@ -396,7 +396,7 @@
   background: #29443a;
   border-color: var(--route);
 }
-.metro-line-buttons span {
+.metro-line-buttons > button > span {
   border-radius: 6px;
   width: 29px;
   height: 22px;
@@ -538,7 +538,7 @@
 .route-casing {
   filter: none;
 }
-.cable-type-buttons span {
+.cable-type-buttons > button > span {
   width: auto;
   min-width: 42px;
   height: 24px;

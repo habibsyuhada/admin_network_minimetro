@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 import { ArrowUp } from "lucide-react";
-import { isTransit, type Metro, type Site } from "./game/metro";
+import { type Metro, type Site } from "./game/metro";
 import { DeviceGlyph } from "./NetworkArt";
 import { nodeName } from "./NodeDetails";
 import type { View } from "./game/mapView";
@@ -39,7 +39,7 @@ export default function OffscreenNodes({
         cy = box.height / 2;
       state.nodes.forEach((n, id) => {
         const urgent = state.overload[id] > 0;
-        if (isTransit(n.shape) && !urgent) return;
+        if (!urgent && state.cables.some((c) => c.stops.includes(id))) return;
         const point = new DOMPoint(n.x, n.y).matrixTransform(matrix),
           x = point.x - box.left,
           y = point.y - box.top;
@@ -92,7 +92,7 @@ export default function OffscreenNodes({
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [state.nodes, state.overload, view, svg]);
+  }, [state.nodes, state.cables, state.overload, view, svg]);
   return (
     <div className="offscreen-nodes" aria-label="Offscreen devices">
       {markers.map((m) => (

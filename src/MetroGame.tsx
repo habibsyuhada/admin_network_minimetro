@@ -112,6 +112,11 @@ export default function MetroGame({
   const [cameraOpen, setCameraOpen] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const hasOverload = s.overload.some((seconds) => seconds > 0);
+  const effectiveSpeed = hasOverload ? 1 : speed;
+  useEffect(() => {
+    if (hasOverload) setSpeed(1);
+  }, [hasOverload]);
   const [buildError, setBuildError] = useState<string | null>(null);
   const [help, setHelp] = useState(true);
   const [confirm, setConfirm] = useState(false);
@@ -165,7 +170,7 @@ export default function MetroGame({
       accumulator = 0;
     const timer = window.setInterval(() => {
       const now = performance.now();
-      accumulator += Math.min(0.5, (now - last) / 1000) * speed;
+      accumulator += Math.min(0.5, (now - last) / 1000) * effectiveSpeed;
       last = now;
       if (document.hidden) {
         accumulator = 0;
@@ -175,12 +180,16 @@ export default function MetroGame({
       accumulator -= steps * 0.1;
       if (steps)
         setS((v) => {
-          for (let i = 0; i < steps; i++) v = metroTick(v);
+          for (let i = 0; i < steps; i++) {
+            v = metroTick(v);
+            if (effectiveSpeed > 1 && v.overload.some((seconds) => seconds > 0))
+              break;
+          }
           return v;
         });
     }, 50);
     return () => clearInterval(timer);
-  }, [stopped, speed]);
+  }, [stopped, effectiveSpeed]);
   const build = (a: number, b: number) => {
     const error = connectionError(s, selected, a, b);
     if (error) {
@@ -273,10 +282,15 @@ export default function MetroGame({
           </button>
           <button
             aria-label="Simulation speed"
+            title={
+              hasOverload
+                ? "Clear overloaded nodes to speed up"
+                : "Change simulation speed"
+            }
             onClick={() => setSpeed((v) => (v === 1 ? 2 : v === 2 ? 3 : 1))}
-            disabled={frozen || placing}
+            disabled={frozen || placing || hasOverload}
           >
-            {speed}x
+            {effectiveSpeed}x
           </button>
         </div>
       </header>

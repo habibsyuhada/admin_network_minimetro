@@ -85,3 +85,39 @@ test("full switch reports its identity and deleting a cable frees a port", async
     fullPage: true,
   });
 });
+
+test("overload automatically resets fast forward and locks it while pause remains available", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.clock.install({ time: new Date(42) });
+  await page.goto("/");
+  await page.clock.pauseAt(new Date(100000));
+  await page
+    .getByRole("button", { name: "Play NOC Flow", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Start connecting" }).click();
+  const speed = page.getByRole("button", {
+    name: "Simulation speed",
+    exact: true,
+  });
+  await speed.click();
+  await speed.click();
+  await expect(speed).toHaveText("3x");
+  for (
+    let i = 0;
+    i < 100 && !(await page.locator(".overload-pulse").count());
+    i++
+  ) {
+    await page.clock.runFor(500);
+    const nextMonth = page.getByRole("button", { name: /Next month/i });
+    if (await nextMonth.isVisible()) await nextMonth.click();
+  }
+  await expect(page.locator(".overload-pulse").first()).toBeVisible();
+  await expect(speed).toHaveText("1x");
+  await expect(speed).toBeDisabled();
+  await page.getByRole("button", { name: "Pause Flow", exact: true }).click();
+  const time = await page.getByTestId("flow-clock").textContent();
+  await page.clock.runFor(2000);
+  await expect(page.getByTestId("flow-clock")).toHaveText(time!);
+});

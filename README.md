@@ -10,15 +10,15 @@ Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangka
 - Paket transit turun di perangkat perantara dan menunggu pengangkut kabel selanjutnya. Kabel dua arah memakai pengangkut yang sama, bukan perjalanan paket mandiri.
 - Routing otomatis memperhitungkan jarak, kecepatan kabel, dan banyaknya muatan yang mengantre dibandingkan kapasitas. Rute dihitung lagi saat pemuatan; tujuan adalah node persis yang ditetapkan saat paket muncul. Node lain dengan ikon sama hanya menjadi tempat transit.
 
-| Jenis | Warna | Kapasitas awal | Kecepatan relatif | Biaya stok |
+| Jenis | Warna | Kapasitas awal | Kecepatan relatif | Harga gold |
 |---|---|---:|---|---:|
-| Ethernet | Toska | 4 paket | Seimbang | 1 |
-| Fiber | Oranye | 3 paket | Cepat | 2 |
-| Backbone | Ungu | 8 paket | Lambat | 2 |
+| Ethernet | Toska | 4 paket | Seimbang | 100 |
+| Fiber | Oranye | 3 paket | Cepat | 200 |
+| Backbone | Ungu | 8 paket | Lambat | 250 |
 
-Stok awal 6. Tiap menit mendapat 2 stok, lalu satu bonus: tambahan 4 stok, +2 kapasitas semua pengangkut, atau peningkatan kecepatan. Perangkat baru muncul setiap 35 detik, hingga 12 perangkat. Antrean minimal 8 paket selama 20 detik mengakhiri permainan.
+Modal awal 1.000 gold. Profit 25 gold per paket yang sampai ke tujuan akhir, dibayarkan setiap menit setelah dikurangi maintenance. Maintenance per minggu: Ethernet 20, Fiber 35, Backbone 40, router 30 gold; dihitung per tick sesuai lama aktif, lalu dibulatkan ke atas satu gold saat settlement. Saldo negatif saat settlement mengakhiri sesi. Upgrade mingguan opsional: +2 kapasitas seharga 300 gold atau kecepatan seharga 250 gold. Perangkat baru muncul setiap 35 detik, hingga 12 perangkat. Antrean minimal 8 paket selama 20 detik mengakhiri permainan.
 
-**Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Biaya stok dikembalikan seluruhnya; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
+**Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Sebanyak 50% harga beli dikembalikan; maintenance yang sudah berjalan tetap ditagih; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
 
 **Detail node** menampilkan daftar perangkat dan antrean yang dikelompokkan berdasarkan tujuan, termasuk jumlah paket, kabel berikutnya, dan tujuan yang belum terhubung. Klik node di peta untuk langsung memeriksanya, atau buka Detail node untuk daftar semua perangkat. Simulasi dijeda selama panel terbuka.
 
@@ -44,12 +44,12 @@ npm run test:e2e
 
 Build tersedia di `dist/`. Base relatif mendukung subpath GitHub Pages. PWA offline membutuhkan kunjungan online pertama. Ini belum APK/IPA.
 
-`src/game/metro.ts` menyimpan simulasi dan routing; `src/MetroGame.tsx` menangani permainan; `src/game/mapView.ts` mengatur batas kamera dan lajur kabel; `src/NetworkArt.tsx` menyediakan ikon perangkat. Uji otomatis meliputi muatan per jenis kabel, antrean transit, routing alternatif, perjalanan dua arah, konservasi paket saat kabel dihapus, ekonomi stok, input, pinch, layout dan offline. Verifikasi perangkat iPhone fisik tetap diperlukan.
+`src/game/metro.ts` menyimpan simulasi dan routing; `src/MetroGame.tsx` menangani permainan; `src/game/mapView.ts` mengatur batas kamera dan lajur kabel; `src/NetworkArt.tsx` menyediakan ikon perangkat. Uji otomatis meliputi muatan per jenis kabel, antrean transit, routing alternatif, perjalanan dua arah, konservasi paket saat kabel dihapus, ekonomi gold, input, pinch, layout dan offline. Verifikasi perangkat iPhone fisik tetap diperlukan.
 
 PC hanya menghasilkan paket menuju Server atau Database. Server dan Database dapat mengirim ke PC atau perangkat layanan lain. Trafik masih simulasi sederhana, bukan pasangan request/response protokol nyata.
 
 ## Router buatan pemain
 
-Tekan **Pasang router**, lalu ketuk lokasi kosong pada peta. Mulai dengan 2 router; tiap minggu mendapat 1 tambahan. Penempatan harus di dalam batas peta dan minimal 75 unit dari perangkat lain. Bisa menggeser peta selama memilih lokasi, atau membatalkan tanpa memakai stok. Hubungkan router memakai drag kabel seperti node lain. Router hanya menjadi titik transit, tidak menghasilkan paket dan bukan tujuan akhir. Antrean router mengikuti aturan overload yang sama.
+Tekan **Pasang router** untuk memunculkan pratinjau di tengah tampilan peta. Geser router ke posisi yang diinginkan, kemudian **OK** untuk membeli seharga 150 gold, atau **Cancel** untuk membatalkan tanpa biaya. Simulasi dijeda selama pratinjau, tetapi peta tetap bisa digeser dan di-zoom. Penempatan harus di dalam peta dan minimal 75 unit dari node lain. Hubungkan router memakai drag kabel seperti node lain. Router hanya menjadi titik transit, tidak menghasilkan paket dan bukan tujuan akhir. Antrean router mengikuti aturan overload yang sama.
 
 Node aktif dan posisi router disimpan dalam state sesi, sehingga penambahan router tidak menggeser identitas tujuan paket atau mengganggu kemunculan Client/Server/Database. Tiga node awal kini berjarak sekitar 294, 291, dan 435 unit. Node otomatis selanjutnya memiliki variasi posisi dan menghindari tumpang tindih dengan node pemain.

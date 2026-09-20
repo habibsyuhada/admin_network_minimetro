@@ -80,7 +80,9 @@ export default function useMapCamera(
     const a = values[0],
       b = values[1];
     const center = b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : a;
-    const node = (e.target as Element).closest("[data-node-id]");
+    const node = (e.target as Element).closest(
+      "[data-node-id], [data-router-draft]",
+    );
     motion.current = {
       kind: b ? "pinch" : node ? "draw" : "pan",
       view: { ...live.current },

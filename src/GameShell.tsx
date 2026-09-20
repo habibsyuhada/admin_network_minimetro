@@ -279,9 +279,11 @@ export default function GameShell() {
               berikutnya. Rute dipilih otomatis.
             </li>
             <li>
-              Stok awal 6. Ethernet memakai 1 stok, Fiber dan Backbone 2 stok.
-              Tiap menit dapat 2 stok dan satu bonus. Hapus kabel lewat Kelola
-              kabel untuk mendapat stok kembali.
+              Modal awal 1.000 gold. Kabel berharga 100/200/250 gold; router 150
+              gold. Router muncul sebagai pratinjau: geser, lalu OK atau Cancel.
+              Setiap paket terkirim memberi profit 25 gold. Tiap menit, profit
+              dikurangi maintenance masuk ke saldo. Penjualan kabel
+              mengembalikan 50% harganya.
             </li>
             <li>
               Antrean 8 paket memicu peringatan. Kurangi dalam 20 detik sebelum

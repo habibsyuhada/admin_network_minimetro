@@ -4,6 +4,9 @@ import Dialog from "./Dialog";
 import NodeDetails, { nodeName } from "./NodeDetails";
 import {
   CABLE_TYPES,
+  ROUTER_COST,
+  maintenanceDue,
+  maintenanceRate,
   cableCapacity,
   connectionError,
   type CableKind,
@@ -34,7 +37,8 @@ export default function MetroGame({
   const [s, setS] = useState(newMetro);
   const best = useRef(0);
   best.current = Math.max(best.current, s.delivered);
-  const [placing, setPlacing] = useState(false);
+  const [draft, setDraft] = useState<{ x: number; y: number } | null>(null);
+  const placing = draft !== null;
   const placement = useRef<{ id: number; x: number; y: number } | null>(null);
   const [selected, setSelected] = useState<CableKind>(0);
   const [paused, setPaused] = useState(false);
@@ -55,6 +59,7 @@ export default function MetroGame({
   } | null>(null);
   const frozen =
     paused || help || confirm || showNodes || s.phase !== "running";
+  const stopped = frozen || placing;
   useEffect(() => {
     const hide = () => {
       if (document.hidden) setPaused(true);
@@ -63,7 +68,8 @@ export default function MetroGame({
       if (e.key === "Escape" && !(e.target as Element).closest("dialog")) {
         gesture.current = null;
         setPointer(null);
-        setPaused(true);
+        if (placing) setDraft(null);
+        else setPaused(true);
       }
     };
     document.addEventListener("visibilitychange", hide);
@@ -72,9 +78,9 @@ export default function MetroGame({
       document.removeEventListener("visibilitychange", hide);
       window.removeEventListener("keydown", key);
     };
-  }, []);
+  }, [placing]);
   useEffect(() => {
-    if (frozen) {
+    if (stopped) {
       gesture.current = null;
       setPointer(null);
       return;
@@ -98,7 +104,7 @@ export default function MetroGame({
         });
     }, 50);
     return () => clearInterval(timer);
-  }, [frozen]);
+  }, [stopped]);
   const build = (a: number, b: number) => {
     const error = connectionError(s, selected, a, b);
     if (error) {
@@ -112,7 +118,7 @@ export default function MetroGame({
     );
   };
   const inspect = (id: number) => {
-    if (frozen) return;
+    if (frozen || placing) return;
     setDetailNode(id);
     setShowNodes(true);
   };
@@ -131,7 +137,7 @@ export default function MetroGame({
   const restart = () => {
     camera.reset();
     setS(newMetro());
-    setPlacing(false);
+    setDraft(null);
     setSelected(0);
     setPaused(false);
     setConfirm(false);
@@ -177,16 +183,8 @@ export default function MetroGame({
           role="group"
           aria-label="Peta Flow interaktif"
           onPointerDown={(e) => {
-            if (placing && !frozen) {
-              if (e.isPrimary && e.button === 0)
-                placement.current = {
-                  id: e.pointerId,
-                  x: e.clientX,
-                  y: e.clientY,
-                };
-              else placement.current = null;
-            }
             if (camera.down(e)) {
+              placement.current = null;
               gesture.current = null;
               setPointer(null);
             }
@@ -197,32 +195,20 @@ export default function MetroGame({
               setPointer(null);
               return;
             }
+            if (draft && placement.current?.id === e.pointerId) {
+              const p = position(e.clientX, e.clientY);
+              setDraft({
+                x: Math.max(40, Math.min(960, p.x - placement.current.x)),
+                y: Math.max(40, Math.min(1160, p.y - placement.current.y)),
+              });
+              return;
+            }
             const g = gesture.current;
             if (g?.pointer === e.pointerId)
               setPointer(position(e.clientX, e.clientY));
           }}
           onPointerUp={(e) => {
-            const pending = placement.current;
             placement.current = null;
-            if (
-              placing &&
-              pending?.id === e.pointerId &&
-              !frozen &&
-              Math.hypot(e.clientX - pending.x, e.clientY - pending.y) < 10
-            ) {
-              camera.end(e);
-              const p = position(e.clientX, e.clientY);
-              const error = routerError(s, p.x, p.y);
-              if (error) setTip(error);
-              else {
-                setS((v) => placeRouter(v, p.x, p.y));
-                setPlacing(false);
-                setTip(
-                  "Router terpasang. Tarik kabel ke router untuk membuat titik transit.",
-                );
-              }
-              return;
-            }
             const consumed = camera.end(e);
             const g = gesture.current;
             gesture.current = null;
@@ -257,6 +243,7 @@ export default function MetroGame({
             setPointer(null);
           }}
           onLostPointerCapture={(e) => {
+            placement.current = null;
             camera.end(e);
             gesture.current = null;
             setPointer(null);
@@ -397,6 +384,55 @@ export default function MetroGame({
               </g>
             );
           })}
+          {draft && (
+            <g
+              data-router-draft="true"
+              role="button"
+              aria-label="Geser pratinjau router"
+              tabIndex={0}
+              transform={`translate(${draft.x},${draft.y})`}
+              className="router-draft"
+              onKeyDown={(e) => {
+                const delta: Record<string, [number, number]> = {
+                  ArrowLeft: [-10, 0],
+                  ArrowRight: [10, 0],
+                  ArrowUp: [0, -10],
+                  ArrowDown: [0, 10],
+                };
+                if (delta[e.key]) {
+                  e.preventDefault();
+                  setDraft({
+                    x: Math.max(40, Math.min(960, draft.x + delta[e.key][0])),
+                    y: Math.max(40, Math.min(1160, draft.y + delta[e.key][1])),
+                  });
+                }
+              }}
+              onPointerDown={(e) => {
+                if (frozen || !e.isPrimary || e.button !== 0) return;
+                e.preventDefault();
+                const p = position(e.clientX, e.clientY);
+                placement.current = {
+                  id: e.pointerId,
+                  x: p.x - draft.x,
+                  y: p.y - draft.y,
+                };
+                svg.current?.setPointerCapture(e.pointerId);
+              }}
+            >
+              <circle
+                r="37"
+                fill="#25362bcc"
+                stroke={
+                  routerError(s, draft.x, draft.y) ? "#f48b73" : "#f2d779"
+                }
+                strokeDasharray="5 4"
+              />
+              <DeviceGlyph kind={3} />
+              <text y="-45" className="metro-node-id">
+                GESER ROUTER
+              </text>
+            </g>
+          )}
           {s.cables.map((l, i) => {
             if (l.stops.length < 2) return null;
             const from = l.stops[l.at],
@@ -471,48 +507,75 @@ export default function MetroGame({
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
-        <button
-          className="router-build"
-          aria-pressed={placing}
-          disabled={frozen || (!placing && s.routerStock === 0)}
-          onClick={() => {
-            setPlacing(!placing);
-            setTip(
-              !placing
-                ? "Ketuk area kosong untuk menempatkan router. Geser peta untuk mencari lokasi."
-                : "Penempatan dibatalkan.",
-            );
-          }}
-        >
-          {placing
-            ? "Batal pasang router"
-            : `+ Pasang router (${s.routerStock})`}
-        </button>
+        <div className="economy-bar" aria-label="Keuangan minggu ini">
+          <strong data-testid="gold">{s.gold} gold</strong>
+          <span>Profit: {s.profit}</span>
+          <span>Maintenance: {maintenanceDue(s)}</span>
+          <span>Bersih: {s.profit - maintenanceDue(s)} gold</span>
+        </div>
+        {draft ? (
+          <div className="router-confirm">
+            <p role="status">
+              {routerError(s, draft.x, draft.y) ??
+                `Geser router ke posisi pilihanmu. Harga ${ROUTER_COST} gold. Simulasi dijeda.`}
+            </p>
+            <button
+              disabled={frozen || !!routerError(s, draft.x, draft.y)}
+              onClick={() => {
+                setS((v) => placeRouter(v, draft.x, draft.y));
+                setDraft(null);
+                setTip("Router terpasang. Tarik kabel untuk menghubungkannya.");
+              }}
+            >
+              OK
+            </button>
+            <button onClick={() => setDraft(null)}>Cancel</button>
+          </div>
+        ) : (
+          <button
+            className="router-build"
+            disabled={frozen || s.gold < ROUTER_COST}
+            onClick={() =>
+              setDraft({
+                x: Math.max(
+                  40,
+                  Math.min(960, camera.view.x + camera.view.width / 2),
+                ),
+                y: Math.max(
+                  40,
+                  Math.min(1160, camera.view.y + camera.view.height / 2),
+                ),
+              })
+            }
+          >
+            + Pasang router · {ROUTER_COST} gold
+          </button>
+        )}
         <div className="metro-line-buttons cable-type-buttons">
           {CABLE_TYPES.map((type, i) => (
             <button
               key={type.name}
               aria-label={`Kabel ${type.name}`}
               aria-pressed={selected === i}
-              disabled={frozen}
+              disabled={frozen || placing}
               style={{ "--route": type.color } as React.CSSProperties}
               onClick={() => {
                 setSelected(i as CableKind);
                 setTip(
-                  `${type.name}: ${cableCapacity(s, i as CableKind)} paket/pengangkut · biaya ${type.cost} stok. ${type.note}.`,
+                  `${type.name}: ${cableCapacity(s, i as CableKind)} paket/pengangkut · harga ${type.cost} gold. ${type.note}.`,
                 );
               }}
             >
               <span>{type.name}</span>
               <small>
-                {cableCapacity(s, i as CableKind)} paket · {type.cost} stok
+                {cableCapacity(s, i as CableKind)} paket · {type.cost} gold
               </small>
             </button>
           ))}
           <button
             className="metro-clear"
             aria-label="Kelola kabel"
-            disabled={frozen || !s.cables.length}
+            disabled={frozen || placing || !s.cables.length}
             onClick={() => setConfirm(true)}
           >
             <Settings2 size={18} />
@@ -520,7 +583,7 @@ export default function MetroGame({
         </div>
         <div className="cable-inventory">
           <span data-testid="cable-count">{s.cables.length} kabel aktif</span>
-          <strong>Stok: {s.stock}</strong>
+          <span>Maintenance penuh: {maintenanceRate(s)} / minggu</span>
           <button
             aria-label="Detail node"
             disabled={frozen}
@@ -570,9 +633,12 @@ export default function MetroGame({
             <li>
               Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
               Backbone: 8 paket, lebih lambat. Angka ini bertambah saat upgrade.
-              Mulai dengan 2 router. Tekan Pasang router lalu ketuk area kosong.
-              Router hanya untuk transit. Setiap menit kamu mendapat 1 router, 2
-              stok kabel, dan memilih bonus.
+              Router seharga 150 gold langsung muncul sebagai pratinjau. Geser,
+              lalu OK untuk membeli atau Cancel. Modal awal 1.000 gold. Setiap
+              paket terkirim menghasilkan 25 gold. Profit dikurangi maintenance
+              dibayarkan setiap menit. Kabel berbiaya 100/200/250 gold;
+              maintenance kabel 20/35/40 dan router 30 gold per minggu, dihitung
+              sesuai lama aktif. Node yang muncul otomatis gratis.
             </li>
             <li>
               Antrean 8 paket memulai hitung mundur. Kurangi antrean sebelum 20
@@ -627,8 +693,9 @@ export default function MetroGame({
       {confirm && (
         <Dialog title="Kelola kabel" onClose={() => setConfirm(false)}>
           <p>
-            Hapus kabel untuk mengembalikan stok. Muatan dikembalikan ke
-            perangkat asal perjalanan; kabel lainnya tetap terpasang.
+            Hapus kabel untuk menjualnya kembali dengan harga 50%. Muatan
+            dikembalikan ke perangkat asal perjalanan; kabel lainnya tetap
+            terpasang.
           </p>
           <div className="cable-list">
             {s.cables.map((c) => (
@@ -651,7 +718,9 @@ export default function MetroGame({
                   aria-label={`Hapus kabel ${c.id}`}
                   onClick={() => {
                     setS((v) => removeCable(v, c.id));
-                    setTip("Kabel dilepas. Stok dan muatan dikembalikan.");
+                    setTip(
+                      "Kabel dijual. 50% harga dikembalikan; muatan kembali ke node asal.",
+                    );
                   }}
                 >
                   Hapus
@@ -668,34 +737,41 @@ export default function MetroGame({
       {s.phase === "reward" && (
         <Dialog title={`Minggu ${s.week} selesai`}>
           <p>
-            {s.delivered} paket terkirim. Pilih bekal untuk jaringan yang makin
-            sibuk. Bekal +2 stok kabel tersedia bersama bonus pilihanmu.
+            Profit: <b>{s.report?.profit} gold</b>
+            <br />
+            Maintenance: <b>{s.report?.maintenance} gold</b>
+            <br />
+            Hasil bersih: <b>{s.report?.net} gold</b>
           </p>
+          <p>Sudah masuk saldo. Saldo sekarang: {s.gold} gold.</p>
           <button
             className="primary"
-            onClick={() => setS((v) => reward(v, "stock"))}
+            onClick={() => setS((v) => reward(v, "continue"))}
           >
-            +4 stok kabel tambahan
+            Lanjut minggu berikutnya
           </button>
           <button
             className="secondary"
+            disabled={s.gold < 300}
             onClick={() => setS((v) => reward(v, "capacity"))}
           >
-            +2 kapasitas semua pengangkut
+            +2 kapasitas · 300 gold
           </button>
           <button
             className="secondary"
+            disabled={s.gold < 250}
             onClick={() => setS((v) => reward(v, "speed"))}
           >
-            Tingkatkan kecepatan transfer
+            Tingkatkan kecepatan · 250 gold
           </button>
         </Dialog>
       )}
       {s.phase === "over" && (
-        <Dialog title="Jaringan kewalahan">
+        <Dialog title={s.gold < 0 ? "Gold habis" : "Jaringan kewalahan"}>
           <p>
-            Antrean terlalu lama penuh. Coba jalur lebih pendek atau perangkat
-            transfer pada sesi berikutnya.
+            {s.gold < 0
+              ? "Saldo tidak cukup untuk menutup maintenance. Bangun jaringan yang lebih efisien pada sesi berikutnya."
+              : "Antrean terlalu lama penuh. Coba jalur lebih pendek atau perangkat transfer pada sesi berikutnya."}
           </p>
           <div className="result-score">
             <small>PAKET TERKIRIM</small>

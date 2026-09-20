@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   SITES,
+  maintenanceDue,
+  maintenanceRate,
   placeRouter,
   routerError,
   cableCapacity,
@@ -90,7 +92,7 @@ describe("point-to-point cable transport", () => {
     s = removeCable(s, s.cables[2].id);
     expect(routeCable(s, 0, 2)).toBe(s.cables[0].id);
   });
-  it("removing an in-flight cable refunds stock and returns all cargo to its departure node", () => {
+  it("removing an in-flight cable refunds half the price and returns all cargo to its departure node", () => {
     let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 1, 1, 2);
     s.queues[0] = [{ destination: 1 }, { destination: 1 }];
     s = steps(s, 12);
@@ -99,22 +101,22 @@ describe("point-to-point cable transport", () => {
     s = removeCable(s, s.cables[0].id);
     expect(count(s)).toBe(count(original));
     expect(s.queues[0]).toEqual([{ destination: 1 }, { destination: 1 }]);
-    expect(s.stock).toBe(original.stock + 1);
+    expect(s.gold).toBe(original.gold + 50);
     expect(s.cables).toHaveLength(1);
     expect(s.cables[0]).toBe(original.cables[1]);
   });
-  it("rejects duplicate pairs, self-links, inactive nodes and insufficient stock", () => {
+  it("rejects duplicate pairs, self-links, inactive nodes and insufficient gold", () => {
     let s = connectCable(newMetro(42), 0, 0, 1);
     expect(connectCable(s, 0, 1, 0)).toBe(s);
     expect(connectCable(s, 0, 1, 1)).toBe(s);
     expect(connectCable(s, 0, 1, 10)).toBe(s);
     expect(connectCable(s, 0, 1, 1.5)).toBe(s);
-    expect(connectCable({ ...s, stock: 0 }, 1, 1, 2).cables).toBe(s.cables);
+    expect(connectCable({ ...s, gold: 0 }, 1, 1, 2).cables).toBe(s.cables);
     s = { ...s, phase: "over" };
     expect(connectionError(s, 0, 1, 2)).not.toBeNull();
     expect(removeCable(s, 1)).toBe(s);
   });
-  it("provides weekly stock and applies capacity/speed upgrades to cable types", () => {
+  it("settles weekly gold and applies capacity/speed upgrades to cable types", () => {
     let s = newMetro(42);
     s.time = 34.9;
     s = metroTick(s);
@@ -124,9 +126,9 @@ describe("point-to-point cable transport", () => {
     expect(s.phase).toBe("reward");
     expect(metroTick(s)).toBe(s);
     const capacity = reward(s, "capacity");
-    expect(capacity.stock).toBe(s.stock + 2);
+    expect(capacity.gold).toBe(s.gold - 300);
     expect(cableCapacity(capacity, 2)).toBe(10);
-    expect(reward(s, "stock").stock).toBe(s.stock + 6);
+    expect(reward(s, "continue").gold).toBe(s.gold);
     expect(reward(s, "speed").speedBonus).toBe(15);
   });
   it("fails only after sustained overload and recovers when queues shrink", () => {
@@ -214,7 +216,7 @@ describe("specific node destinations", () => {
 });
 
 describe("player-built routers", () => {
-  it("uses stock, validates spacing and preserves state on invalid placement", () => {
+  it("uses gold, validates spacing and preserves state on invalid placement", () => {
     const initial = newMetro(42);
     expect(placeRouter(initial, 70, 90)).toBe(initial);
     expect(placeRouter(initial, -10, 300)).toBe(initial);
@@ -222,9 +224,9 @@ describe("player-built routers", () => {
     const s = placeRouter(initial, 200, 300);
     expect(initial.nodes).toHaveLength(3);
     expect(s.nodes[3]).toEqual({ x: 200, y: 300, shape: 3 });
-    expect(s.routerStock).toBe(1);
+    expect(s.gold).toBe(850);
     expect(s.queues[3]).toEqual([]);
-    expect(routerError({ ...s, routerStock: 0 }, 500, 500)).not.toBeNull();
+    expect(routerError({ ...s, gold: 0 }, 500, 500)).not.toBeNull();
   });
   it("transfers through a router while keeping the exact destination", () => {
     let s = placeRouter(newMetro(42), 200, 300);
@@ -255,8 +257,68 @@ describe("player-built routers", () => {
     expect(s.spawned).toBe(4);
     expect(s.queues).toHaveLength(s.nodes.length);
     expect(s.overload).toHaveLength(s.nodes.length);
-    expect(reward({ ...s, phase: "reward" }, "stock").routerStock).toBe(
-      s.routerStock + 1,
-    );
+    expect(reward({ ...s, phase: "reward" }, "continue").gold).toBe(s.gold);
+  });
+});
+
+describe("gold economy", () => {
+  it("settles 500 profit minus 200 maintenance exactly once", () => {
+    const before = {
+      ...newMetro(42),
+      time: 59.9,
+      profit: 500,
+      maintenanceUnits: 120000,
+    };
+    const paid = metroTick(before);
+    expect(paid.gold).toBe(1300);
+    expect(paid.report).toEqual({ profit: 500, maintenance: 200, net: 300 });
+    expect(paid.phase).toBe("reward");
+    expect(metroTick(paid)).toBe(paid);
+    const next = reward(paid, "continue");
+    expect(next.gold).toBe(1300);
+    expect(next.profit).toBe(0);
+    expect(next.maintenanceUnits).toBe(0);
+  });
+  it("accrues running maintenance, retains it on sale, and charges only confirmed assets", () => {
+    let s = connectCable(placeRouter(newMetro(42), 200, 300), 0, 0, 3);
+    expect(s.gold).toBe(750);
+    expect(maintenanceRate(s)).toBe(50);
+    s = steps(s, 120);
+    expect(maintenanceDue(s)).toBe(10);
+    const sold = removeCable(s, s.cables[0].id);
+    expect(sold.gold).toBe(800);
+    expect(sold.maintenanceUnits).toBe(s.maintenanceUnits);
+    expect(maintenanceRate(sold)).toBe(30);
+  });
+  it("earns on final delivery only and blocks spending beyond the balance", () => {
+    let s = connectCable(newMetro(42), 0, 0, 1);
+    s.cables[0].cargo = [{ destination: 1 }];
+    s.cables[0].progress = 0.999;
+    s.cables[0].wait = 0;
+    s = metroTick(s);
+    expect(s.profit).toBe(25);
+    expect(s.gold).toBe(900);
+    const poor = { ...s, gold: 99 };
+    expect(connectCable(poor, 0, 1, 2)).toBe(poor);
+    const rewardState = { ...s, gold: 299, phase: "reward" as const };
+    expect(reward(rewardState, "capacity")).toBe(rewardState);
+  });
+  it("deducts losses and ends a run only when settlement makes the balance negative", () => {
+    const s = metroTick({
+      ...newMetro(42),
+      time: 59.9,
+      gold: 100,
+      maintenanceUnits: 120000,
+    });
+    expect(s.gold).toBe(-100);
+    expect(s.phase).toBe("over");
+    const zero = metroTick({
+      ...newMetro(42),
+      time: 59.9,
+      gold: 200,
+      maintenanceUnits: 120000,
+    });
+    expect(zero.gold).toBe(0);
+    expect(zero.phase).toBe("reward");
   });
 });

@@ -9,7 +9,8 @@ export const CABLE_TYPES = [
     color: "#58b8af",
     capacity: 4,
     speed: 60,
-    cost: 1,
+    cost: 100,
+    maintenance: 20,
     note: "Seimbang",
   },
   {
@@ -17,7 +18,8 @@ export const CABLE_TYPES = [
     color: "#ee785d",
     capacity: 3,
     speed: 100,
-    cost: 2,
+    cost: 200,
+    maintenance: 35,
     note: "Lebih cepat",
   },
   {
@@ -25,7 +27,8 @@ export const CABLE_TYPES = [
     color: "#a596db",
     capacity: 8,
     speed: 45,
-    cost: 2,
+    cost: 250,
+    maintenance: 40,
     note: "Muatan besar",
   },
 ] as const;
@@ -54,17 +57,19 @@ export type Cable = {
   cargo: Packet[];
 };
 export type Metro = {
-  version: 4;
+  version: 5;
   nodes: Site[];
   spawned: number;
-  routerStock: number;
+  gold: number;
+  profit: number;
+  maintenanceUnits: number;
+  report: { profit: number; maintenance: number; net: number } | null;
   time: number;
   seed: number;
   delivered: number;
   queues: Packet[][];
   overload: number[];
   cables: Cable[];
-  stock: number;
   nextCableId: number;
   capacityBonus: number;
   speedBonus: number;
@@ -77,17 +82,19 @@ export const cableSpeed = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].speed + s.speedBonus;
 export function newMetro(seed = Date.now() >>> 0): Metro {
   return {
-    version: 4,
+    version: 5,
     nodes: SITES.slice(0, 3).map((n) => ({ ...n })),
     spawned: 3,
-    routerStock: 2,
+    gold: 1000,
+    profit: 0,
+    maintenanceUnits: 0,
+    report: null,
     time: 0,
     seed,
     delivered: 0,
     queues: [[], [], []],
     overload: [0, 0, 0],
     cables: [],
-    stock: 6,
     nextCableId: 1,
     capacityBonus: 0,
     speedBonus: 0,
@@ -117,8 +124,8 @@ export function connectionError(
     )
   )
     return "Kabel jenis ini sudah menghubungkan kedua perangkat.";
-  if (s.stock < CABLE_TYPES[kind].cost)
-    return "Stok kabel tidak cukup. Hapus kabel atau tunggu bekal mingguan.";
+  if (s.gold < CABLE_TYPES[kind].cost)
+    return "Gold tidak cukup untuk memasang kabel ini.";
   return null;
 }
 export function connectCable(
@@ -140,7 +147,7 @@ export function connectCable(
   return {
     ...s,
     cables: [...s.cables, cable],
-    stock: s.stock - CABLE_TYPES[kind].cost,
+    gold: s.gold - CABLE_TYPES[kind].cost,
     nextCableId: s.nextCableId + 1,
   };
 }
@@ -153,7 +160,7 @@ export function removeCable(s: Metro, id: number): Metro {
     ...s,
     queues,
     cables: s.cables.filter((c) => c.id !== id),
-    stock: s.stock + CABLE_TYPES[cable.kind].cost,
+    gold: s.gold + Math.floor(CABLE_TYPES[cable.kind].cost / 2),
   };
 }
 function travelTime(s: Metro, c: Cable) {
@@ -196,17 +203,26 @@ export function routeCable(
   }
   return null;
 }
+export const ROUTER_COST = 150;
+export const ROUTER_MAINTENANCE = 30;
+export const PACKET_PROFIT = 25;
+export const maintenanceRate = (s: Metro) =>
+  s.cables.reduce((total, c) => total + CABLE_TYPES[c.kind].maintenance, 0) +
+  s.nodes.filter((n) => n.shape === 3).length * ROUTER_MAINTENANCE;
+export const maintenanceDue = (s: Metro) => Math.ceil(s.maintenanceUnits / 600);
 export function reward(
   s: Metro,
-  choice: "stock" | "capacity" | "speed",
+  choice: "continue" | "capacity" | "speed",
 ): Metro {
-  if (s.phase !== "reward") return s;
+  const cost = choice === "capacity" ? 300 : choice === "speed" ? 250 : 0;
+  if (s.phase !== "reward" || s.gold < cost) return s;
   return {
     ...s,
     phase: "running",
     week: s.week + 1,
-    routerStock: s.routerStock + 1,
-    stock: s.stock + 2 + (choice === "stock" ? 4 : 0),
+    profit: 0,
+    maintenanceUnits: 0,
+    gold: s.gold - cost,
     capacityBonus: s.capacityBonus + (choice === "capacity" ? 2 : 0),
     speedBonus: s.speedBonus + (choice === "speed" ? 15 : 0),
   };
@@ -216,6 +232,7 @@ export function metroTick(state: Metro): Metro {
   const s: Metro = {
     ...state,
     time: Math.round((state.time + 0.1) * 10) / 10,
+    maintenanceUnits: state.maintenanceUnits + maintenanceRate(state),
     nodes: [...state.nodes],
     queues: state.queues.map((q) => [...q]),
     overload: [...state.overload],
@@ -295,23 +312,29 @@ export function metroTick(state: Metro): Metro {
       c.wait = 0.4;
       const node = c.stops[c.at];
       for (const packet of c.cargo) {
-        if (node === packet.destination) s.delivered++;
-        else s.queues[node].push(packet);
+        if (node === packet.destination) {
+          s.delivered++;
+          s.profit += PACKET_PROFIT;
+        } else s.queues[node].push(packet);
       }
       c.cargo = [];
     }
   s.overload = s.queues.map((q, i) =>
     q.length >= 8 ? s.overload[i] + 0.1 : Math.max(0, s.overload[i] - 0.2),
   );
+  if (s.time >= s.week * 60) {
+    const maintenance = maintenanceDue(s);
+    s.report = { profit: s.profit, maintenance, net: s.profit - maintenance };
+    s.gold += s.report.net;
+    s.phase = s.gold < 0 ? "over" : "reward";
+  }
   if (s.overload.some((t) => t >= 20)) s.phase = "over";
-  else if (s.time >= s.week * 60) s.phase = "reward";
   return s;
 }
 
 export function routerError(s: Metro, x: number, y: number): string | null {
   if (s.phase !== "running") return "Permainan sedang dijeda.";
-  if (s.routerStock < 1)
-    return "Stok router habis. Dapatkan satu lagi pada minggu berikutnya.";
+  if (s.gold < ROUTER_COST) return "Gold tidak cukup untuk memasang router.";
   if (
     !Number.isFinite(x) ||
     !Number.isFinite(y) ||
@@ -332,6 +355,6 @@ export function placeRouter(s: Metro, x: number, y: number): Metro {
     nodes: [...s.nodes, { x, y, shape: 3 }],
     queues: [...s.queues, []],
     overload: [...s.overload, 0],
-    routerStock: s.routerStock - 1,
+    gold: s.gold - ROUTER_COST,
   };
 }

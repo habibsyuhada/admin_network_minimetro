@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { dragCable } from "./helpers";
 
-test("place routers, reject overlap, drag cables and inspect the new transit node", async ({
+test("router preview moves before OK, rejects overlap, and Cancel spends nothing", async ({
   page,
 }) => {
   await page.goto("/");
@@ -9,50 +9,105 @@ test("place routers, reject overlap, drag cables and inspect the new transit nod
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page
-    .getByRole("button", { name: "+ Pasang router (2)", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Client 1", exact: true }).click();
-  await expect(
-    page.getByText(
-      "Terlalu dekat dengan perangkat lain. Pilih area yang lebih kosong.",
-    ),
-  ).toBeVisible();
+  const purchase = page.getByRole("button", { name: /Pasang router/ });
+  await purchase.click();
+  const draft = page.getByRole("button", { name: "Geser pratinjau router" });
+  await expect(draft).toBeVisible();
   await expect(page.locator("[data-node-id]")).toHaveCount(3);
-  const point = await page.locator(".metro-map").evaluate((el) => {
-    const p = new DOMPoint(200, 300).matrixTransform(
-      (el as SVGSVGElement).getScreenCTM()!,
+  await expect(page.getByTestId("gold")).toHaveText("1000 gold");
+  const clock = await page.getByTestId("flow-clock").textContent();
+  await page.waitForTimeout(1100);
+  await expect(page.getByTestId("flow-clock")).toHaveText(clock!);
+  const move = async (x: number, y: number) => {
+    const start = await draft.evaluate((el) => {
+      const p = new DOMPoint(0, 0).matrixTransform(
+        (el as SVGGraphicsElement).getScreenCTM()!,
+      );
+      return { x: p.x, y: p.y };
+    });
+    const end = await page.locator(".metro-map").evaluate(
+      (el, p) => {
+        const q = new DOMPoint(p.x, p.y).matrixTransform(
+          (el as SVGSVGElement).getScreenCTM()!,
+        );
+        return { x: q.x, y: q.y };
+      },
+      { x, y },
     );
-    return { x: p.x, y: p.y };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x, end.y, { steps: 10 });
+    await page.mouse.up();
+  };
+  await move(70, 90);
+  await expect(
+    page.getByRole("button", { name: "OK", exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByText(/Terlalu dekat/)).toBeVisible();
+  await move(200, 300);
+  await expect(
+    page.getByRole("button", { name: "OK", exact: true }),
+  ).toBeEnabled();
+  await expect(page.locator("[data-node-id]")).toHaveCount(3);
+  await page.screenshot({
+    path: `test-results/router-preview-${test.info().project.name}.png`,
   });
-  await page.mouse.click(point.x, point.y);
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await expect(draft).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Router 4", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "+ Pasang router (1)", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByTestId("gold")).toHaveText("850 gold");
   await dragCable(page, 0, 3);
   await dragCable(page, 3, 1);
-  await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
+  await expect(page.getByTestId("gold")).toHaveText("650 gold");
   await page.getByRole("button", { name: "Router 4", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Detail Router 4", exact: true }),
+    page.getByRole("dialog", { name: "Detail Router 4" }),
   ).toBeVisible();
-  await expect(page.getByText(/Router buatanmu/)).toBeVisible();
-  await page.screenshot({
-    path: `test-results/router-detail-${test.info().project.name}.png`,
-  });
   await page.getByRole("button", { name: "Kembali ke peta" }).click();
-  await page.screenshot({
-    path: `test-results/router-map-${test.info().project.name}.png`,
-  });
-  await page
-    .getByRole("button", { name: "+ Pasang router (1)", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Batal pasang router", exact: true })
-    .click();
+  await purchase.click();
+  await move(100, 350);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(draft).toHaveCount(0);
   await expect(page.locator("[data-node-id]")).toHaveCount(4);
+  await expect(page.getByTestId("gold")).toHaveText("650 gold");
   expect(errors).toEqual([]);
+});
+
+test("weekly report credits only profit minus maintenance and never pays twice", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date(42) });
+  await page.goto("/");
+  await page.clock.pauseAt(new Date(100000));
+  await page.clock.setFixedTime(new Date(42));
+  await page.getByRole("button", { name: "Main NOC Flow" }).click();
+  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await dragCable(page, 0, 1);
+  await dragCable(page, 1, 2);
+  await dragCable(page, 2, 0);
+  await expect(page.getByTestId("gold")).toHaveText("700 gold");
+  await page.clock.runFor(60200);
+  const report = page.getByRole("dialog", { name: "Minggu 1 selesai" });
+  await expect(report).toBeVisible();
+  const text = (await report.textContent())!;
+  const profit = Number(text.match(/Profit:\s*(\d+) gold/)![1]);
+  const maintenance = Number(text.match(/Maintenance:\s*(\d+) gold/)![1]);
+  expect(profit).toBeGreaterThan(0);
+  expect(maintenance).toBe(60);
+  await expect(page.getByTestId("gold")).toHaveText(
+    `${700 + profit - maintenance} gold`,
+  );
+  await page.clock.runFor(3000);
+  await expect(page.getByTestId("gold")).toHaveText(
+    `${700 + profit - maintenance} gold`,
+  );
+  await report
+    .getByRole("button", { name: "Lanjut minggu berikutnya" })
+    .click();
+  await expect(report).toHaveCount(0);
+  await expect(page.getByTestId("gold")).toHaveText(
+    `${700 + profit - maintenance} gold`,
+  );
 });

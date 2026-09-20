@@ -49,7 +49,7 @@ test("point-to-point cables have separate carriers and can be removed individual
   await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
   await expect(page.locator('[data-carrier="1"]')).toHaveCount(0);
   await expect(page.locator('[data-carrier="2"]')).toHaveCount(1);
-  await expect(page.getByText("Stok: 3", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("gold")).toHaveText("650 gold");
   await page.screenshot({
     path: `test-results/cables-${test.info().project.name}.png`,
     fullPage: true,

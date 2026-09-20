@@ -754,3 +754,50 @@
   background: #64532b;
   border-color: #f2d779;
 }
+
+.economy-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: #192e28;
+  color: #b6cbbb;
+  font-size: 10px;
+}
+.economy-bar strong {
+  color: #f2d779;
+  font-size: 14px;
+}
+.router-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #b5a15d;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  background: #2d3122;
+}
+.router-confirm p {
+  width: 100%;
+  margin: 0;
+  font-size: 11px;
+  color: #eadfac;
+}
+.router-confirm button {
+  flex: 1;
+  min-height: 40px;
+  background: #354e36;
+  color: #e0edc1;
+  border-radius: 8px;
+}
+.router-draft {
+  cursor: grab;
+  outline: none;
+}
+.router-draft:focus-visible circle {
+  stroke-width: 4px;
+}

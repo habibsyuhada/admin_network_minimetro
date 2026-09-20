@@ -739,3 +739,18 @@
 .map-camera-controls button[aria-label="Lihat seluruh area"] {
   font-size: 11px;
 }
+
+.router-build {
+  min-height: 40px;
+  width: 100%;
+  margin-bottom: 6px;
+  border: 1px solid #7d7043;
+  border-radius: 10px;
+  background: #35331f;
+  color: #f2d779;
+  font-size: 12px;
+}
+.router-build[aria-pressed="true"] {
+  background: #64532b;
+  border-color: #f2d779;
+}

@@ -1,6 +1,6 @@
-export const DEVICE_NAMES = ["Client", "Server", "Database"];
-export const DEVICE_CODES = ["PC", "SRV", "DB"];
-export const DEVICE_COLORS = ["#85dfc0", "#a8b5fb", "#efb679"];
+export const DEVICE_NAMES = ["Client", "Server", "Database", "Router"];
+export const DEVICE_CODES = ["PC", "SRV", "DB", "RTR"];
+export const DEVICE_COLORS = ["#85dfc0", "#a8b5fb", "#efb679", "#f2d779"];
 export function DeviceGlyph({
   kind,
   compact = false,
@@ -42,6 +42,12 @@ export function DeviceGlyph({
           <circle cx="8" cy="-7" r="1" fill={color} />
           <circle cx="8" cy="3" r="1" fill={color} />
           <circle cx="8" cy="11" r="1" fill={color} />
+        </>
+      ) : kind === 3 ? (
+        <>
+          <rect x="-17" y="-10" width="34" height="23" rx="5" fill="#3c3724" />
+          <path d="M-12 -10V-19M12 -10V-19M-10 0H10M-6 -4L-10 0L-6 4M6 -4L10 0L6 4" />
+          <path d="M-10 8H-8M-2 8H0M6 8H8" />
         </>
       ) : (
         <>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   SITES,
+  placeRouter,
+  routerError,
   cableCapacity,
   connectCable,
   connectionError,
@@ -64,7 +66,7 @@ describe("point-to-point cable transport", () => {
     s.speedBonus = 300;
     s.queues[0] = [{ destination: 1 }];
     s.queues[1] = [{ destination: 0 }];
-    s = steps(s, 23);
+    s = steps(s, 28);
     expect(s.delivered).toBe(2);
     expect(count(s)).toBe(2);
     expect(s.cables[0].stops).toEqual([0, 1]);
@@ -146,6 +148,8 @@ describe("specific node destinations", () => {
   it("passes through an identical icon without delivering to the wrong node", () => {
     let s = newMetro(42);
     s.queues.push([], [], []);
+    s.nodes.push(...SITES.slice(3, 6));
+    s.spawned = 6;
     s.overload.push(0, 0, 0);
     s = connectCable(connectCable(s, 0, 0, 1), 0, 1, 5);
     s.cables[0].cargo = [{ destination: 5 }];
@@ -166,6 +170,8 @@ describe("specific node destinations", () => {
   it("does not substitute a reachable node with the same icon", () => {
     let s = newMetro(42);
     s.queues.push([], [], []);
+    s.nodes.push(...SITES.slice(3, 6));
+    s.spawned = 6;
     s.overload.push(0, 0, 0);
     s = connectCable(s, 0, 0, 1);
     expect(routeCable(s, 0, 5)).toBeNull();
@@ -177,6 +183,8 @@ describe("specific node destinations", () => {
   it("generates only active, distinct destinations including matching device types", () => {
     let s = newMetro(42);
     s.queues.push([], [], []);
+    s.nodes.push(...SITES.slice(3, 6));
+    s.spawned = 6;
     s.overload.push(0, 0, 0);
     let sameType = false;
     for (let i = 0; i < 40; i++) {
@@ -202,5 +210,53 @@ describe("specific node destinations", () => {
       );
     }
     expect(sameType).toBe(true);
+  });
+});
+
+describe("player-built routers", () => {
+  it("uses stock, validates spacing and preserves state on invalid placement", () => {
+    const initial = newMetro(42);
+    expect(placeRouter(initial, 70, 90)).toBe(initial);
+    expect(placeRouter(initial, -10, 300)).toBe(initial);
+    expect(placeRouter(initial, NaN, 300)).toBe(initial);
+    const s = placeRouter(initial, 200, 300);
+    expect(initial.nodes).toHaveLength(3);
+    expect(s.nodes[3]).toEqual({ x: 200, y: 300, shape: 3 });
+    expect(s.routerStock).toBe(1);
+    expect(s.queues[3]).toEqual([]);
+    expect(routerError({ ...s, routerStock: 0 }, 500, 500)).not.toBeNull();
+  });
+  it("transfers through a router while keeping the exact destination", () => {
+    let s = placeRouter(newMetro(42), 200, 300);
+    s = connectCable(connectCable(s, 0, 0, 3), 0, 3, 1);
+    expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
+    s.cables[0].cargo = [{ destination: 1 }];
+    s.cables[0].progress = 0.99;
+    s.cables[0].wait = 0;
+    s = metroTick(s);
+    expect(s.queues[3]).toEqual([{ destination: 1 }]);
+    expect(s.delivered).toBe(0);
+    expect(routeCable(s, 3, 1)).toBe(s.cables[1].id);
+  });
+  it("never generates traffic to or from routers, and spawns automatic nodes independently", () => {
+    let s = placeRouter(newMetro(42), 200, 300);
+    for (let i = 0; i < 20; i++) {
+      s.time = 2.9;
+      s.queues = s.queues.map(() => []);
+      s = metroTick(s);
+      expect(s.queues[3]).toEqual([]);
+      expect(s.queues.flat().some((p) => p.destination === 3)).toBe(false);
+    }
+    s.time = 34.9;
+    s = metroTick(s);
+    expect(s.nodes).toHaveLength(5);
+    expect(s.nodes[3].shape).toBe(3);
+    expect(s.nodes[4].shape).toBe(0);
+    expect(s.spawned).toBe(4);
+    expect(s.queues).toHaveLength(s.nodes.length);
+    expect(s.overload).toHaveLength(s.nodes.length);
+    expect(reward({ ...s, phase: "reward" }, "stock").routerStock).toBe(
+      s.routerStock + 1,
+    );
   });
 });

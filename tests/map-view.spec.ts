@@ -67,9 +67,9 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   await page.mouse.up();
   await expect(map).not.toHaveAttribute("viewBox", zoomed!);
   await expect(page.getByTestId("cable-count")).toHaveText("0 kabel aktif");
-  // Construction must still hit the right devices after camera movement.
-  await dragCable(page, 0, 1);
+  // Restore the wider starting view so both distant endpoints are visible.
   await page.getByRole("button", { name: "Kembali ke area awal" }).click();
+  await dragCable(page, 0, 1);
   await expect(map).toHaveAttribute("viewBox", initial!);
   await page.getByRole("button", { name: "Kabel Fiber", exact: true }).click();
   await dragCable(page, 1, 0);

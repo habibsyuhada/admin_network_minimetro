@@ -47,3 +47,9 @@ Build tersedia di `dist/`. Base relatif mendukung subpath GitHub Pages. PWA offl
 `src/game/metro.ts` menyimpan simulasi dan routing; `src/MetroGame.tsx` menangani permainan; `src/game/mapView.ts` mengatur batas kamera dan lajur kabel; `src/NetworkArt.tsx` menyediakan ikon perangkat. Uji otomatis meliputi muatan per jenis kabel, antrean transit, routing alternatif, perjalanan dua arah, konservasi paket saat kabel dihapus, ekonomi stok, input, pinch, layout dan offline. Verifikasi perangkat iPhone fisik tetap diperlukan.
 
 PC hanya menghasilkan paket menuju Server atau Database. Server dan Database dapat mengirim ke PC atau perangkat layanan lain. Trafik masih simulasi sederhana, bukan pasangan request/response protokol nyata.
+
+## Router buatan pemain
+
+Tekan **Pasang router**, lalu ketuk lokasi kosong pada peta. Mulai dengan 2 router; tiap minggu mendapat 1 tambahan. Penempatan harus di dalam batas peta dan minimal 75 unit dari perangkat lain. Bisa menggeser peta selama memilih lokasi, atau membatalkan tanpa memakai stok. Hubungkan router memakai drag kabel seperti node lain. Router hanya menjadi titik transit, tidak menghasilkan paket dan bukan tujuan akhir. Antrean router mengikuti aturan overload yang sama.
+
+Node aktif dan posisi router disimpan dalam state sesi, sehingga penambahan router tidak menggeser identitas tujuan paket atau mengganggu kemunculan Client/Server/Database. Tiga node awal kini berjarak sekitar 294, 291, dan 435 unit. Node otomatis selanjutnya memiliki variasi posisi dan menghindari tumpang tindih dengan node pemain.

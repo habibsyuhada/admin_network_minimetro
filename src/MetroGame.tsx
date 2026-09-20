@@ -7,7 +7,8 @@ import {
   cableCapacity,
   connectionError,
   type CableKind,
-  SITES,
+  placeRouter,
+  routerError,
   removeCable,
   connectCable,
   metroTick,
@@ -33,6 +34,8 @@ export default function MetroGame({
   const [s, setS] = useState(newMetro);
   const best = useRef(0);
   best.current = Math.max(best.current, s.delivered);
+  const [placing, setPlacing] = useState(false);
+  const placement = useRef<{ id: number; x: number; y: number } | null>(null);
   const [selected, setSelected] = useState<CableKind>(0);
   const [paused, setPaused] = useState(false);
   const [help, setHelp] = useState(true);
@@ -122,12 +125,13 @@ export default function MetroGame({
   const danger = s.overload.indexOf(Math.max(...s.overload));
   const camera = useMapCamera(
     svg,
-    { x: 0, y: 60, width: 400, height: 400 },
+    { x: 0, y: 20, width: 400, height: 520 },
     frozen,
   );
   const restart = () => {
-    camera.focus({ x: 200, y: 260 });
+    camera.reset();
     setS(newMetro());
+    setPlacing(false);
     setSelected(0);
     setPaused(false);
     setConfirm(false);
@@ -173,6 +177,15 @@ export default function MetroGame({
           role="group"
           aria-label="Peta Flow interaktif"
           onPointerDown={(e) => {
+            if (placing && !frozen) {
+              if (e.isPrimary && e.button === 0)
+                placement.current = {
+                  id: e.pointerId,
+                  x: e.clientX,
+                  y: e.clientY,
+                };
+              else placement.current = null;
+            }
             if (camera.down(e)) {
               gesture.current = null;
               setPointer(null);
@@ -189,17 +202,45 @@ export default function MetroGame({
               setPointer(position(e.clientX, e.clientY));
           }}
           onPointerUp={(e) => {
+            const pending = placement.current;
+            placement.current = null;
+            if (
+              placing &&
+              pending?.id === e.pointerId &&
+              !frozen &&
+              Math.hypot(e.clientX - pending.x, e.clientY - pending.y) < 10
+            ) {
+              camera.end(e);
+              const p = position(e.clientX, e.clientY);
+              const error = routerError(s, p.x, p.y);
+              if (error) setTip(error);
+              else {
+                setS((v) => placeRouter(v, p.x, p.y));
+                setPlacing(false);
+                setTip(
+                  "Router terpasang. Tarik kabel ke router untuk membuat titik transit.",
+                );
+              }
+              return;
+            }
             const consumed = camera.end(e);
             const g = gesture.current;
             gesture.current = null;
             setPointer(null);
-            if (consumed || !g || g.pointer !== e.pointerId || frozen) return;
+            if (
+              placing ||
+              consumed ||
+              !g ||
+              g.pointer !== e.pointerId ||
+              frozen
+            )
+              return;
             if (Math.hypot(e.clientX - g.x, e.clientY - g.y) < 10) {
               inspect(g.start);
               return;
             }
             const p = position(e.clientX, e.clientY);
-            const target = SITES.findIndex(
+            const target = s.nodes.findIndex(
               (n, id) =>
                 id < s.queues.length && Math.hypot(n.x - p.x, n.y - p.y) < 30,
             );
@@ -210,6 +251,7 @@ export default function MetroGame({
             build(g.start, target);
           }}
           onPointerCancel={() => {
+            placement.current = null;
             camera.clear();
             gesture.current = null;
             setPointer(null);
@@ -254,14 +296,14 @@ export default function MetroGame({
             <g key={i} className="route-layer" aria-hidden="true">
               <path
                 className="metro-route route-casing"
-                d={linePath(s.cables, i)}
+                d={linePath(s.cables, i, s.nodes)}
                 stroke="#101f20"
                 strokeWidth="9"
               />
               <path
                 className="metro-route"
                 data-route={i}
-                d={linePath(s.cables, i)}
+                d={linePath(s.cables, i, s.nodes)}
                 stroke={CABLE_TYPES[s.cables[i].kind].color}
                 strokeWidth={selected === s.cables[i].kind ? 6 : 5}
               />
@@ -270,15 +312,15 @@ export default function MetroGame({
           {pointer && (
             <line
               className="metro-preview"
-              x1={SITES[gesture.current?.start ?? 0].x}
-              y1={SITES[gesture.current?.start ?? 0].y}
+              x1={s.nodes[gesture.current?.start ?? 0].x}
+              y1={s.nodes[gesture.current?.start ?? 0].y}
               x2={pointer.x}
               y2={pointer.y}
               stroke={CABLE_TYPES[selected].color}
             />
           )}
           {s.queues.map((q, id) => {
-            const n = SITES[id];
+            const n = s.nodes[id];
             return (
               <g
                 key={id}
@@ -295,7 +337,8 @@ export default function MetroGame({
                   }
                 }}
                 onPointerDown={(e) => {
-                  if (frozen || !e.isPrimary || e.button !== 0) return;
+                  if (placing || frozen || !e.isPrimary || e.button !== 0)
+                    return;
                   e.preventDefault();
                   svg.current?.setPointerCapture(e.pointerId);
                   gesture.current = {
@@ -332,12 +375,14 @@ export default function MetroGame({
                         height="13"
                         rx="3"
                         fill="#142c29"
-                        stroke={DEVICE_COLORS[SITES[packet.destination].shape]}
+                        stroke={
+                          DEVICE_COLORS[s.nodes[packet.destination].shape]
+                        }
                         strokeWidth=".6"
                       />
                       <g transform="scale(.29)">
                         <DeviceGlyph
-                          kind={SITES[packet.destination].shape}
+                          kind={s.nodes[packet.destination].shape}
                           compact
                         />
                       </g>
@@ -357,7 +402,7 @@ export default function MetroGame({
             const from = l.stops[l.at],
               to = l.stops[l.at === 0 ? 1 : 0];
             if (to === undefined) return null;
-            const [a, b] = laneSegment(s.cables, i, from, to);
+            const [a, b] = laneSegment(s.cables, i, from, to, s.nodes);
             const x = a.x + (b.x - a.x) * l.progress,
               y = a.y + (b.y - a.y) * l.progress;
             return (
@@ -426,6 +471,23 @@ export default function MetroGame({
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
+        <button
+          className="router-build"
+          aria-pressed={placing}
+          disabled={frozen || (!placing && s.routerStock === 0)}
+          onClick={() => {
+            setPlacing(!placing);
+            setTip(
+              !placing
+                ? "Ketuk area kosong untuk menempatkan router. Geser peta untuk mencari lokasi."
+                : "Penempatan dibatalkan.",
+            );
+          }}
+        >
+          {placing
+            ? "Batal pasang router"
+            : `+ Pasang router (${s.routerStock})`}
+        </button>
         <div className="metro-line-buttons cable-type-buttons">
           {CABLE_TYPES.map((type, i) => (
             <button
@@ -508,7 +570,9 @@ export default function MetroGame({
             <li>
               Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
               Backbone: 8 paket, lebih lambat. Angka ini bertambah saat upgrade.
-              Setiap menit kamu mendapat 2 stok dan memilih bonus.
+              Mulai dengan 2 router. Tekan Pasang router lalu ketuk area kosong.
+              Router hanya untuk transit. Setiap menit kamu mendapat 1 router, 2
+              stok kabel, dan memilih bonus.
             </li>
             <li>
               Antrean 8 paket memulai hitung mundur. Kurangi antrean sebelum 20
@@ -539,7 +603,7 @@ export default function MetroGame({
           title={
             detailNode === null
               ? "Detail node"
-              : `Detail ${nodeName(detailNode)}`
+              : `Detail ${nodeName(detailNode, s.nodes)}`
           }
           onClose={() => setShowNodes(false)}
         >
@@ -547,7 +611,7 @@ export default function MetroGame({
             <button
               className="secondary"
               onClick={() => {
-                camera.focus(SITES[detailNode]);
+                camera.focus(s.nodes[detailNode]);
                 setShowNodes(false);
               }}
             >
@@ -575,7 +639,9 @@ export default function MetroGame({
                   </b>
                   <small>
                     {c.stops
-                      .map((id) => `${DEVICE_NAMES[SITES[id].shape]} ${id + 1}`)
+                      .map(
+                        (id) => `${DEVICE_NAMES[s.nodes[id].shape]} ${id + 1}`,
+                      )
                       .join(" ↔ ")}{" "}
                     · {c.cargo.length}/{cableCapacity(s, c.kind)} paket
                   </small>

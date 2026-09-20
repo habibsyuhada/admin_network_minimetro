@@ -1,4 +1,4 @@
-import { SITES, type Cable } from "./metro";
+import { SITES, type Site, type Cable } from "./metro";
 export type Point = { x: number; y: number };
 export type View = Point & { width: number; height: number };
 export const MAP_BOUNDS: View = { x: 0, y: 0, width: 1000, height: 1200 };
@@ -37,6 +37,7 @@ export function laneSegment(
   lineIndex: number,
   a: number,
   b: number,
+  sites: Site[] = SITES,
 ): [Point, Point] {
   const users = lines.flatMap((line, i) =>
     line.stops.some(
@@ -49,25 +50,29 @@ export function laneSegment(
       : [],
   );
   const offset = (users.indexOf(lineIndex) - (users.length - 1) / 2) * 12;
-  const lo = SITES[Math.min(a, b)],
-    hi = SITES[Math.max(a, b)];
+  const lo = sites[Math.min(a, b)],
+    hi = sites[Math.max(a, b)];
   const length = Math.hypot(hi.x - lo.x, hi.y - lo.y);
   const dx = (-(hi.y - lo.y) / length) * offset,
     dy = ((hi.x - lo.x) / length) * offset;
   return [
-    { x: SITES[a].x + dx, y: SITES[a].y + dy },
-    { x: SITES[b].x + dx, y: SITES[b].y + dy },
+    { x: sites[a].x + dx, y: sites[a].y + dy },
+    { x: sites[b].x + dx, y: sites[b].y + dy },
   ];
 }
-export function linePath(lines: Cable[], index: number): string {
+export function linePath(
+  lines: Cable[],
+  index: number,
+  sites: Site[] = SITES,
+): string {
   const stops = lines[index].stops;
   return stops
     .slice(1)
     .map((b, i) => {
       const a = stops[i];
-      const [p, q] = laneSegment(lines, index, a, b);
+      const [p, q] = laneSegment(lines, index, a, b, sites);
       // Short connectors stay beneath each device, hiding lane joins at corners.
-      return `M${SITES[a].x},${SITES[a].y} L${p.x},${p.y} L${q.x},${q.y} L${SITES[b].x},${SITES[b].y}`;
+      return `M${sites[a].x},${sites[a].y} L${p.x},${p.y} L${q.x},${q.y} L${sites[b].x},${sites[b].y}`;
     })
     .join(" ");
 }

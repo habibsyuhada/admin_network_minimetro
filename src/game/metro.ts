@@ -1,4 +1,6 @@
-export type Shape = 0 | 1 | 2;
+export type Shape = 0 | 1 | 2 | 3;
+export type Site = { x: number; y: number; shape: Shape };
+export const WORLD = { width: 1000, height: 1200 };
 export type Packet = { destination: number };
 export type CableKind = 0 | 1 | 2;
 export const CABLE_TYPES = [
@@ -27,10 +29,10 @@ export const CABLE_TYPES = [
     note: "Muatan besar",
   },
 ] as const;
-export const SITES: { x: number; y: number; shape: Shape }[] = [
-  { x: 85, y: 125, shape: 0 },
-  { x: 235, y: 205, shape: 1 },
-  { x: 305, y: 365, shape: 2 },
+export const SITES: Site[] = [
+  { x: 70, y: 90, shape: 0 },
+  { x: 350, y: 180, shape: 1 },
+  { x: 290, y: 465, shape: 2 },
   { x: 238, y: 820, shape: 0 },
   { x: 775, y: 160, shape: 2 },
   { x: 188, y: 550, shape: 1 },
@@ -52,7 +54,10 @@ export type Cable = {
   cargo: Packet[];
 };
 export type Metro = {
-  version: 3;
+  version: 4;
+  nodes: Site[];
+  spawned: number;
+  routerStock: number;
   time: number;
   seed: number;
   delivered: number;
@@ -72,7 +77,10 @@ export const cableSpeed = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].speed + s.speedBonus;
 export function newMetro(seed = Date.now() >>> 0): Metro {
   return {
-    version: 3,
+    version: 4,
+    nodes: SITES.slice(0, 3).map((n) => ({ ...n })),
+    spawned: 3,
+    routerStock: 2,
     time: 0,
     seed,
     delivered: 0,
@@ -149,7 +157,7 @@ export function removeCable(s: Metro, id: number): Metro {
   };
 }
 function travelTime(s: Metro, c: Cable) {
-  const [a, b] = c.stops.map((id) => SITES[id]);
+  const [a, b] = c.stops.map((id) => s.nodes[id]);
   return Math.hypot(a.x - b.x, a.y - b.y) / cableSpeed(s, c.kind);
 }
 // Positive edge costs include journey time and queued loads. Dijkstra chooses
@@ -197,6 +205,7 @@ export function reward(
     ...s,
     phase: "running",
     week: s.week + 1,
+    routerStock: s.routerStock + 1,
     stock: s.stock + 2 + (choice === "stock" ? 4 : 0),
     capacityBonus: s.capacityBonus + (choice === "capacity" ? 2 : 0),
     speedBonus: s.speedBonus + (choice === "speed" ? 15 : 0),
@@ -207,6 +216,7 @@ export function metroTick(state: Metro): Metro {
   const s: Metro = {
     ...state,
     time: Math.round((state.time + 0.1) * 10) / 10,
+    nodes: [...state.nodes],
     queues: state.queues.map((q) => [...q]),
     overload: [...state.overload],
     cables: state.cables.map((c) => ({ ...c, cargo: [...c.cargo] })),
@@ -217,16 +227,32 @@ export function metroTick(state: Metro): Metro {
   };
   if (
     Math.floor(s.time / 35) > Math.floor(state.time / 35) &&
-    s.queues.length < SITES.length
+    s.spawned < SITES.length
   ) {
-    s.queues.push([]);
-    s.overload.push(0);
+    const base = SITES[s.spawned];
+    const candidate = {
+      ...base,
+      x: base.x + (random() - 0.5) * 60,
+      y: base.y + (random() - 0.5) * 60,
+    };
+    const node = [candidate, base].find((n) =>
+      s.nodes.every((other) => Math.hypot(other.x - n.x, other.y - n.y) >= 75),
+    );
+    if (node) {
+      s.nodes.push(node);
+      s.spawned++;
+      s.queues.push([]);
+      s.overload.push(0);
+    }
   }
   if (Math.floor(s.time / 3) > Math.floor(state.time / 3))
     for (let id = 0; id < s.queues.length; id++) {
+      if (s.nodes[id].shape === 3) continue;
       if (random() > Math.min(0.85, 0.4 + s.time / 900)) continue;
       const targets = s.queues.flatMap((_, target) =>
-        target !== id && !(SITES[id].shape === 0 && SITES[target].shape === 0)
+        target !== id &&
+        s.nodes[target].shape !== 3 &&
+        !(s.nodes[id].shape === 0 && s.nodes[target].shape === 0)
           ? [target]
           : [],
       );
@@ -280,4 +306,32 @@ export function metroTick(state: Metro): Metro {
   if (s.overload.some((t) => t >= 20)) s.phase = "over";
   else if (s.time >= s.week * 60) s.phase = "reward";
   return s;
+}
+
+export function routerError(s: Metro, x: number, y: number): string | null {
+  if (s.phase !== "running") return "Permainan sedang dijeda.";
+  if (s.routerStock < 1)
+    return "Stok router habis. Dapatkan satu lagi pada minggu berikutnya.";
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    x < 40 ||
+    y < 40 ||
+    x > WORLD.width - 40 ||
+    y > WORLD.height - 40
+  )
+    return "Tempatkan router di dalam batas peta.";
+  if (s.nodes.some((n) => Math.hypot(n.x - x, n.y - y) < 75))
+    return "Terlalu dekat dengan perangkat lain. Pilih area yang lebih kosong.";
+  return null;
+}
+export function placeRouter(s: Metro, x: number, y: number): Metro {
+  if (routerError(s, x, y)) return s;
+  return {
+    ...s,
+    nodes: [...s.nodes, { x, y, shape: 3 }],
+    queues: [...s.queues, []],
+    overload: [...s.overload, 0],
+    routerStock: s.routerStock - 1,
+  };
 }

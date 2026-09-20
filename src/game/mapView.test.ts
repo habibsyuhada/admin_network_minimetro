@@ -41,7 +41,7 @@ describe("map presentation", () => {
     const lines = [cable(0, 1, 0), cable(0, 1, 1), cable(0, 1, 2)];
     const points = lines.map((_, i) => laneSegment(lines, i, 0, 1)[0]);
     expect(new Set(points.map((p) => `${p.x},${p.y}`)).size).toBe(3);
-    expect(points[1]).toEqual({ x: 85, y: 125 });
+    expect(points[1]).toEqual({ x: 70, y: 90 });
     expect(laneSegment(lines.slice(0, 1), 0, 0, 1)[0]).toEqual(points[1]);
   });
   it("preserves the world point under the zoom anchor and bounds zoom", () => {

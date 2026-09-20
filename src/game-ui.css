@@ -1583,3 +1583,115 @@ dialog[open] {
     grid-auto-columns: 1fr;
   }
 }
+
+.automatic-node-pulse circle {
+  fill: none;
+  stroke: #a7d8bc;
+  stroke-width: 1.5;
+  animation: automatic-beacon 2.8s ease-out infinite;
+  pointer-events: none;
+}
+.automatic-node-pulse circle:nth-child(2) {
+  animation-delay: -1.4s;
+}
+@keyframes automatic-beacon {
+  from {
+    r: 28;
+    opacity: 0.5;
+  }
+  to {
+    r: 43;
+    opacity: 0;
+  }
+}
+.overload-pulse {
+  fill: none;
+  stroke: #ff7777;
+  stroke-width: 3;
+  animation: overload-beacon 1.1s ease-out infinite;
+}
+@keyframes overload-beacon {
+  from {
+    r: 32;
+    opacity: 0.9;
+  }
+  to {
+    r: 52;
+    opacity: 0;
+  }
+}
+.effects-paused .metro-danger-ring {
+  animation-play-state: running;
+}
+.offscreen-nodes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.offscreen-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  width: 46px;
+  height: 46px;
+  min-height: 46px;
+  padding: 5px;
+  border: 1px solid #7fba9b;
+  border-radius: 14px;
+  background: #193831;
+  box-shadow: 0 3px 10px #0005;
+}
+.offscreen-node > svg:not(.edge-arrow) {
+  width: 30px;
+  height: 30px;
+}
+.offscreen-node .edge-arrow {
+  position: absolute;
+  top: -13px;
+  left: 14px;
+  color: #b9f595;
+}
+.edge-count,
+.edge-alert {
+  position: absolute;
+  right: -7px;
+  bottom: -5px;
+  border-radius: 12px;
+  min-width: 19px;
+  padding: 2px 4px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #142823;
+  background: #b9f595;
+}
+.offscreen-node.urgent {
+  border: 2px solid #ff7777;
+  animation: edge-warning 1s ease-in-out infinite alternate;
+}
+.edge-alert {
+  top: -7px;
+  bottom: auto;
+  background: #ff7777;
+}
+@keyframes edge-warning {
+  to {
+    box-shadow: 0 0 0 4px #ff777733;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .automatic-node-pulse circle {
+    opacity: 0.3;
+  }
+  .automatic-node-pulse circle:nth-child(2) {
+    display: none;
+  }
+  .overload-pulse {
+    opacity: 0.8;
+  }
+}
+
+.metro-map-wrap .map-camera-controls,
+.metro-map-wrap .camera-toggle {
+  z-index: 5;
+}

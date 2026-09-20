@@ -137,3 +137,12 @@ Every shared Dialog now separates its fixed header, scrolling body, and fixed ac
 Original background music is synthesized locally: an eight-bar 84-BPM sine-synth loop with bass, sustained chords and a light arpeggio. Music has a separate persistent toggle in Settings and the gameplay menu, begins only after a gesture, and does not speed up with simulation speed. It stops while hidden or muted, disconnects ended nodes, and avoids scheduling a backlog after timer stalls. Existing sound-effect preferences remain independent. No network audio assets are needed.
 
 Validation: 61 unit tests pass, including music gesture/mute/visibility/scheduler lifecycle. Mobile tests verify fixed header/footer positions while scrolling Guide, Settings, Mission details, gameplay help, build/cable pickers, statistics, game menu, and node details; music preference survives reload. Existing monthly item purchase, radio construction and gateway cases pass. Expanded-help and dark river-map screenshots visually inspected.
+
+
+## Persistent node attention and offscreen navigation
+
+Automatically generated clients/services now have a continuous, subtle double pulse. Every overloaded node, including player devices, gets a faster red pulse. These visual indicators continue in design mode; reduced-motion mode uses static rings instead. Simulation and overload timers are unchanged.
+
+An HTML overlay projects node positions using the SVG screen matrix and actual viewport, grouping hidden automatic/overloaded devices into eight directions. Each button shows the target icon, direction and grouped count; overloaded targets take priority and add a red alert. Tapping focuses the camera. Visible devices disappear from the overlay, and player transit devices only appear when overloaded. Camera controls take priority and markers avoid their rectangles. Indicators are disabled during dialogs, placement or cable dragging.
+
+Browser checks cover automatic-vs-player pulses, zoom-created indicators, focus on tap, no indicators in whole-map view, and reduced-motion behavior. An actual timed browser run without cables verified an overloaded node and a red offscreen indicator. Mobile screenshots inspected. An iPhone test found a marker intercepting zoom, resolved by reserving control space and raising camera controls above the overlay.

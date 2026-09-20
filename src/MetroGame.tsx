@@ -1,3 +1,4 @@
+import OffscreenNodes from "./OffscreenNodes";
 import useGameFeedback from "./useGameFeedback";
 import ItemPanel from "./ItemPanel";
 import EnvironmentArt from "./EnvironmentArt";
@@ -492,6 +493,24 @@ export default function MetroGame({
                   };
                 }}
               >
+                {!isTransit(n.shape) && (
+                  <g
+                    className="automatic-node-pulse"
+                    aria-hidden="true"
+                    pointerEvents="none"
+                  >
+                    <circle r="30" />
+                    <circle r="30" />
+                  </g>
+                )}
+                {s.overload[id] > 0 && (
+                  <circle
+                    r="33"
+                    className="overload-pulse"
+                    aria-hidden="true"
+                    pointerEvents="none"
+                  />
+                )}
                 <circle r="30" fill="transparent" />
                 {s.overload[id] > 0 && (
                   <circle
@@ -630,6 +649,13 @@ export default function MetroGame({
             );
           })}
         </svg>
+        <OffscreenNodes
+          state={s}
+          view={camera.view}
+          svg={svg}
+          disabled={frozen || placing || pointer !== null}
+          onFocus={(n) => camera.focus(n)}
+        />
         <button
           className="camera-toggle"
           aria-label="Map controls"

@@ -67,7 +67,7 @@ describe("environment rules", () => {
       linkTerrainError(
         s,
         { x: 40, y: 120, shape: 3 },
-        { x: 250, y: 120, shape: 3 },
+        { x: 350, y: 120, shape: 3 },
       ),
     ).toMatch(/building/);
   });

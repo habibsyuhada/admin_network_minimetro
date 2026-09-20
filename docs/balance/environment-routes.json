@@ -13,13 +13,13 @@
   {
     "id": "campus",
     "phase": "complete",
-    "month": 4,
-    "time": 240,
-    "delivered": 121,
+    "month": 5,
+    "time": 300,
+    "delivered": 179,
     "gold": 740,
-    "devices": 10,
-    "actions": 9,
-    "maxQueue": 10
+    "devices": 13,
+    "actions": 12,
+    "maxQueue": 12
   },
   {
     "id": "harbor",

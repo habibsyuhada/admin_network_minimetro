@@ -1,0 +1,122 @@
+[
+  {
+    "seed": 123,
+    "id": "campus",
+    "phase": "complete",
+    "month": 5,
+    "time": 300,
+    "delivered": 179,
+    "gold": 740,
+    "devices": 13,
+    "actions": 12,
+    "maxQueue": 12
+  },
+  {
+    "seed": 42,
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 149,
+    "gold": 1098,
+    "devices": 11,
+    "actions": 11,
+    "maxQueue": 9
+  },
+  {
+    "seed": 987,
+    "id": "campus",
+    "phase": "complete",
+    "month": 5,
+    "time": 300,
+    "delivered": 178,
+    "gold": 896,
+    "devices": 14,
+    "actions": 11,
+    "maxQueue": 17
+  },
+  {
+    "seed": 2026,
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 121,
+    "gold": 842,
+    "devices": 10,
+    "actions": 10,
+    "maxQueue": 8
+  },
+  {
+    "seed": 45678,
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 147,
+    "gold": 1013,
+    "devices": 14,
+    "actions": 12,
+    "maxQueue": 12
+  },
+  {
+    "seed": 7,
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 144,
+    "gold": 812,
+    "devices": 10,
+    "actions": 10,
+    "maxQueue": 11
+  },
+  {
+    "seed": 99,
+    "id": "campus",
+    "phase": "complete",
+    "month": 5,
+    "time": 300,
+    "delivered": 201,
+    "gold": 1252,
+    "devices": 15,
+    "actions": 14,
+    "maxQueue": 15
+  },
+  {
+    "seed": 314,
+    "id": "campus",
+    "phase": "complete",
+    "month": 5,
+    "time": 300,
+    "delivered": 158,
+    "gold": 967,
+    "devices": 12,
+    "actions": 11,
+    "maxQueue": 11
+  },
+  {
+    "seed": 1024,
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 129,
+    "gold": 519,
+    "devices": 11,
+    "actions": 11,
+    "maxQueue": 10
+  },
+  {
+    "seed": 65535,
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 130,
+    "gold": 770,
+    "devices": 11,
+    "actions": 11,
+    "maxQueue": 8
+  }
+]

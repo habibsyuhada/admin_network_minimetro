@@ -39,10 +39,17 @@ Victory is checked at month end after settlement and loss checks; both month and
 | Map | Completion month | Delivered | Final gold |
 |---|---:|---:|---:|
 | Home Lab | 3 | 66 | 1241 |
-| Campus | 4 | 121 | 740 |
+| Campus | 5 | 179 | 740 |
 | Riverside | 6 | 259 | 847 |
 | Downtown | 8 | 549 | 1866 |
 | Highlands | 11 | 830 | 4009 |
 | Metro Region | 12 | 1253 | 5229 |
 
 These are single-seed campaign solvability checks, not a claim of final human difficulty. Downtown starting gold was raised to 1900 and its traffic reduced to 0.9; Highlands traffic was reduced to 0.8 after adding constraints. Earlier `campaign-results.json` and `environment-baseline.json` are historical, not current balance results. Browser tests separately exercise real month-end purchase/equip/unequip, radio construction across the river, and editable gateway service on desktop and phone emulation.
+
+
+### Larger Campus buildings
+
+Lab is now 250x280 (previously 125x140), Library 280x280 (140x140), and Dorms 340x420 (170x210). Each footprint is four times the area, with twice the width and height. Library moved to (240,430) and Dorms to (600,730), leaving open corridors and keeping all footprints within the existing 1000x1200 world. Starting nodes, economy, traffic multiplier, and mission targets remain unchanged.
+
+`node scripts/check-campus.mjs` compares ten seeded traffic runs using the same adaptive strategy. Before: 10/10 completed in months 4-5, average 4.2 months. After: 10/10 completed in months 4-5, average 4.4 months. The campaign's seed 123 now finishes in month 5 with 179 packets and 740 gold. Ending gold across new runs ranges from 519 to 1252. Reports: `docs/balance/campus-before-buildings.json` and `docs/balance/campus-large-buildings.json`. This suggests the geometry adds modest routing pressure without requiring an economy adjustment; it is automated solvability evidence, not a substitute for human playtesting.

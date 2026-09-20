@@ -26,9 +26,9 @@ export function terrainFor(id?: string): Terrain[] {
   switch (id) {
     case "campus":
       return [
-        block("lab", 55, 65, 125, 140, "building", "Lab"),
-        block("library", 240, 365, 140, 140, "building", "Library"),
-        block("dorm", 665, 745, 170, 210, "building", "Dorms"),
+        block("lab", 55, 65, 250, 280, "building", "Lab"),
+        block("library", 240, 430, 280, 280, "building", "Library"),
+        block("dorm", 600, 730, 340, 420, "building", "Dorms"),
       ];
     case "harbor":
       return [river];

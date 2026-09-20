@@ -107,3 +107,8 @@ Active sessions and inventory remain memory-only; only profile/progression persi
 The initial screen now shows the level board, selected level name, and one large Play action. Mission descriptions, starting gold, goals and star rules are shown only in a dismissible mission dialog. Progress totals and the packet record moved to Settings; Guide, Endless and Sound use a compact bottom menu. The board expands into available portrait space and becomes a two-column landscape layout.
 
 Production build and type/format checks pass. Six campaign browser checks pass on Chromium, Android and WebKit/iPhone emulation, covering locked levels, mission detail dismissal, game entry and saved unlocks. Additional 360x640 and 844x390 browser checks found no horizontal or vertical home overflow and confirmed Endless entry. Portrait and landscape screenshots were visually reviewed.
+
+
+## Campus building enlargement
+
+All three Campus building footprints are 4x their previous area (2x width and height). Library and Dorms were repositioned to preserve corridors within the existing world. No economy or goal changes were needed after matched before/after simulations across ten seeds: both sets completed 10/10, with mean completion increasing from 4.2 to 4.4 months. See MAP_SCHEMA.md and the campus balance JSON reports. All 56 unit tests pass, including the updated building crossing check. Production build passes. Mobile initial/whole-map screenshots were inspected at 390x844, with all footprints within world bounds.

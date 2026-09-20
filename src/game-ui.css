@@ -1511,3 +1511,25 @@ dialog select {
     opacity: 0.65;
   }
 }
+
+/* Blank-map cartography: only gameplay terrain and the player's network. */
+.metro-map-wrap,
+.metro-map {
+  background: #f4f1e8;
+}
+.metro-map-wrap {
+  border-color: transparent;
+}
+.metro-game .metro-node-id {
+  fill: #4c6465;
+  font-weight: 700;
+}
+.metro-game .node-feedback.build {
+  stroke: #50894d;
+}
+.metro-game .node-feedback.arrival {
+  stroke: #258c99;
+}
+.metro-game .metro-map .route-casing {
+  stroke: #f4f1e8;
+}

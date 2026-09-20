@@ -30,23 +30,23 @@ export default function EnvironmentArt({ state }: { state: Metro }) {
             y={t.y}
             width={t.width}
             height={t.height}
-            rx={t.kind === "river" ? 0 : 14}
+            rx={t.kind === "river" ? 0 : 3}
             fill={
               {
-                building: "#35464b",
-                rock: "#485252",
-                river: "#173f60",
-                construction: "#715937",
-                flood: "#2c6667",
+                building: "#d9dbd5",
+                rock: "#c6c9bd",
+                river: "#b4dce6",
+                construction: "#edcf91",
+                flood: "#c5e3e7",
               }[t.kind]
             }
             stroke={
               {
-                building: "#89999b",
-                rock: "#91938b",
-                river: "#549abe",
-                construction: "#eab46b",
-                flood: "#76bec3",
+                building: "#bec4ba",
+                rock: "#a7af9e",
+                river: "#b4dce6",
+                construction: "#c09a4d",
+                flood: "#8bbfc7",
               }[t.kind]
             }
             strokeWidth="2"
@@ -56,32 +56,15 @@ export default function EnvironmentArt({ state }: { state: Metro }) {
                 : undefined
             }
           />
-          <text
-            x={t.x + t.width / 2}
-            y={t.y + 25}
-            textAnchor="middle"
-            fill="#d4e3db"
-            fontSize="10"
-          >
-            {t.label}
-          </text>
+          <title>{t.label}</title>
           {t.kind === "rock" && (
             <path
-              d={`M${t.x + 15} ${t.y + t.height - 25} L${t.x + t.width / 2} ${t.y + 55} L${t.x + t.width - 15} ${t.y + t.height - 25}Z`}
-              fill="#727769"
-              opacity=".4"
+              d={`M${t.x + 18} ${t.y + t.height - 25}L${t.x + t.width / 2} ${t.y + 30}L${t.x + t.width - 18} ${t.y + t.height - 25}`}
+              fill="none"
+              stroke="#a7af9e"
+              strokeWidth="2"
             />
           )}
-          {t.kind === "building" &&
-            [0, 1, 2].map((i) => (
-              <path
-                key={i}
-                d={`M${t.x + 20} ${t.y + 50 + i * 20}h${t.width - 40}`}
-                stroke="#829697"
-                strokeWidth="5"
-                strokeDasharray="8 8"
-              />
-            ))}
         </g>
       ))}
       {terrain.some((t) => t.kind === "river") &&
@@ -92,20 +75,20 @@ export default function EnvironmentArt({ state }: { state: Metro }) {
               y={b.y}
               width="114"
               height={b.height}
-              fill="#6e7762"
-              stroke="#c7c69d"
+              fill="#f4f1e8"
+              stroke="#8eaaa9"
               strokeWidth="3"
             />
             <path
               d={`M450 ${b.y + 12}H550M450 ${b.y + b.height - 12}H550`}
-              stroke="#c7c69d"
+              stroke="#8eaaa9"
               strokeDasharray="6 4"
             />
             <text
               x="500"
               y={b.y + b.height / 2}
               textAnchor="middle"
-              fill="#f1f3d9"
+              fill="#415e65"
               fontSize="11"
             >
               {bridgeUse(state, b.id)}/2 cables

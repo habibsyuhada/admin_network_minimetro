@@ -399,65 +399,19 @@ export default function MetroGame({
             setPointer(null);
           }}
         >
-          <defs>
-            <pattern
-              id="network-grid"
-              width="24"
-              height="24"
-              patternUnits="userSpaceOnUse"
-            >
-              <circle cx="1" cy="1" r=".8" fill="#29413d" />
-            </pattern>
-          </defs>
           <rect
+            className="blank-map-land"
             width={MAP_BOUNDS.width}
             height={MAP_BOUNDS.height}
-            fill="url(#network-grid)"
+            fill="#f4f1e8"
           />
           <EnvironmentArt state={s} />
-          {level && level.id !== "campus" && (
-            <g className="level-terrain" aria-hidden="true">
-              {level.zones.map((z, i) => (
-                <g key={i}>
-                  <rect
-                    x={z.x - 20}
-                    y={z.y - 20}
-                    width={z.width + 40}
-                    height={z.height + 40}
-                    rx="58"
-                  />
-                  <text x={z.x + 12} y={z.y + 25}>
-                    DISTRICT {i + 1}
-                  </text>
-                </g>
-              ))}
-            </g>
-          )}
-          <g
-            className="network-zones"
-            aria-hidden="true"
-            opacity={level ? 0.25 : 1}
-          >
-            <rect x="30" y="36" width="135" height="170" rx="16" />
-            <rect x="195" y="150" width="170" height="290" rx="16" />
-            <rect x="35" y="345" width="140" height="210" rx="16" />
-            <text x="42" y="55">
-              ACCESS / A
-            </text>
-            <text x="205" y="162">
-              DATA CENTER
-            </text>
-            <text x="47" y="538">
-              ACCESS / B
-            </text>
-            <path d="M15 300H155L185 330H390M180 15V120L155 145" />
-          </g>
           {s.cables.map((_, i) => (
             <g key={i} className="route-layer" aria-hidden="true">
               <path
                 className="metro-route route-casing"
                 d={linePath(s.cables, i, renderNodes)}
-                stroke="#101f20"
+                stroke="#f4f1e8"
                 strokeWidth="9"
               />
               <path
@@ -662,7 +616,7 @@ export default function MetroGame({
                   height="12"
                   rx="3"
                   fill={CABLE_TYPES[l.kind].color}
-                  stroke="#101f20"
+                  stroke="#f4f1e8"
                   strokeWidth="2"
                 />
                 <text className="metro-car-count" y="3" style={{ fontSize: 8 }}>

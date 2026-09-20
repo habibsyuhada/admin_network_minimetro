@@ -600,3 +600,138 @@
     grid-template-columns: 240px 1fr;
   }
 }
+/* Give the network most of the screen; keep the operating controls compact. */
+.metro-game {
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  padding-inline: max(10px, env(safe-area-inset-left));
+}
+.metro-header {
+  grid-column: 1;
+  grid-row: 1;
+  gap: 8px;
+}
+.metro-wordmark {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.metro-score {
+  grid-column: 2;
+  grid-row: 1;
+  gap: 14px;
+  padding: 0;
+}
+.metro-score small {
+  font-size: 7px;
+  letter-spacing: 0.5px;
+}
+.metro-score strong {
+  font-size: 24px;
+}
+.metro-calendar strong {
+  font-size: 17px;
+  padding: 2px 0;
+}
+.metro-calendar progress {
+  width: 58px;
+}
+.metro-map-wrap {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-height: 0;
+}
+.metro-controls {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  padding-top: 0;
+}
+.cable-inventory {
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin-top: 3px;
+}
+.cable-inventory button {
+  min-height: 40px;
+  padding: 0 4px;
+}
+.metro-controls > p {
+  min-height: 28px;
+  margin: 0;
+}
+.node-directory,
+.node-destinations {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+.node-directory button,
+.node-destinations > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid #365148;
+  background: #1b332c;
+  border-radius: 12px;
+  color: #d9efdf;
+  font-size: 13px;
+}
+.node-directory svg,
+.node-destinations svg {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+}
+.node-directory strong,
+.node-destinations strong {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.node-directory small,
+.node-destinations small {
+  display: block;
+  color: #a2bfae;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.node-destinations .missing-route {
+  color: #ffbd91;
+}
+.empty-queue {
+  padding: 18px;
+  background: #1b332c;
+  border-radius: 12px;
+}
+@media (min-width: 900px), (orientation: landscape) and (max-height: 600px) {
+  .metro-game {
+    max-width: none;
+    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-rows: 48px 64px minmax(0, 1fr);
+    gap: 8px 16px;
+  }
+  .metro-header {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .metro-score {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .metro-map-wrap {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+  .metro-controls {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .cable-inventory {
+    justify-content: flex-start;
+  }
+}

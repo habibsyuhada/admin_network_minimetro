@@ -253,8 +253,9 @@ export default function GameShell() {
       {panel === "help" && (
         <Dialog title="Panduan operator" onClose={() => setPanel(null)}>
           <p>
-            Hubungkan perangkat dengan kabel berwarna. Antar paket ke jenis
-            perangkat tujuannya.
+            Hubungkan perangkat dengan kabel berwarna. Antar paket ke perangkat
+            tertentu, misalnya Server 2. Ikon menunjukkan jenisnya; buka Detail
+            node untuk melihat nama tujuan dan jumlah paket.
           </p>
           <div className="device-legend">
             {DEVICE_NAMES.map((name, i) => (

@@ -12,9 +12,12 @@ test("camera stops at map edges and centers when zoomed out", async ({
   const read = async () =>
     (await map.getAttribute("viewBox"))!.split(" ").map(Number);
   const drag = async (delta: number) => {
-    await page.mouse.move(bounds.x + 8, bounds.y + 8);
+    // The emulated visual viewport can clip the SVG edge. Start inside the visible map.
+    const x = Math.max(12, bounds.x + 8);
+    const y = Math.max(12, bounds.y + 8);
+    await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.mouse.move(bounds.x + 8 + delta, bounds.y + 8 + delta, {
+    await page.mouse.move(x + delta, y + delta, {
       steps: 5,
     });
     await page.mouse.up();

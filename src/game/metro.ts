@@ -1,4 +1,5 @@
 export type Shape = 0 | 1 | 2;
+export type Packet = { destination: number };
 export type CableKind = 0 | 1 | 2;
 export const CABLE_TYPES = [
   {
@@ -48,14 +49,14 @@ export type Cable = {
   at: 0 | 1;
   progress: number;
   wait: number;
-  cargo: Shape[];
+  cargo: Packet[];
 };
 export type Metro = {
-  version: 2;
+  version: 3;
   time: number;
   seed: number;
   delivered: number;
-  queues: Shape[][];
+  queues: Packet[][];
   overload: number[];
   cables: Cable[];
   stock: number;
@@ -71,7 +72,7 @@ export const cableSpeed = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].speed + s.speedBonus;
 export function newMetro(seed = Date.now() >>> 0): Metro {
   return {
-    version: 2,
+    version: 3,
     time: 0,
     seed,
     delivered: 0,
@@ -152,16 +153,17 @@ function travelTime(s: Metro, c: Cable) {
   return Math.hypot(a.x - b.x, a.y - b.y) / cableSpeed(s, c.kind);
 }
 // Positive edge costs include journey time and queued loads. Dijkstra chooses
-// a destination of the requested type; equal costs use stable cable IDs.
-function edgeCost(s: Metro, c: Cable, from: number, shape: Shape) {
+// the exact destination node; equal costs use stable cable IDs.
+function edgeCost(s: Metro, c: Cable, from: number, destination: number) {
   const loads =
-    s.queues[from].filter((p) => p === shape).length / cableCapacity(s, c.kind);
+    s.queues[from].filter((p) => p.destination === destination).length /
+    cableCapacity(s, c.kind);
   return travelTime(s, c) * (1 + loads) + 0.4;
 }
 export function routeCable(
   s: Metro,
   start: number,
-  shape: Shape,
+  destination: number,
 ): number | null {
   const best = s.queues.map(() => Infinity);
   const first: (number | null)[] = s.queues.map(() => null);
@@ -172,12 +174,12 @@ export function routeCable(
     for (let i = 0; i < best.length; i++)
       if (!visited.has(i) && (node < 0 || best[i] < best[node])) node = i;
     if (node < 0 || !Number.isFinite(best[node])) break;
-    if (SITES[node].shape === shape) return first[node];
+    if (node === destination) return first[node];
     visited.add(node);
     for (const cable of s.cables) {
       if (!cable.stops.includes(node)) continue;
       const next = cable.stops[0] === node ? cable.stops[1] : cable.stops[0];
-      const cost = best[node] + edgeCost(s, cable, node, shape);
+      const cost = best[node] + edgeCost(s, cable, node, destination);
       if (cost < best[next] - 1e-9) {
         best[next] = cost;
         first[next] = first[node] ?? cable.id;
@@ -223,9 +225,8 @@ export function metroTick(state: Metro): Metro {
   if (Math.floor(s.time / 3) > Math.floor(state.time / 3))
     for (let id = 0; id < s.queues.length; id++) {
       if (random() > Math.min(0.85, 0.4 + s.time / 900)) continue;
-      s.queues[id].push(
-        ((SITES[id].shape + 1 + Math.floor(random() * 2)) % 3) as Shape,
-      );
+      const target = Math.floor(random() * (s.queues.length - 1));
+      s.queues[id].push({ destination: target >= id ? target + 1 : target });
     }
   // Departures happen before arrivals: transferring cargo must wait for the
   // next cable's own carrier, regardless of cable iteration order.
@@ -234,14 +235,17 @@ export function metroTick(state: Metro): Metro {
       c.wait = Math.max(0, Math.round((c.wait - 0.1) * 10) / 10);
       if (c.wait > 0) continue;
       const node = c.stops[c.at];
-      const routes = new Map<Shape, number | null>();
+      const routes = new Map<number, number | null>();
       for (const packet of s.queues[node])
-        if (!routes.has(packet))
-          routes.set(packet, routeCable(s, node, packet));
+        if (!routes.has(packet.destination))
+          routes.set(
+            packet.destination,
+            routeCable(s, node, packet.destination),
+          );
       s.queues[node] = s.queues[node].filter((packet) => {
         if (
           c.cargo.length < cableCapacity(s, c.kind) &&
-          routes.get(packet) === c.id
+          routes.get(packet.destination) === c.id
         ) {
           c.cargo.push(packet);
           return false;
@@ -258,7 +262,7 @@ export function metroTick(state: Metro): Metro {
       c.wait = 0.4;
       const node = c.stops[c.at];
       for (const packet of c.cargo) {
-        if (SITES[node].shape === packet) s.delivered++;
+        if (node === packet.destination) s.delivered++;
         else s.queues[node].push(packet);
       }
       c.cargo = [];

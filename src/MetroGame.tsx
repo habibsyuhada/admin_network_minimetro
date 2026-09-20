@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play, Settings2, Network } from "lucide-react";
 import Dialog from "./Dialog";
+import NodeDetails, { nodeName } from "./NodeDetails";
 import {
   CABLE_TYPES,
   cableCapacity,
-  cableSpeed,
   connectionError,
   type CableKind,
   SITES,
@@ -38,6 +38,8 @@ export default function MetroGame({
   const [paused, setPaused] = useState(false);
   const [help, setHelp] = useState(true);
   const [confirm, setConfirm] = useState(false);
+  const [showNodes, setShowNodes] = useState(false);
+  const [detailNode, setDetailNode] = useState<number | null>(null);
   const [tip, setTip] = useState(
     "Pilih jenis kabel, lalu hubungkan dua perangkat.",
   );
@@ -49,13 +51,14 @@ export default function MetroGame({
     x: number;
     y: number;
   } | null>(null);
-  const frozen = paused || help || confirm || s.phase !== "running";
+  const frozen =
+    paused || help || confirm || showNodes || s.phase !== "running";
   useEffect(() => {
     const hide = () => {
       if (document.hidden) setPaused(true);
     };
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !(e.target as Element).closest("dialog")) {
         gesture.current = null;
         setPointer(null);
         setPaused(true);
@@ -347,11 +350,14 @@ export default function MetroGame({
                         height="13"
                         rx="3"
                         fill="#142c29"
-                        stroke={DEVICE_COLORS[packet]}
+                        stroke={DEVICE_COLORS[SITES[packet.destination].shape]}
                         strokeWidth=".6"
                       />
                       <g transform="scale(.29)">
-                        <DeviceGlyph kind={packet} compact />
+                        <DeviceGlyph
+                          kind={SITES[packet.destination].shape}
+                          compact
+                        />
                       </g>
                     </g>
                   ))}
@@ -427,7 +433,7 @@ export default function MetroGame({
         >
           {s.overload[danger] > 0
             ? `Perangkat ${danger + 1} penuh · ${Math.max(0, Math.ceil(20 - s.overload[danger]))} detik untuk mengurangi antrean`
-            : "Ikon pada paket menunjukkan perangkat tujuan."}
+            : "Paket punya tujuan spesifik. Buka Detail node"}
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
@@ -465,28 +471,22 @@ export default function MetroGame({
         <div className="cable-inventory">
           <span data-testid="cable-count">{s.cables.length} kabel aktif</span>
           <strong>Stok: {s.stock}</strong>
+          <button
+            aria-label="Detail node"
+            disabled={frozen}
+            onClick={() => {
+              setDetailNode(from);
+              setShowNodes(true);
+            }}
+          >
+            {from === null ? "Detail node" : `Detail ${nodeName(from)}`}
+          </button>
+          <button onClick={() => setHelp(true)}>Panduan</button>
           {from !== null && (
             <button onClick={() => setFrom(null)}>Batal</button>
           )}
         </div>
         <p role="status">{tip}</p>
-        <div className="network-legend">
-          {DEVICE_NAMES.map((name, i) => (
-            <span key={name}>
-              <svg viewBox="-19 -20 38 40">
-                <DeviceGlyph kind={i} compact />
-              </svg>
-              {name}
-            </span>
-          ))}
-        </div>
-        <div className="metro-capacity">
-          <span>
-            {cableCapacity(s, selected)} paket / pengangkut ·{" "}
-            {CABLE_TYPES[selected].note}
-          </span>
-          <button onClick={() => setHelp(true)}>Cara bermain</button>
-        </div>
       </section>
       {help && (
         <Dialog
@@ -495,8 +495,8 @@ export default function MetroGame({
         >
           <p>
             Setiap kabel menghubungkan dua perangkat dan memiliki satu
-            pengangkut sendiri. Paket menuju Client, Server, atau Database
-            sesuai ikonnya.
+            pengangkut sendiri. Setiap paket menuju satu perangkat tertentu,
+            misalnya Server 2. Ikon tetap menunjukkan jenis perangkatnya.
           </p>
           <ol className="handbook">
             <li>
@@ -514,6 +514,10 @@ export default function MetroGame({
               menunjukkan bandwidth. Paket transit menunggu pengangkut kabel
               berikutnya; rute dipilih otomatis berdasarkan waktu tempuh dan
               antrean.
+            </li>
+            <li>
+              Buka Detail node untuk melihat jumlah paket per tujuan dan apakah
+              jalurnya sudah tersambung.
             </li>
             <li>
               Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
@@ -541,6 +545,21 @@ export default function MetroGame({
           </button>
           <button className="secondary" onClick={() => onMenu(best.current)}>
             <ArrowLeft size={18} /> Akhiri sesi & ke menu
+          </button>
+        </Dialog>
+      )}
+      {showNodes && (
+        <Dialog
+          title={
+            detailNode === null
+              ? "Detail node"
+              : `Detail ${nodeName(detailNode)}`
+          }
+          onClose={() => setShowNodes(false)}
+        >
+          <NodeDetails state={s} node={detailNode} onSelect={setDetailNode} />
+          <button className="primary" onClick={() => setShowNodes(false)}>
+            Kembali ke peta
           </button>
         </Dialog>
       )}

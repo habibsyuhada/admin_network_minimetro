@@ -7,9 +7,11 @@ test("router preview moves before OK, rejects overlap, and Cancel spends nothing
   await page.goto("/");
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const purchase = page.getByRole("button", { name: /Pasang router/ });
+  await page.getByRole("button", { name: "Bangun perangkat" }).click();
   await purchase.click();
   const draft = page.getByRole("button", { name: "Geser pratinjau router" });
   await expect(draft).toBeVisible();
@@ -66,6 +68,7 @@ test("router preview moves before OK, rejects overlap, and Cancel spends nothing
     page.getByRole("dialog", { name: "Detail Router 4" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Kembali ke peta" }).click();
+  await page.getByRole("button", { name: "Bangun perangkat" }).click();
   await purchase.click();
   await move(100, 350);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -84,6 +87,7 @@ test("monthly report credits only profit minus maintenance and never pays twice"
   await page.clock.setFixedTime(new Date(42));
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
   await addTransit(page);
   await dragCable(page, 0, 3);
   await dragCable(page, 1, 3);
@@ -118,6 +122,8 @@ test("switch preview has its own price, icon and transit specification", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
+  await page.getByRole("button", { name: "Bangun perangkat" }).click();
   await page.getByRole("button", { name: /Pasang switch/ }).click();
   await expect(
     page.getByRole("button", { name: "Geser pratinjau switch" }),

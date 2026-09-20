@@ -73,3 +73,9 @@ The home screen is now an island mission board with six levels, locked progressi
 Campaign definitions live in `src/game/levels.ts`; see `MAP_SCHEMA.md`. Completion requires both minimum months and delivered packets, checked after monthly maintenance and loss conditions. Best stars persist in the existing profile key and unlock the next level. Active sessions are not persisted.
 
 Validation: 42 unit tests passed. Campaign/menu and existing cable flows were checked on desktop Chromium, Android emulation and WebKit/iPhone emulation. TypeScript, formatting and production build passed. A real UI replay completed level 1 with 66 packets and 1,490 gold in month 3, then verified level 2 unlocked after reload. Six adaptive simulations completed their maps in months 3, 5, 7, 8, 10 and 12. See `docs/balance/campaign-results.json` and `docs/balance/campaign-browser.json`.
+
+## Quiet gameplay HUD
+
+Removed always-visible economy breakdown, score panel, map subtitle, build catalog, cable catalog and repeated hints. Gameplay now exposes only wallet/month/time controls plus three contextual dock buttons. Cable and build trays reveal prices on request; wallet/mission opens paused statistics, and the menu contains exit/help. Camera controls use a separate toggle. A compact pause badge leaves topology editable. The initial help dialog now collapses the longer rules.
+
+Validated with 42 unit tests, production build and TypeScript/format checks. Thirty targeted browser cases passed across desktop Chromium, Android and iPhone emulation: compact HUD, map taking over 65% of the viewport, tool selection/automatic closing, placement cancellation, statistics, menu, campaign progression, node details, cables, pause and speed. Visual screenshots inspected after fixing the wallet layout.

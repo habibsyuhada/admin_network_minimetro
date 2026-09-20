@@ -95,7 +95,10 @@ try {
     }
     await pause();
     if (action.type === "place") {
+      if (!(await btn("Lihat seluruh area").isVisible()))
+        await btn("Atur tampilan peta").click();
       await btn("Lihat seluruh area").click();
+      await btn("Bangun perangkat").click();
       await page.getByRole("button", { name: /Pasang router/ }).click();
       const preview = page.getByRole("button", {
         name: "Geser pratinjau router",
@@ -107,7 +110,10 @@ try {
       await drag(start, await point(action.args[0], action.args[1]));
       await btn("OK").click();
     } else if (action.type === "connect") {
+      if (!(await btn("Lihat seluruh area").isVisible()))
+        await btn("Atur tampilan peta").click();
       await btn("Lihat seluruh area").click();
+      await btn("Pilih kabel").click();
       await btn(
         `Kabel ${["Ethernet", "Fiber", "Backbone"][action.args[0]]}`,
       ).click();
@@ -117,6 +123,7 @@ try {
       );
     } else if (action.type === "change") {
       const id = action.args[0];
+      await btn("Pilih kabel").click();
       await btn("Kelola kabel").click();
       // The cable manager labels provide an endpoint name; inspection uses its first node.
       const text = await page.getByRole("dialog").innerText();

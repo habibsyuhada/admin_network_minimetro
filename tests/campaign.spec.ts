@@ -42,6 +42,7 @@ test("campaign map selects missions, locks progression, and fits a phone", async
     path: `test-results/campaign-game-${test.info().project.name}.png`,
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Menu permainan" }).click();
   await page.getByRole("button", { name: "Akhiri sesi & ke menu" }).click();
   await page.getByRole("button", { name: /Level 2:/ }).click();
   await expect(

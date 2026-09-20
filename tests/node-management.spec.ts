@@ -12,6 +12,7 @@ for (const kind of ["router", "switch"])
     await page.clock.setFixedTime(new Date(42));
     await page.getByRole("button", { name: "Main NOC Flow" }).click();
     await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+    await page.getByRole("button", { name: "Bangun perangkat" }).click();
     await page
       .getByRole("button", { name: new RegExp(`Pasang ${kind}`) })
       .click();

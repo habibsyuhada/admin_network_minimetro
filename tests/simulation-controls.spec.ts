@@ -23,6 +23,7 @@ test("pause permits topology edits and speed scales simulation time", async ({
     "transform",
     carrier!,
   );
+  await page.getByRole("button", { name: "Bangun perangkat" }).click();
   await page.getByRole("button", { name: /Pasang switch/ }).click();
   await page.getByRole("button", { name: "OK", exact: true }).click();
   await dragCable(page, 2, 3);

@@ -26,6 +26,7 @@ test("node details show service icon destinations and pause the simulation", asy
   await expect(page.getByTestId("flow-clock")).toHaveText(clock!);
   await detail.getByRole("button", { name: "Kembali ke peta" }).click();
   await dragCable(page, 0, 1);
+  await page.getByRole("button", { name: "Lihat misi dan statistik" }).click();
   await page.getByRole("button", { name: "Detail node", exact: true }).click();
   await page.getByRole("button", { name: /Client 1.*paket/ }).click();
   await expect(destination).toContainText("Via YouTube 2");

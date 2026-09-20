@@ -7,6 +7,7 @@ test("camera stops at map edges and centers when zoomed out", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
   await page.getByRole("button", { name: "Perbesar peta" }).click();
   const map = page.getByRole("group", { name: "Peta Flow interaktif" });
   const bounds = (await map.boundingBox())!;
@@ -53,6 +54,7 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
   const map = page.getByRole("group", { name: "Peta Flow interaktif" });
   const initial = await map.getAttribute("viewBox");
   await page.getByRole("button", { name: "Perbesar peta" }).click();
@@ -73,6 +75,7 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   await addTransit(page, "switch", 10);
   await dragCable(page, 3, 4);
   await expect(map).toHaveAttribute("viewBox", initial!);
+  await page.getByRole("button", { name: "Pilih kabel" }).click();
   await page.getByRole("button", { name: "Kabel Fiber", exact: true }).click();
   await dragCable(page, 4, 3);
   const a = await page.locator('[data-route="0"]').getAttribute("d");
@@ -95,6 +98,7 @@ test("two-finger pinch cancels cable drawing and never commits a route", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
   const map = page.getByRole("group", { name: "Peta Flow interaktif" });
   const client = (await page
     .getByRole("button", { name: "Client 1", exact: true })
@@ -147,6 +151,7 @@ test("new distant nodes stay in the large map and can be located through details
   await page.clock.setFixedTime(new Date(42));
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: "Atur tampilan peta" }).click();
   const map = page.getByRole("group", { name: "Peta Flow interaktif" });
   const initial = await map.getAttribute("viewBox");
   await page.clock.runFor(45200);
@@ -154,6 +159,7 @@ test("new distant nodes stay in the large map and can be located through details
     4,
   );
   await expect(map).toHaveAttribute("viewBox", initial!);
+  await page.getByRole("button", { name: "Lihat misi dan statistik" }).click();
   await page.getByRole("button", { name: "Detail node", exact: true }).click();
   await page.locator(".node-directory button").nth(3).click();
   await page.getByRole("button", { name: "Lihat node di peta" }).click();

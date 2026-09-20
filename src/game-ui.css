@@ -761,3 +761,360 @@ dialog {
     transition: none !important;
   }
 }
+/* Quiet play HUD: reveal tools and statistics only on request. */
+.metro-game {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100dvh;
+}
+.metro-header {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: max(10px, env(safe-area-inset-top)) 12px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+}
+.metro-header button {
+  min-height: 44px;
+  border-radius: 16px;
+}
+.hud-menu {
+  width: 44px;
+  background: #17333b;
+  color: #bdd6ce;
+}
+.hud-wallet {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffe0a0;
+  background: transparent;
+  padding: 0 5px;
+}
+.hud-wallet strong {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.hud-month {
+  margin-left: auto;
+  color: #b7d0c4;
+  font-size: 11px;
+  min-width: 48px;
+  text-align: center;
+}
+.hud-month progress {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-top: 6px;
+  accent-color: #b9f595;
+}
+.simulation-controls {
+  margin: 0;
+  display: flex;
+  gap: 4px;
+}
+.simulation-controls button {
+  width: 36px;
+  min-width: 36px;
+  background: #1a383c;
+  border: 0;
+  box-shadow: none;
+  font-size: 12px;
+}
+.metro-map-wrap {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.metro-map {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  width: 100%;
+}
+.metro-map-wrap .planning-banner {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 20px;
+  background: #b9f595;
+  color: #16382a;
+  font-size: 10px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.camera-toggle {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #17363bd9;
+  border: 1px solid #54776c55;
+  color: #bbd7c7;
+}
+.map-camera-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 66px;
+  margin: 0;
+  padding: 6px;
+  gap: 4px;
+  background: #132f35f5;
+  border-radius: 18px;
+}
+.map-camera-controls > span {
+  display: none;
+}
+.map-camera-controls button {
+  min-height: 44px;
+  box-shadow: none;
+}
+.metro-controls {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 440px);
+  align-self: center;
+  margin: 0;
+  padding: 8px 16px max(14px, env(safe-area-inset-bottom));
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.play-dock {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.play-dock button {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 58px;
+  padding: 8px;
+  border-radius: 20px;
+  color: #d8edce;
+  background: #24443b;
+  box-shadow: 0 4px 0 #081d22;
+  border: 1px solid #5f80654d;
+}
+.play-dock button span {
+  font-size: 11px;
+  font-weight: 700;
+}
+.play-dock button[aria-expanded="true"] {
+  background: #3a5b44;
+  border-color: #b9f595;
+}
+.play-dock button:first-child svg {
+  color: var(--route);
+}
+.play-dock button i {
+  position: absolute;
+  bottom: 7px;
+  width: 18px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--route);
+}
+.tray-heading,
+.metro-controls .transit-choice,
+.metro-controls .cable-type-buttons,
+.metro-controls .tool-hint {
+  position: relative;
+  background: #203e36;
+  margin: 0;
+  padding: 10px;
+}
+.tray-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  border-radius: 20px 20px 0 0;
+  font-size: 13px;
+}
+.tray-heading button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  background: transparent;
+  color: #b9d3c3;
+}
+.metro-controls .transit-choice {
+  border-radius: 0 0 20px 20px;
+  padding-bottom: 16px;
+}
+.metro-controls .transit-choice button {
+  min-height: 62px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px;
+}
+.metro-controls .transit-choice button small {
+  margin: 0;
+}
+.metro-controls .cable-type-buttons button {
+  min-height: 60px;
+}
+.metro-controls .tool-hint {
+  border-radius: 0 0 20px 20px;
+  text-align: center;
+  padding-bottom: 14px;
+  font-size: 11px;
+}
+.metro-controls .router-confirm {
+  margin: 0;
+  border-radius: 22px;
+  padding: 12px;
+  background: #234538;
+}
+.metro-controls .router-confirm button {
+  min-height: 44px;
+}
+.metro-controls [hidden],
+.metro-map-wrap [hidden] {
+  display: none;
+}
+.connection-error {
+  position: absolute;
+  z-index: 4;
+  top: 46px;
+  left: 0;
+  right: 0;
+  box-shadow: 0 6px 30px #0005;
+}
+.metro-notice.is-danger {
+  position: absolute;
+  left: 10px;
+  right: 66px;
+  bottom: 14px;
+  margin: 0;
+  padding: 10px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+dialog .metro-score {
+  display: flex;
+  justify-content: space-between;
+  background: #18332c;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0;
+}
+dialog .economy-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  border: 0;
+}
+dialog .economy-bar strong {
+  grid-column: 1/-1;
+}
+dialog .economy-bar > span {
+  font-size: 13px;
+}
+dialog .cable-inventory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+}
+dialog .cable-inventory > span:nth-child(2) {
+  display: block;
+}
+dialog .cable-inventory button {
+  min-height: 44px;
+  font-size: 12px;
+}
+dialog details {
+  margin: 16px 0;
+}
+dialog summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+  color: #b9f595;
+}
+@media (max-width: 370px) {
+  .metro-header {
+    gap: 3px;
+    padding-inline: 7px;
+  }
+  .hud-wallet strong {
+    font-size: 12px;
+  }
+  .play-dock {
+    gap: 7px;
+  }
+  .play-dock button {
+    flex-direction: column;
+    gap: 3px;
+    min-height: 64px;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .metro-header {
+    padding-block: 4px;
+  }
+  .metro-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    width: 310px;
+    padding: 0;
+  }
+  .play-dock button {
+    min-height: 48px;
+  }
+  .tray-heading {
+    margin-top: 0;
+  }
+  .metro-controls:has(.tray-heading) .play-dock {
+    display: none;
+  }
+  .metro-map-wrap {
+    padding-bottom: 0;
+  }
+}
+.metro-header .hud-wallet {
+  display: flex;
+  width: auto;
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #ffe0a0;
+}

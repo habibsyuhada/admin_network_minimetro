@@ -19,6 +19,7 @@ test("point-to-point cables have separate carriers and can be removed individual
   await dragCable(page, 3, 4);
   await expect(page.getByTestId("cable-count")).toHaveText("2 kabel aktif");
   await expect(page.locator("[data-carrier]")).toHaveCount(2);
+  await tap("Pilih kabel");
   await tap("Kabel Fiber");
   await dragCable(page, 3, 4);
   await expect(page.locator('[data-carrier="3"]')).toContainText("/3");
@@ -27,6 +28,7 @@ test("point-to-point cables have separate carriers and can be removed individual
     .evaluateAll((paths) => paths.map((p) => p.getAttribute("stroke")));
   expect(colors[0]).toBe(colors[1]);
   expect(colors[2]).not.toBe(colors[0]);
+  await tap("Pilih kabel");
   await tap("Kabel Ethernet");
   await dragCable(page, 0, 3);
   await dragCable(page, 0, 4);
@@ -36,6 +38,7 @@ test("point-to-point cables have separate carriers and can be removed individual
   await page.waitForTimeout(1100);
   await expect(page.getByTestId("flow-clock")).toHaveText(clock!);
   await tap("Lanjutkan Flow");
+  await tap("Pilih kabel");
   await tap("Kelola kabel");
   await tap("Hapus kabel 1");
   await tap("Selesai");
@@ -98,7 +101,7 @@ test("drag makes one cable and mobile layouts remain usable", async ({
         ),
       ).toBeLessThanOrEqual(1);
       await expect(
-        small.getByRole("button", { name: "Kabel Ethernet", exact: true }),
+        small.getByRole("button", { name: "Pilih kabel", exact: true }),
       ).toBeInViewport();
       await expect(
         small.getByRole("button", { name: "Facebook 3", exact: true }),

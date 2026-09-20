@@ -35,6 +35,7 @@ test("mobile game menu opens only Flow and keeps sound preferences", async ({
     page.getByRole("button", { name: "Facebook 3", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Jeda mode Flow" }).click();
+  await page.getByRole("button", { name: "Menu permainan" }).click();
   await page.getByRole("button", { name: "Akhiri sesi & ke menu" }).click();
   await expect(
     page.getByRole("button", { name: "Main NOC Flow" }),

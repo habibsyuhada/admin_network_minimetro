@@ -20,6 +20,7 @@ export async function addTransit(
   kind: "router" | "switch" = "router",
   offset = 0,
 ) {
+  await page.getByRole("button", { name: "Bangun perangkat" }).click();
   await page
     .getByRole("button", { name: new RegExp(`Pasang ${kind}`) })
     .click();

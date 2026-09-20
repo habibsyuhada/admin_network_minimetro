@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Pause, Play, Settings2, Network } from "lucide-react";
+import {
+  ArrowLeft,
+  Pause,
+  Play,
+  Settings2,
+  Coins,
+  Plus,
+  Cable,
+  X,
+  Menu,
+  Maximize,
+  Target,
+} from "lucide-react";
 import { getLevel, missionStars } from "./game/levels";
 import Dialog from "./Dialog";
 import NodeDetails, { nodeName, nodeCode } from "./NodeDetails";
@@ -73,6 +85,9 @@ export default function MetroGame({
     : null;
   const placement = useRef<{ id: number; x: number; y: number } | null>(null);
   const [selected, setSelected] = useState<CableKind>(0);
+  const [tray, setTray] = useState<"cables" | "nodes" | null>(null);
+  const [gamePanel, setGamePanel] = useState<"stats" | "menu" | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [buildError, setBuildError] = useState<string | null>(null);
@@ -92,7 +107,12 @@ export default function MetroGame({
     y: number;
   } | null>(null);
   const frozen =
-    help || confirm || showNodes || sale !== null || s.phase !== "running";
+    help ||
+    gamePanel !== null ||
+    confirm ||
+    showNodes ||
+    sale !== null ||
+    s.phase !== "running";
   const stopped = paused || frozen || placing;
   useEffect(() => {
     const hide = () => {
@@ -190,8 +210,24 @@ export default function MetroGame({
       }
     >
       <header className="metro-header">
-        <span className="metro-wordmark">
-          <Network size={20} /> <span>{level ? level.name : "NOC / FLOW"}</span>
+        <button
+          className="hud-menu"
+          aria-label="Menu permainan"
+          onClick={() => setGamePanel("menu")}
+        >
+          <Menu size={20} />
+        </button>
+        <button
+          className="hud-wallet"
+          aria-label="Lihat keuangan dan target"
+          onClick={() => setGamePanel("stats")}
+        >
+          <Coins size={18} />
+          <strong data-testid="gold">{s.gold} gold</strong>
+        </button>
+        <span className="hud-month">
+          Bulan {s.month}
+          <progress aria-label="Progres bulan" value={s.time % 60} max={60} />
         </span>
         <div className="simulation-controls" aria-label="Waktu simulasi">
           <button
@@ -211,27 +247,24 @@ export default function MetroGame({
           </button>
         </div>
       </header>
-      <section className="metro-score" aria-label="Statistik Flow">
-        <div>
-          <small>PAKET TERKIRIM</small>
-          <strong data-testid="delivered">{s.delivered}</strong>
-        </div>
-        <div className="metro-calendar">
-          <small>BULAN {s.month}</small>
-          <strong data-testid="flow-clock">
-            {String(Math.floor(s.time / 60)).padStart(2, "0")}:
-            {String(Math.floor(s.time % 60)).padStart(2, "0")}
-          </strong>
-          <progress aria-label="Progres bulan" value={s.time % 60} max={60} />
-        </div>
-      </section>
+      <span
+        className="sr-only"
+        data-testid="flow-clock"
+        aria-label="Waktu berlalu"
+      >
+        {String(Math.floor(s.time / 60)).padStart(2, "0")}:
+        {String(Math.floor(s.time % 60)).padStart(2, "0")}
+      </span>
+      <span className="sr-only" data-testid="cable-count">
+        {s.cables.length} kabel aktif
+      </span>
+      <span className="sr-only" data-testid="delivered">
+        {s.delivered}
+      </span>
       <div className="metro-map-wrap">
         {paused && !help && s.phase === "running" && (
           <div className="planning-banner" role="status">
-            <span>Simulasi dijeda. Kamu tetap bisa mendesain topologi.</span>
-            <button onClick={() => onMenu(best.current)}>
-              Akhiri sesi &amp; ke menu
-            </button>
+            <Pause size={12} /> Mode desain
           </div>
         )}
         {buildError && (
@@ -248,14 +281,6 @@ export default function MetroGame({
           </div>
         )}
 
-        <div className="metro-map-title">
-          <span>
-            {level
-              ? `${level.subtitle} · ${Math.min(s.month, level.months)}/${level.months} bulan · ${s.delivered}/${level.packets} paket`
-              : "MODE BEBAS / LOCAL AREA NETWORK"}
-          </span>
-          <span>{s.queues.length} perangkat</span>
-        </div>
         <svg
           ref={svg}
           viewBox={`${camera.view.x} ${camera.view.y} ${camera.view.width} ${camera.view.height}`}
@@ -571,7 +596,19 @@ export default function MetroGame({
             );
           })}
         </svg>
-        <div className="map-camera-controls" aria-label="Kontrol tampilan peta">
+        <button
+          className="camera-toggle"
+          aria-label="Atur tampilan peta"
+          aria-expanded={cameraOpen}
+          onClick={() => setCameraOpen((v) => !v)}
+        >
+          <Maximize size={18} />
+        </button>
+        <div
+          hidden={!cameraOpen}
+          className="map-camera-controls"
+          aria-label="Kontrol tampilan peta"
+        >
           <button
             aria-label="Lihat seluruh area"
             disabled={frozen}
@@ -612,12 +649,49 @@ export default function MetroGame({
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
-        <div className="economy-bar" aria-label="Keuangan bulan ini">
-          <strong data-testid="gold">{s.gold} gold</strong>
-          <span>Profit: {s.profit}</span>
-          <span>Maintenance: {maintenanceDue(s)}</span>
-          <span>Bersih: {s.profit - maintenanceDue(s)} gold</span>
-        </div>
+        {!draft && (
+          <nav className="play-dock" aria-label="Alat jaringan">
+            <button
+              aria-label="Pilih kabel"
+              aria-expanded={tray === "cables"}
+              onClick={() => setTray((v) => (v === "cables" ? null : "cables"))}
+              style={
+                {
+                  "--route": CABLE_TYPES[selected].color,
+                } as React.CSSProperties
+              }
+            >
+              <Cable size={23} />
+              <span>{CABLE_TYPES[selected].name}</span>
+              <i />
+            </button>
+            <button
+              aria-label="Bangun perangkat"
+              aria-expanded={tray === "nodes"}
+              onClick={() => setTray((v) => (v === "nodes" ? null : "nodes"))}
+            >
+              <Plus size={24} />
+              <span>Bangun</span>
+            </button>
+            <button
+              aria-label="Lihat misi dan statistik"
+              onClick={() => setGamePanel("stats")}
+            >
+              <Target size={23} />
+              <span>{level ? "Misi" : "Statistik"}</span>
+            </button>
+          </nav>
+        )}
+        {tray && !draft && (
+          <div className="tray-heading">
+            <strong>
+              {tray === "nodes" ? "Tambah perangkat" : "Jenis kabel"}
+            </strong>
+            <button aria-label="Tutup alat" onClick={() => setTray(null)}>
+              <X size={18} />
+            </button>
+          </div>
+        )}
         {draft ? (
           <div className="router-confirm">
             <p role="status">
@@ -647,12 +721,13 @@ export default function MetroGame({
             <button onClick={() => setDraft(null)}>Cancel</button>
           </div>
         ) : (
-          <div className="transit-choice">
+          <div className="transit-choice" hidden={tray !== "nodes"}>
             {([3, 4] as const).map((kind) => (
               <button
                 key={kind}
                 disabled={frozen || s.gold < TRANSIT[kind].cost}
                 onClick={() => {
+                  setTray(null);
                   setBuildKind(kind);
                   setDraft({
                     x: Math.max(
@@ -675,7 +750,10 @@ export default function MetroGame({
             ))}
           </div>
         )}
-        <div className="metro-line-buttons cable-type-buttons">
+        <div
+          className="metro-line-buttons cable-type-buttons"
+          hidden={tray !== "cables" || placing}
+        >
           {CABLE_TYPES.map((type, i) => (
             <button
               key={type.name}
@@ -685,6 +763,7 @@ export default function MetroGame({
               style={{ "--route": type.color } as React.CSSProperties}
               onClick={() => {
                 setSelected(i as CableKind);
+                setTray(null);
                 setTip(
                   `${type.name}: ${cableCapacity(s, i as CableKind)} paket/pengangkut · harga ${type.cost} gold. ${type.note}.`,
                 );
@@ -700,28 +779,102 @@ export default function MetroGame({
             className="metro-clear"
             aria-label="Kelola kabel"
             disabled={frozen || placing || !s.cables.length}
-            onClick={() => setConfirm(true)}
+            onClick={() => {
+              setTray(null);
+              setConfirm(true);
+            }}
           >
             <Settings2 size={18} />
           </button>
         </div>
-        <div className="cable-inventory">
-          <span data-testid="cable-count">{s.cables.length} kabel aktif</span>
-          <span>Maintenance penuh: {maintenanceRate(s)} / bulan</span>
-          <button
-            aria-label="Detail node"
-            disabled={frozen}
-            onClick={() => {
-              setDetailNode(null);
-              setShowNodes(true);
-            }}
-          >
-            Detail node
-          </button>
-          <button onClick={() => setHelp(true)}>Panduan</button>
-        </div>
-        <p role="status">{tip}</p>
+        {tray === "cables" && !draft && (
+          <p className="tool-hint">Tarik dari satu node ke node lainnya.</p>
+        )}
+        <span className="sr-only" role="status">
+          {tip}
+        </span>
       </section>
+      {gamePanel && (
+        <Dialog
+          title={gamePanel === "stats" ? "Jaringanmu" : "Menu permainan"}
+          onClose={() => setGamePanel(null)}
+        >
+          <h2>{level?.name ?? "Mode Bebas"}</h2>
+          {gamePanel === "stats" ? (
+            <>
+              <section className="metro-score" aria-label="Statistik Flow">
+                <div>
+                  <small>PAKET TERKIRIM</small>
+                  <strong>{s.delivered}</strong>
+                </div>
+                <div className="metro-calendar">
+                  <small>BULAN {s.month}</small>
+                  <strong>
+                    {String(Math.floor(s.time / 60)).padStart(2, "0")}:
+                    {String(Math.floor(s.time % 60)).padStart(2, "0")}
+                  </strong>
+                </div>
+              </section>
+              <div className="economy-bar" aria-label="Keuangan bulan ini">
+                <strong>Saldo: {s.gold} gold</strong>
+                <span>Profit: {s.profit}</span>
+                <span>Maintenance: {maintenanceDue(s)}</span>
+                <span>Bersih: {s.profit - maintenanceDue(s)} gold</span>
+              </div>
+              {level && (
+                <p className="mission-brief">
+                  Target: {level.months} bulan · {s.delivered}/{level.packets}{" "}
+                  paket
+                </p>
+              )}
+              <div className="cable-inventory">
+                <span>{s.cables.length} kabel aktif</span>
+                <span>Maintenance penuh: {maintenanceRate(s)} / bulan</span>
+                <button
+                  aria-label="Detail node"
+                  disabled={s.phase !== "running"}
+                  onClick={() => {
+                    setGamePanel(null);
+                    setDetailNode(null);
+                    setShowNodes(true);
+                  }}
+                >
+                  Detail node
+                </button>
+                <button
+                  onClick={() => {
+                    setGamePanel(null);
+                    setHelp(true);
+                  }}
+                >
+                  Panduan
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                className="secondary"
+                onClick={() => {
+                  setGamePanel(null);
+                  setHelp(true);
+                }}
+              >
+                Cara bermain
+              </button>
+              <button
+                className="secondary"
+                onClick={() => onMenu(best.current)}
+              >
+                Akhiri sesi &amp; ke menu
+              </button>
+            </>
+          )}
+          <button className="primary" onClick={() => setGamePanel(null)}>
+            Kembali bermain
+          </button>
+        </Dialog>
+      )}
       {help && (
         <Dialog
           title="Jaringan kecil, terus tumbuh"
@@ -743,59 +896,68 @@ export default function MetroGame({
             YouTube. Semua node berikon YouTube bisa menerima paketnya. PC
             meminta layanan; layanan mengirim balasan sesuai ikon jenis client.
           </p>
-          <ol className="handbook">
-            <li>
-              Tekan Jeda untuk mendesain topologi tanpa paket bergerak. Tombol
-              1x/2x/3x mengatur kecepatan seluruh simulasi, termasuk kemunculan
-              node dan maintenance.
-            </li>
-            <li>
-              Geser area kosong untuk menggerakkan peta. Cubit dengan dua jari
-              atau gunakan tombol − / + untuk zoom. Tekan persentase untuk
-              kembali ke area awal. Tombol Peta menampilkan seluruh area.
-            </li>
-            <li>
-              Pilih jenis kabel lalu tarik dari satu perangkat ke perangkat
-              lain. Klik atau sentuh satu perangkat untuk melihat detailnya.
-              Untuk cabang baru, mulai lagi dari perangkat mana pun.
-            </li>
-            <li>
-              Pengangkut hanya bolak-balik pada kabelnya. Angka muatan/kapasitas
-              menunjukkan bandwidth. Paket transit menunggu pengangkut kabel
-              berikutnya; rute dipilih otomatis berdasarkan waktu tempuh dan
-              antrean.
-            </li>
-            <li>
-              Buka Detail node untuk melihat jumlah paket per tujuan dan apakah
-              jalurnya sudah tersambung.
-            </li>
-            <li>
-              Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
-              Backbone: 8 paket, lebih lambat. Angka ini bertambah saat upgrade.
-              Router seharga 150 gold langsung muncul sebagai pratinjau. Geser,
-              lalu OK untuk membeli atau Cancel. Modal awal 1.600 gold. Setiap
-              paket terkirim menghasilkan 18 gold. Profit dikurangi maintenance
-              dibayarkan setiap menit. Kabel berbiaya 100/200/250 gold;
-              maintenance kabel 20/35/40 dan router 30 gold per bulan, dihitung
-              sesuai lama aktif. Node yang muncul otomatis gratis.
-            </li>
-            <li>
-              Router: 150 gold, 8 port, buffer 24, maintenance 30/bulan. Switch:
-              80 gold, 4 port, buffer 16, maintenance 15/bulan; bongkar-muat
-              lebih cepat (0,2 detik). Client dan layanan memiliki 1 port.
-              Setiap kabel memakai satu port; kabel sejenis boleh dipasang
-              paralel antar router/switch.
-            </li>
-            <li>
-              Tiap 45 detik muncul gelombang PC atau layanan (masing-masing
-              50%). Gelombang PC: 1 PC 60%, 2 PC 30%, 3 PC 10%. Layanan dipilih
-              merata dari 7 jenis dan boleh berulang. Maksimal 36 node otomatis.
-            </li>
-            <li>
-              Antrean penuh memulai hitung mundur: PC/layanan 10, switch 16,
-              router 24 paket. Kurangi antrean sebelum 25 detik habis!
-            </li>
-          </ol>
+          <p>
+            Tarik kabel antar node. Gunakan <b>Bangun</b> untuk menambah router
+            atau switch, dan jeda untuk mendesain jaringan.
+          </p>
+          <details>
+            <summary>Pelajari aturan lengkap</summary>
+            <ol className="handbook">
+              <li>
+                Tekan Jeda untuk mendesain topologi tanpa paket bergerak. Tombol
+                1x/2x/3x mengatur kecepatan seluruh simulasi, termasuk
+                kemunculan node dan maintenance.
+              </li>
+              <li>
+                Geser area kosong untuk menggerakkan peta. Cubit dengan dua jari
+                atau gunakan tombol − / + untuk zoom. Tekan persentase untuk
+                kembali ke area awal. Tombol Peta menampilkan seluruh area.
+              </li>
+              <li>
+                Pilih jenis kabel lalu tarik dari satu perangkat ke perangkat
+                lain. Klik atau sentuh satu perangkat untuk melihat detailnya.
+                Untuk cabang baru, mulai lagi dari perangkat mana pun.
+              </li>
+              <li>
+                Pengangkut hanya bolak-balik pada kabelnya. Angka
+                muatan/kapasitas menunjukkan bandwidth. Paket transit menunggu
+                pengangkut kabel berikutnya; rute dipilih otomatis berdasarkan
+                waktu tempuh dan antrean.
+              </li>
+              <li>
+                Buka Detail node untuk melihat jumlah paket per tujuan dan
+                apakah jalurnya sudah tersambung.
+              </li>
+              <li>
+                Ethernet: 4 paket, seimbang. Fiber: 3 paket, lebih cepat.
+                Backbone: 8 paket, lebih lambat. Angka ini bertambah saat
+                upgrade. Router seharga 150 gold langsung muncul sebagai
+                pratinjau. Geser, lalu OK untuk membeli atau Cancel. Modal awal
+                1.600 gold. Setiap paket terkirim menghasilkan 18 gold. Profit
+                dikurangi maintenance dibayarkan setiap menit. Kabel berbiaya
+                100/200/250 gold; maintenance kabel 20/35/40 dan router 30 gold
+                per bulan, dihitung sesuai lama aktif. Node yang muncul otomatis
+                gratis.
+              </li>
+              <li>
+                Router: 150 gold, 8 port, buffer 24, maintenance 30/bulan.
+                Switch: 80 gold, 4 port, buffer 16, maintenance 15/bulan;
+                bongkar-muat lebih cepat (0,2 detik). Client dan layanan
+                memiliki 1 port. Setiap kabel memakai satu port; kabel sejenis
+                boleh dipasang paralel antar router/switch.
+              </li>
+              <li>
+                Tiap 45 detik muncul gelombang PC atau layanan (masing-masing
+                50%). Gelombang PC: 1 PC 60%, 2 PC 30%, 3 PC 10%. Layanan
+                dipilih merata dari 7 jenis dan boleh berulang. Maksimal 36 node
+                otomatis.
+              </li>
+              <li>
+                Antrean penuh memulai hitung mundur: PC/layanan 10, switch 16,
+                router 24 paket. Kurangi antrean sebelum 25 detik habis!
+              </li>
+            </ol>
+          </details>
           <p className="muted">
             Sesi Flow berlangsung selama halaman terbuka; belum disimpan setelah
             reload. Jeda otomatis saat aplikasi berada di latar belakang.

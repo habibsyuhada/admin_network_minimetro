@@ -1,3 +1,4 @@
+import { Gold } from "./GameIcons";
 import { useState } from "react";
 import Dialog from "./Dialog";
 import { Lock, Play, Star, Flag, ChevronRight, Info } from "lucide-react";
@@ -148,7 +149,9 @@ export default function CampaignMap({
                 <b>{level.packets}</b> packets
               </span>
               <span>
-                <b>{level.gold.toLocaleString("en-US")}</b> gold
+                <b>
+                  <Gold amount={level.gold} />
+                </b>
               </span>
             </div>
 

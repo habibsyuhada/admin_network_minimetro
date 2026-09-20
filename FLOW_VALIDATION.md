@@ -146,3 +146,8 @@ Automatically generated clients/services now have a continuous, subtle double pu
 An HTML overlay projects node positions using the SVG screen matrix and actual viewport, grouping hidden automatic/overloaded devices into eight directions. Each button shows the target icon, direction and grouped count; overloaded targets take priority and add a red alert. Tapping focuses the camera. Visible devices disappear from the overlay, and player transit devices only appear when overloaded. Camera controls take priority and markers avoid their rectangles. Indicators are disabled during dialogs, placement or cable dragging.
 
 Browser checks cover automatic-vs-player pulses, zoom-created indicators, focus on tap, no indicators in whole-map view, and reduced-motion behavior. An actual timed browser run without cables verified an overloaded node and a red offscreen indicator. Mobile screenshots inspected. An iPhone test found a marker intercepting zoom, resolved by reserving control space and raising camera controls above the overlay.
+
+
+## Item art and coin currency
+
+Eight upgrade types now have distinct colored equipment badges using the existing vector icon library. Shared artwork appears in monthly offers, stored inventory, and equipped items; the inventory overview also shows item quantities before a target device is selected. A reusable gold coin graphic replaces repeated visible gold labels beside wallet balance, device/cable/item prices, upkeep, refunds, monthly settlement, mission capital and final balance. Screen-reader gold labels remain present. Explanatory prose still uses currency names where needed. No prices or economy rules changed.

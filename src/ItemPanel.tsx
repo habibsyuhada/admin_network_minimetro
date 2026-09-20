@@ -1,3 +1,4 @@
+import { ItemIcon, Gold } from "./GameIcons";
 import { ITEMS, ITEM_KEYS, type ItemKind } from "./game/items";
 import {
   type Metro,
@@ -27,7 +28,10 @@ export default function ItemPanel({
       </h3>
       {(n.items ?? []).map((key) => (
         <article key={key}>
-          <strong>{ITEMS[key].name}</strong>
+          <div className="item-heading">
+            <ItemIcon kind={key} />
+            <strong>{ITEMS[key].name}</strong>
+          </div>
           <p>{ITEMS[key].description}</p>
           <button
             disabled={
@@ -50,13 +54,16 @@ export default function ItemPanel({
             (n.items?.length ?? 0) >= itemSlots(n);
         return (
           <article key={key}>
-            <strong>
-              {ITEMS[key].name} ×{count}
-            </strong>
+            <div className="item-heading">
+              <ItemIcon kind={key} />
+              <strong>
+                {ITEMS[key].name} ×{count}
+              </strong>
+            </div>
             <p>{ITEMS[key].description}</p>
             <small>
-              Upkeep: {ITEMS[key].maintenance} gold/month{" "}
-              {key === "bandwidth" ? "+ 4 per affected cable" : ""}
+              Upkeep: <Gold amount={ITEMS[key].maintenance} />
+              /month {key === "bandwidth" ? "+ 4 per affected cable" : ""}
             </small>
             <button
               disabled={disabled || state.phase !== "running"}

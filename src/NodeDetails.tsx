@@ -1,3 +1,4 @@
+import { Gold } from "./GameIcons";
 import {
   CLIENT_VARIANTS,
   SERVICES,
@@ -105,8 +106,9 @@ export default function NodeDetails({
         <p>
           {spec.name} built by you.{" "}
           {state.cables.filter((c) => c.stops.includes(node)).length}/
-          {spec.ports} ports used. Maintenance {spec.maintenance} gold/month.
-          Queue capacity: {nodeBuffer(nodes[node])} packets.{" "}
+          {spec.ports} ports used. Maintenance{" "}
+          <Gold amount={spec.maintenance} />
+          /month. Queue capacity: {nodeBuffer(nodes[node])} packets.{" "}
           {kind === 14
             ? "This device is a service destination."
             : "Packets can transfer here."}
@@ -235,9 +237,8 @@ export default function NodeDetails({
                           {cableMaintenance(state, kind, c)}/month
                         </small>
                         <small>
-                          {cost > 0
-                            ? `Pay ${cost} gold`
-                            : `Refund ${-cost} gold`}
+                          {cost > 0 ? "Pay " : "Refund "}
+                          <Gold amount={Math.abs(cost)} />
                           {cost > state.gold ? " · Not enough gold" : ""}
                         </small>
                       </button>
@@ -248,7 +249,7 @@ export default function NodeDetails({
                   aria-label={`Remove cable ${c.id}`}
                   onClick={() => onRemoveCable(c.id)}
                 >
-                  Remove · refund {CABLE_TYPES[c.kind].cost} gold
+                  Remove · refund <Gold amount={CABLE_TYPES[c.kind].cost} />
                 </button>
               </article>
             );

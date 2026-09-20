@@ -1,3 +1,4 @@
+import { ItemIcon, Gold } from "./GameIcons";
 import OffscreenNodes from "./OffscreenNodes";
 import useGameFeedback from "./useGameFeedback";
 import ItemPanel from "./ItemPanel";
@@ -10,7 +11,6 @@ import {
   Pause,
   Play,
   Settings2,
-  Coins,
   Plus,
   Cable,
   Menu,
@@ -253,8 +253,9 @@ export default function MetroGame({
           aria-label="View finances and goals"
           onClick={() => setGamePanel("stats")}
         >
-          <Coins size={18} />
-          <strong data-testid="gold">{s.gold} gold</strong>
+          <strong data-testid="gold">
+            <Gold amount={s.gold} />
+          </strong>
         </button>
         <span className="hud-month">
           Month {s.month}
@@ -823,7 +824,9 @@ export default function MetroGame({
                             packet buffer
                           </small>
                         </span>
-                        <small>{TRANSIT[kind].cost} gold</small>
+                        <small>
+                          <Gold amount={TRANSIT[kind].cost} />
+                        </small>
                       </button>
                     ),
                   )}
@@ -850,8 +853,8 @@ export default function MetroGame({
                     >
                       <span>{type.name}</span>
                       <small>
-                        {cableCapacity(s, i as CableKind)} packets · {type.cost}{" "}
-                        gold
+                        {cableCapacity(s, i as CableKind)} packets ·{" "}
+                        <Gold amount={type.cost} />
                       </small>
                     </button>
                   ))}
@@ -920,10 +923,23 @@ export default function MetroGame({
               {inventoryNode >= 0 && s.nodes[inventoryNode] ? (
                 <ItemPanel state={s} node={inventoryNode} onUpdate={setS} />
               ) : (
-                <p>
-                  {s.inventory.length} items in storage. Choose a device to
-                  equip them.
-                </p>
+                <>
+                  <p>
+                    {s.inventory.length} items in storage. Choose a device to
+                    equip them.
+                  </p>
+                  <div className="inventory-overview">
+                    {[...new Set(s.inventory)].map((key) => (
+                      <div key={key} className="item-heading">
+                        <ItemIcon kind={key} />
+                        <strong>
+                          {ITEMS[key].name} ×
+                          {s.inventory.filter((item) => item === key).length}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </>
           ) : gamePanel === "stats" ? (
@@ -959,10 +975,18 @@ export default function MetroGame({
                 </div>
               </section>
               <div className="economy-bar" aria-label="This month finances">
-                <strong>Balance: {s.gold} gold</strong>
-                <span>Profit: {s.profit}</span>
-                <span>Maintenance: {maintenanceDue(s)}</span>
-                <span>Net: {s.profit - maintenanceDue(s)} gold</span>
+                <strong>
+                  Balance: <Gold amount={s.gold} />
+                </strong>
+                <span>
+                  Profit: <Gold amount={s.profit} />
+                </span>
+                <span>
+                  Maintenance: <Gold amount={maintenanceDue(s)} />
+                </span>
+                <span>
+                  Net: <Gold amount={s.profit - maintenanceDue(s)} />
+                </span>
               </div>
               {level && (
                 <p className="mission-brief">
@@ -1225,7 +1249,11 @@ export default function MetroGame({
           <p>
             50% of the device price plus a full refund for{" "}
             {s.cables.filter((c) => c.stops.includes(sale)).length} connected
-            cables: <b>{nodeRefund(s, sale)} gold</b>.
+            cables:{" "}
+            <b>
+              <Gold amount={nodeRefund(s, sale)} />
+            </b>
+            .
           </p>
           <p>
             Waiting and carried packets are reassigned to remaining nodes.
@@ -1291,27 +1319,39 @@ export default function MetroGame({
       {s.phase === "reward" && (
         <Dialog title={`Month ${s.month} complete`}>
           <p>
-            Profit: <b>{s.report?.profit} gold</b>
+            Profit:{" "}
+            <b>
+              <Gold amount={s.report?.profit} />
+            </b>
             <br />
-            Maintenance: <b>{s.report?.maintenance} gold</b>
+            Maintenance:{" "}
+            <b>
+              <Gold amount={s.report?.maintenance} />
+            </b>
             <br />
-            Net income: <b>{s.report?.net} gold</b>
+            Net income:{" "}
+            <b>
+              <Gold amount={s.report?.net} />
+            </b>
           </p>
           <p>
-            Balance: {s.gold} gold. Buy one optional item this month. It goes to
-            Inventory, not directly onto your network.
+            Balance: <Gold amount={s.gold} />. Buy one optional item this month.
+            It goes to Inventory, not directly onto your network.
           </p>
           <div className="monthly-items">
             {monthlyItems(s).map((key) => (
               <article key={key}>
-                <strong>{ITEMS[key].name}</strong>
+                <div className="item-heading">
+                  <ItemIcon kind={key} />
+                  <strong>{ITEMS[key].name}</strong>
+                </div>
                 <p>{ITEMS[key].description}</p>
                 <button
                   aria-label={`Buy ${ITEMS[key].name}`}
                   disabled={s.purchasedThisMonth || s.gold < ITEMS[key].cost}
                   onClick={() => setS((v) => buyItem(v, key))}
                 >
-                  {ITEMS[key].cost} gold · Buy item
+                  <Gold amount={ITEMS[key].cost} /> · Buy item
                 </button>
               </article>
             ))}
@@ -1345,8 +1385,11 @@ export default function MetroGame({
             {s.month} months completed. {s.delivered} packets delivered.
           </p>
           <p>
-            Final balance <b>{s.gold} gold</b>. Your level progress has been
-            saved.
+            Final balance{" "}
+            <b>
+              <Gold amount={s.gold} />
+            </b>
+            . Your level progress has been saved.
           </p>
           <section className="star-breakdown" aria-label="Star requirements">
             <h3>Your stars</h3>

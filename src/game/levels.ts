@@ -19,7 +19,7 @@ export type Level = {
 export const LEVELS: Level[] = [
   {
     id: "neighborhood",
-    name: "Digital Neighborhood",
+    name: "Home Lab",
     subtitle: "01 / FIRST CONNECTION",
     description:
       "A small neighborhood with short connections. Master your first packet flows.",
@@ -40,10 +40,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "campus",
-    name: "Connected Campus",
+    name: "Campus",
     subtitle: "02 / RUSH HOUR",
     description:
-      "Clients gather in two campus areas. Build efficient transfer hubs.",
+      "Clients gather inside campus buildings. Place transit devices in the open corridors; cables cannot cut through buildings.",
     seed: 123,
     months: 4,
     packets: 120,
@@ -64,10 +64,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "harbor",
-    name: "Data Harbor",
+    name: "Riverside",
     subtitle: "03 / TWO SHORES",
     description:
-      "Connect both sides of the harbor. Balance speed and capacity over longer distances.",
+      "Cross the river through two bridges, with two cable slots each. Wireless Bridge pairs offer a smaller-capacity alternative.",
     seed: 987,
     months: 6,
     packets: 250,
@@ -91,13 +91,13 @@ export const LEVELS: Level[] = [
     name: "Downtown",
     subtitle: "04 / HEAVY TRAFFIC",
     description:
-      "Four districts grow at once. Distribute traffic across your network.",
+      "Connect dense city blocks. Road works block new construction in months 3�4 of each four-month cycle, with a warning one month ahead.",
     seed: 2026,
     months: 8,
     packets: 450,
-    gold: 1600,
+    gold: 1900,
     spawnEvery: 45,
-    traffic: 1,
+    traffic: 0.9,
     maxNodes: 28,
     color: "#c6a4ff",
     zones: [
@@ -114,16 +114,16 @@ export const LEVELS: Level[] = [
   },
   {
     id: "highlands",
-    name: "Signal Hills",
+    name: "Highlands",
     subtitle: "05 / REACH FURTHER",
     description:
-      "Devices spread across the hills. Combine short links with strong backbone connections.",
+      "Rocky ridges block cables and devices. Use mountain passes and Cable Relays to route around them.",
     seed: 45678,
     months: 10,
     packets: 700,
     gold: 1800,
     spawnEvery: 45,
-    traffic: 0.95,
+    traffic: 0.8,
     maxNodes: 32,
     color: "#f8a78d",
     zones: [
@@ -139,10 +139,10 @@ export const LEVELS: Level[] = [
   },
   {
     id: "metropolis",
-    name: "Metro Network",
+    name: "Metro Region",
     subtitle: "06 / A FULL YEAR",
     description:
-      "Connect the entire region. Keep the network running for twelve months.",
+      "Manage buildings, a river and a ridge. The floodplain slows exposed links every fourth month; prepare Weatherproof Kits.",
     seed: 987,
     months: 12,
     packets: 1100,

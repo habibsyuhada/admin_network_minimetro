@@ -1,3 +1,7 @@
+import ItemPanel from "./ItemPanel";
+import EnvironmentArt from "./EnvironmentArt";
+import { ITEMS } from "./game/items";
+import { terrainFor, terrainNotice } from "./game/environment";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -18,7 +22,11 @@ import {
   CABLE_TYPES,
   OVERLOAD_SECONDS,
   changeCable,
-  upgradeCost,
+  monthlyItems,
+  buyItem,
+  TRANSIT_KINDS,
+  transitUnlocked,
+  itemSlots,
   packetKind,
   packetVariant,
   TRANSIT,
@@ -85,7 +93,10 @@ export default function MetroGame({
   const placement = useRef<{ id: number; x: number; y: number } | null>(null);
   const [selected, setSelected] = useState<CableKind>(0);
   const [tray, setTray] = useState<"cables" | "nodes" | null>(null);
-  const [gamePanel, setGamePanel] = useState<"stats" | "menu" | null>(null);
+  const [gamePanel, setGamePanel] = useState<
+    "stats" | "menu" | "inventory" | null
+  >(null);
+  const [inventoryNode, setInventoryNode] = useState<number>(-1);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -168,7 +179,9 @@ export default function MetroGame({
     setBuildError(null);
     setS((v) => connectCable(v, selected, a, b));
     playCue("link");
-    setTip(`${CABLE_TYPES[selected].name} connected. Its carrier is ready.`);
+    setTip(
+      `${CABLE_TYPES[s.nodes[a].shape === 11 && s.nodes[b].shape === 11 ? 3 : selected].name} connected. Its carrier is ready.`,
+    );
   };
   const inspect = (id: number) => {
     if (frozen || placing) return;
@@ -181,6 +194,15 @@ export default function MetroGame({
       ? new DOMPoint(x, y).matrixTransform(matrix.inverse())
       : { x: 0, y: 0 };
   };
+  const previewTarget = pointer
+    ? s.nodes.findIndex(
+        (n) => Math.hypot(n.x - pointer.x, n.y - pointer.y) < 34,
+      )
+    : -1;
+  const previewError =
+    gesture.current && previewTarget >= 0
+      ? connectionError(s, selected, gesture.current.start, previewTarget)
+      : null;
   const danger = s.overload.indexOf(Math.max(...s.overload));
   const camera = useMapCamera(
     svg,
@@ -259,15 +281,33 @@ export default function MetroGame({
         {s.delivered}
       </span>
       <div className="metro-map-wrap">
+        {terrainNotice(s) && (
+          <button
+            className="environment-badge"
+            onClick={() => setGamePanel("stats")}
+          >
+            {s.levelId === "downtown"
+              ? s.month % 4 === 2
+                ? "Road works next month"
+                : s.month % 4 === 3 || s.month % 4 === 0
+                  ? "Road works active"
+                  : "Road works schedule"
+              : s.month % 4 === 3
+                ? "Flood next month"
+                : s.month % 4 === 0
+                  ? "Flood active"
+                  : "Flood schedule"}
+          </button>
+        )}
         {paused && !help && s.phase === "running" && (
           <div className="planning-banner" role="status">
             <Pause size={12} /> Design mode
           </div>
         )}
-        {buildError && (
+        {(buildError || previewError) && (
           <div className="connection-error" role="alert">
             <span>
-              <b>Could not connect cable.</b> {buildError}
+              <b>Could not connect cable.</b> {buildError ?? previewError}
             </span>
             <button
               aria-label="Dismiss error"
@@ -367,6 +407,7 @@ export default function MetroGame({
             height={MAP_BOUNDS.height}
             fill="url(#network-grid)"
           />
+          <EnvironmentArt state={s} />
           {level && (
             <g className="level-terrain" aria-hidden="true">
               {level.zones.map((z, i) => (
@@ -417,6 +458,7 @@ export default function MetroGame({
                 data-route={i}
                 d={linePath(s.cables, i, renderNodes)}
                 stroke={CABLE_TYPES[s.cables[i].kind].color}
+                strokeDasharray={s.cables[i].kind === 3 ? "6 5" : undefined}
                 strokeWidth={selected === s.cables[i].kind ? 6 : 5}
               />
             </g>
@@ -428,7 +470,13 @@ export default function MetroGame({
               y1={s.nodes[gesture.current?.start ?? 0].y}
               x2={pointer.x}
               y2={pointer.y}
-              stroke={CABLE_TYPES[selected].color}
+              stroke={
+                previewTarget >= 0
+                  ? previewError
+                    ? "#ff7777"
+                    : "#b9f595"
+                  : CABLE_TYPES[selected].color
+              }
             />
           )}
           {s.queues.map((q, id) => {
@@ -475,6 +523,16 @@ export default function MetroGame({
                   />
                 )}
                 <DeviceGlyph kind={n.shape} variant={n.clientVariant} />
+                {[12, 14].includes(n.shape) && (
+                  <g transform="translate(22,-20) scale(.42)">
+                    <DeviceGlyph kind={n.service ?? 1} />
+                  </g>
+                )}
+                {!!n.items?.length && (
+                  <text x="-25" y="-25" fill="#ffd47f" fontSize="9">
+                    {n.items.length}★
+                  </text>
+                )}
                 <text y="-34" className="metro-node-id">
                   {nodeCode(id, s.nodes)}
                 </text>
@@ -587,7 +645,7 @@ export default function MetroGame({
                   strokeWidth="2"
                 />
                 <text className="metro-car-count" y="3" style={{ fontSize: 8 }}>
-                  {l.cargo.length}/{cableCapacity(s, l.kind)}
+                  {l.cargo.length}/{cableCapacity(s, l.kind, l)}
                 </text>
               </g>
             );
@@ -724,51 +782,53 @@ export default function MetroGame({
               <>
                 <p>Choose a device, then drag it into position on the map.</p>
                 <div className="transit-choice">
-                  {([3, 4] as const).map((kind) => (
-                    <button
-                      key={kind}
-                      disabled={frozen || s.gold < TRANSIT[kind].cost}
-                      onClick={() => {
-                        setTray(null);
-                        setBuildKind(kind);
-                        setDraft({
-                          x: Math.max(
-                            40,
-                            Math.min(
-                              960,
-                              camera.view.x + camera.view.width / 2,
+                  {TRANSIT_KINDS.filter((kind) => transitUnlocked(s, kind)).map(
+                    (kind) => (
+                      <button
+                        key={kind}
+                        disabled={frozen || s.gold < TRANSIT[kind].cost}
+                        onClick={() => {
+                          setTray(null);
+                          setBuildKind(kind);
+                          setDraft({
+                            x: Math.max(
+                              40,
+                              Math.min(
+                                960,
+                                camera.view.x + camera.view.width / 2,
+                              ),
                             ),
-                          ),
-                          y: Math.max(
-                            40,
-                            Math.min(
-                              1160,
-                              camera.view.y + camera.view.height / 2,
+                            y: Math.max(
+                              40,
+                              Math.min(
+                                1160,
+                                camera.view.y + camera.view.height / 2,
+                              ),
                             ),
-                          ),
-                        });
-                      }}
-                    >
-                      <svg viewBox="-30 -30 60 60" aria-hidden="true">
-                        <DeviceGlyph kind={kind} />
-                      </svg>
-                      <span>
-                        + Place {TRANSIT[kind].name.toLowerCase()}
-                        <small>
-                          {TRANSIT[kind].ports} ports · {TRANSIT[kind].buffer}{" "}
-                          packet buffer
-                        </small>
-                      </span>
-                      <small>{TRANSIT[kind].cost} gold</small>
-                    </button>
-                  ))}
+                          });
+                        }}
+                      >
+                        <svg viewBox="-30 -30 60 60" aria-hidden="true">
+                          <DeviceGlyph kind={kind} />
+                        </svg>
+                        <span>
+                          + Place {TRANSIT[kind].name.toLowerCase()}
+                          <small>
+                            {TRANSIT[kind].ports} ports · {TRANSIT[kind].buffer}{" "}
+                            packet buffer
+                          </small>
+                        </span>
+                        <small>{TRANSIT[kind].cost} gold</small>
+                      </button>
+                    ),
+                  )}
                 </div>
               </>
             ) : (
               <>
                 <p>Choose a cable type, then drag between two nodes.</p>
                 <div className="metro-line-buttons cable-type-buttons">
-                  {CABLE_TYPES.map((type, i) => (
+                  {CABLE_TYPES.slice(0, 3).map((type, i) => (
                     <button
                       key={type.name}
                       aria-label={`Cable ${type.name}`}
@@ -805,17 +865,81 @@ export default function MetroGame({
                 </div>
               </>
             )}
+            <button
+              className="secondary"
+              onClick={() => {
+                setTray(null);
+                setGamePanel("inventory");
+              }}
+            >
+              Inventory · {s.inventory.length} items
+            </button>
           </div>
         </Dialog>
       )}
       {gamePanel && (
         <Dialog
-          title={gamePanel === "stats" ? "Your network" : "Game menu"}
+          title={
+            gamePanel === "stats"
+              ? "Your network"
+              : gamePanel === "inventory"
+                ? "Inventory"
+                : "Game menu"
+          }
           onClose={() => setGamePanel(null)}
         >
           <h2>{level?.name ?? "Endless Mode"}</h2>
-          {gamePanel === "stats" ? (
+          {gamePanel === "inventory" ? (
             <>
+              <p>
+                Equip or move items while the simulation is paused. Items are
+                purchased only at month end.
+              </p>
+              <label>
+                Target device
+                <select
+                  aria-label="Target device"
+                  value={inventoryNode}
+                  onChange={(e) => setInventoryNode(Number(e.target.value))}
+                >
+                  <option value={-1}>Choose a device</option>
+                  {s.nodes.map((n, id) =>
+                    itemSlots(n) > 0 ? (
+                      <option key={n.serial} value={id}>
+                        {nodeName(id, s.nodes)}
+                      </option>
+                    ) : null,
+                  )}
+                </select>
+              </label>
+              {inventoryNode >= 0 && s.nodes[inventoryNode] ? (
+                <ItemPanel state={s} node={inventoryNode} onUpdate={setS} />
+              ) : (
+                <p>
+                  {s.inventory.length} items in storage. Choose a device to
+                  equip them.
+                </p>
+              )}
+            </>
+          ) : gamePanel === "stats" ? (
+            <>
+              {!!terrainFor(s.levelId).length && (
+                <section className="environment-help">
+                  <h3>Environment</h3>
+                  <p>{terrainNotice(s)}</p>
+                  <p>
+                    Buildings allow endpoint connections, but cannot be crossed
+                    as shortcuts. Transit devices must stay outside. Rocky
+                    ridges block all links. Rivers require a bridge crossing (2
+                    cables per bridge) or a Wireless Bridge pair.
+                  </p>
+                  <p>
+                    Map obstacles also apply when moving connected devices.
+                    Existing links survive road works. Floods slow exposed
+                    cables, but do not destroy equipment.
+                  </p>
+                </section>
+              )}
               <section className="metro-score" aria-label="Flow statistics">
                 <div>
                   <small>PACKETS DELIVERED</small>
@@ -878,6 +1002,12 @@ export default function MetroGame({
               </button>
               <button
                 className="secondary"
+                onClick={() => setGamePanel("inventory")}
+              >
+                Inventory · {s.inventory.length} items
+              </button>
+              <button
+                className="secondary"
                 onClick={() => onMenu(best.current)}
               >
                 End session &amp; exit
@@ -916,6 +1046,21 @@ export default function MetroGame({
           </p>
           <details>
             <summary>Read the full rules</summary>
+            <p>
+              At month end you may buy one upgrade item. Equip or unequip it in
+              node details or Inventory. Bonuses are local; the same bonus at
+              both ends of a cable does not stack. Sold devices return their
+              items. Port Expansion cannot be removed while its extra ports are
+              in use.
+            </p>
+            <p>
+              Packets use destination icons, not request/response pairs. Cache
+              Servers receive physical refill packets from a reachable service,
+              then handle five matching deliveries locally. Service Gateways can
+              change their service icon in node details. Relay, Wireless Bridge,
+              Cache Server, Distribution Hub and Service Gateway unlock as you
+              advance through the campaign.
+            </p>
             <ol className="handbook">
               <li>
                 Pause to design your topology without moving packets. The
@@ -1030,6 +1175,7 @@ export default function MetroGame({
           )}
           <NodeDetails
             state={s}
+            onUpdate={setS}
             node={detailNode}
             onSelect={setDetailNode}
             onChangeCable={(id, kind) => {
@@ -1044,6 +1190,9 @@ export default function MetroGame({
               setTip("Cable removed. The full purchase price was refunded.");
             }}
           />
+          {detailNode !== null && itemSlots(s.nodes[detailNode]) > 0 && (
+            <ItemPanel state={s} node={detailNode} onUpdate={setS} />
+          )}
           <button className="primary" onClick={() => setShowNodes(false)}>
             Back to map
           </button>
@@ -1096,7 +1245,7 @@ export default function MetroGame({
                   </b>
                   <small>
                     {c.stops.map((id) => nodeName(id, s.nodes)).join(" ↔ ")} ·{" "}
-                    {c.cargo.length}/{cableCapacity(s, c.kind)} packets
+                    {c.cargo.length}/{cableCapacity(s, c.kind, c)} packets
                   </small>
                 </div>
                 <button
@@ -1130,30 +1279,36 @@ export default function MetroGame({
             Net income: <b>{s.report?.net} gold</b>
           </p>
           <p>
-            Upgrades apply to the entire network. Capacity +2 adds 4
-            gold/cable/month in maintenance; speed +15 adds about 1–2
-            gold/cable/month.
+            Balance: {s.gold} gold. Buy one optional item this month. It goes to
+            Inventory, not directly onto your network.
           </p>
-          <p>Already credited. Current balance: {s.gold} gold.</p>
+          <div className="monthly-items">
+            {monthlyItems(s).map((key) => (
+              <article key={key}>
+                <strong>{ITEMS[key].name}</strong>
+                <p>{ITEMS[key].description}</p>
+                <button
+                  aria-label={`Buy ${ITEMS[key].name}`}
+                  disabled={s.purchasedThisMonth || s.gold < ITEMS[key].cost}
+                  onClick={() => setS((v) => buyItem(v, key))}
+                >
+                  {ITEMS[key].cost} gold · Buy item
+                </button>
+              </article>
+            ))}
+          </div>
+          {!monthlyItems(s).length && <p>Upgrade items unlock in Campus.</p>}
+          {s.purchasedThisMonth && (
+            <p role="status">
+              Item added to Inventory. Equip it from a device's details or the
+              game menu.
+            </p>
+          )}
           <button
             className="primary"
             onClick={() => setS((v) => reward(v, "continue"))}
           >
             Continue to next month
-          </button>
-          <button
-            className="secondary"
-            disabled={s.gold < upgradeCost(s, "capacity")}
-            onClick={() => setS((v) => reward(v, "capacity"))}
-          >
-            +2 capacity · {upgradeCost(s, "capacity")} gold
-          </button>
-          <button
-            className="secondary"
-            disabled={s.gold < upgradeCost(s, "speed")}
-            onClick={() => setS((v) => reward(v, "speed"))}
-          >
-            Increase speed · {upgradeCost(s, "speed")} gold
           </button>
         </Dialog>
       )}

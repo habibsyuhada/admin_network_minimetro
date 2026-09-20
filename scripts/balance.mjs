@@ -16,24 +16,27 @@ const compiled = ts.transpileModule(source, {
     target: ts.ScriptTarget.ES2022,
   },
 }).outputText;
-const levelSource = fs.readFileSync(
-  new URL("../src/game/levels.ts", import.meta.url),
-  "utf8",
-);
-const levelCompiled = ts.transpileModule(levelSource, {
-  compilerOptions: {
-    module: ts.ModuleKind.ESNext,
-    target: ts.ScriptTarget.ES2022,
-  },
-}).outputText;
-const levelUrl =
-  "data:text/javascript;base64," +
-  Buffer.from(levelCompiled).toString("base64");
-const g = await import(
-  "data:text/javascript;base64," +
-    Buffer.from(
-      compiled.replaceAll('"./levels"', JSON.stringify(levelUrl)),
-    ).toString("base64")
+let linked = compiled;
+for (const name of ["levels", "items", "environment"]) {
+  const text = fs.readFileSync(
+    new URL(`../src/game/${name}.ts`, import.meta.url),
+    "utf8",
+  );
+  const js = ts.transpileModule(text, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText;
+  linked = linked.replaceAll(
+    `"./${name}"`,
+    JSON.stringify(
+      "data:text/javascript;base64," + Buffer.from(js).toString("base64"),
+    ),
+  );
+}
+export const g = await import(
+  "data:text/javascript;base64," + Buffer.from(linked).toString("base64")
 );
 export function play(seed, strategy = "adaptive", levelId) {
   let s = g.newMetro(seed, levelId),
@@ -126,16 +129,26 @@ export function play(seed, strategy = "adaptive", levelId) {
         maxWait,
       });
       if (s.month === 12) break;
-      const upgrade =
-        strategy === "cheap"
-          ? "continue"
-          : s.gold > 1400
-            ? s.month % 2
-              ? "capacity"
-              : "speed"
-            : "continue";
-      if (!act("reward", [upgrade], g.reward(s, upgrade)))
-        act("reward", ["continue"], g.reward(s, "continue"));
+      if (strategy !== "cheap" && s.gold > 1000) {
+        const target = s.nodes.findIndex(
+          (n) =>
+            g.isTransit(n.shape) &&
+            g.itemSlots(n) > (n.items?.length ?? 0) &&
+            !g.hasItem(n, "bandwidth"),
+        );
+        if (target >= 0 && g.monthlyItems(s).includes("bandwidth"))
+          act("buy", ["bandwidth"], g.buyItem(s, "bandwidth"));
+      }
+      act("reward", ["continue"], g.reward(s));
+      for (const key of [...s.inventory]) {
+        const id = s.nodes.findIndex(
+          (n) =>
+            g.itemAllowed(n, key) &&
+            g.itemSlots(n) > (n.items?.length ?? 0) &&
+            !g.hasItem(n, key),
+        );
+        if (id >= 0) act("equip", [id, key], g.installItem(s, id, key));
+      }
     }
     if (Math.round(s.time * 10) % 10 === 0) build();
     s = g.metroTick(s);

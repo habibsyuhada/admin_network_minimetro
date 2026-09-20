@@ -1200,3 +1200,76 @@ dialog summary {
   margin: 0;
   height: auto;
 }
+.item-panel article,
+.monthly-items article {
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #456858;
+  border-radius: 14px;
+  background: #19352d;
+}
+.item-panel p,
+.monthly-items p {
+  margin: 7px 0;
+}
+.item-panel small {
+  display: block;
+  margin: 7px 0;
+  color: #b4c9b9;
+}
+.item-panel button,
+.monthly-items button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #c3eca1;
+  color: #183626;
+  font-weight: 700;
+}
+.service-config {
+  padding: 12px;
+  border-radius: 14px;
+  background: #223c34;
+  margin-top: 12px;
+}
+dialog select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 8px 0 14px;
+  padding: 8px;
+  border: 1px solid #688b71;
+  border-radius: 10px;
+  background: #173329;
+  color: #e0efdb;
+  font: inherit;
+}
+.environment-badge {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #9b9460;
+  border-radius: 18px;
+  color: #eed898;
+  background: #223932e8;
+  font-size: 11px;
+}
+.environment-art text {
+  letter-spacing: 0.4px;
+}
+.environment-help {
+  padding: 12px;
+  background: #233d33;
+  border-radius: 14px;
+}
+.build-modal .secondary {
+  margin-top: 14px;
+}
+.monthly-items {
+  max-height: 45dvh;
+  overflow: auto;
+  padding: 2px;
+}

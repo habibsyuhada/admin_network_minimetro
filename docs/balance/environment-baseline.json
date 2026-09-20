@@ -1,0 +1,50 @@
+[
+  {
+    "id": "neighborhood",
+    "phase": "complete",
+    "month": 3,
+    "delivered": 66,
+    "gold": 1826,
+    "time": 180
+  },
+  {
+    "id": "campus",
+    "phase": "complete",
+    "month": 5,
+    "delivered": 161,
+    "gold": 1786,
+    "time": 300
+  },
+  {
+    "id": "harbor",
+    "phase": "over",
+    "month": 4,
+    "delivered": 86,
+    "gold": 594,
+    "time": 216.9
+  },
+  {
+    "id": "downtown",
+    "phase": "over",
+    "month": 3,
+    "delivered": 37,
+    "gold": 402,
+    "time": 138.9
+  },
+  {
+    "id": "highlands",
+    "phase": "over",
+    "month": 3,
+    "delivered": 32,
+    "gold": 607,
+    "time": 141.9
+  },
+  {
+    "id": "metropolis",
+    "phase": "over",
+    "month": 2,
+    "delivered": 16,
+    "gold": 196,
+    "time": 93.9
+  }
+]

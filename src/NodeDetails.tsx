@@ -1,5 +1,9 @@
 import {
   CLIENT_VARIANTS,
+  SERVICES,
+  configureService,
+  setPriority,
+  hasItem,
   cableChangeCost,
   cableMaintenance,
   type CableKind,
@@ -31,8 +35,10 @@ export default function NodeDetails({
   onSelect,
   onRemoveCable,
   onChangeCable,
+  onUpdate,
 }: {
   state: Metro;
+  onUpdate: (fn: (s: Metro) => Metro) => void;
   node: number | null;
   onSelect: (id: number | null) => void;
   onRemoveCable: (id: number) => void;
@@ -93,15 +99,80 @@ export default function NodeDetails({
       )}
       <p>
         {state.cables.filter((c) => c.stops.includes(node)).length}/
-        {nodePorts(kind)} ports used.
+        {nodePorts(nodes[node])} ports used.
       </p>
       {spec && (
         <p>
           {spec.name} built by you.{" "}
           {state.cables.filter((c) => c.stops.includes(node)).length}/
           {spec.ports} ports used. Maintenance {spec.maintenance} gold/month.
-          Queue capacity: {nodeBuffer(nodes[node].shape)} packets. Packets wait
-          for their next carrier here; this is a transit device.
+          Queue capacity: {nodeBuffer(nodes[node])} packets.{" "}
+          {kind === 14
+            ? "This device is a service destination."
+            : "Packets can transfer here."}
+        </p>
+      )}
+      {[12, 14].includes(kind) && (
+        <section className="service-config">
+          <label>
+            Service icon
+            <select
+              aria-label="Service icon"
+              value={nodes[node].service ?? 1}
+              onChange={(e) =>
+                onUpdate((s) =>
+                  configureService(s, node, Number(e.target.value)),
+                )
+              }
+            >
+              {SERVICES.map((k) => (
+                <option key={k} value={k}>
+                  {DEVICE_NAMES[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <svg viewBox="-30 -30 60 60" width="50" height="50">
+            <DeviceGlyph kind={nodes[node].service ?? 1} />
+          </svg>
+          {kind === 12 ? (
+            <p>
+              Cache: {nodes[node].cacheCharges ?? 0}/5 deliveries available.
+              Empty caches request a physical refill from a reachable matching
+              service every 15 seconds. Refills earn no gold. Changing service
+              empties the cache.
+            </p>
+          ) : (
+            <p>
+              This gateway receives packets for the selected icon. Existing
+              packets retain their destination when you change it.
+            </p>
+          )}
+        </section>
+      )}
+      {hasItem(nodes[node], "priority") && (
+        <label>
+          Priority service
+          <select
+            aria-label="Priority service"
+            value={nodes[node].priority ?? 1}
+            onChange={(e) =>
+              onUpdate((s) => setPriority(s, node, Number(e.target.value)))
+            }
+          >
+            {SERVICES.map((k) => (
+              <option key={k} value={k}>
+                {DEVICE_NAMES[k]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {kind === 11 && (
+        <p>
+          Connect two Wireless Bridges to create a radio link automatically.
+          Each bridge supports one radio link, up to 650 units. Radio crosses
+          rivers, but not rocky ridges.
         </p>
       )}
       <h3>Connected cables</h3>
@@ -133,13 +204,13 @@ export default function NodeDetails({
                     </b>
                     <small>To {nodeName(peer, nodes)}</small>
                     <small>
-                      {cableCapacity(state, c.kind)} packets · speed{" "}
-                      {cableSpeed(state, c.kind)} · maintenance{" "}
-                      {cableMaintenance(state, c.kind)}/month
+                      {cableCapacity(state, c.kind, c)} packets · speed{" "}
+                      {cableSpeed(state, c.kind, c)} · maintenance{" "}
+                      {cableMaintenance(state, c.kind, c)}/month
                     </small>
                   </span>
                 </div>
-                <details className="cable-type-picker">
+                <details className="cable-type-picker" hidden={c.kind === 3}>
                   <summary>Change cable type</summary>
                   <p>
                     Pay the price difference, or receive a refund for a cheaper
@@ -147,7 +218,8 @@ export default function NodeDetails({
                   </p>
                   {CABLE_TYPES.map((type, index) => {
                     const kind = index as CableKind;
-                    if (kind === c.kind) return null;
+                    if (kind === c.kind || kind === 3 || c.kind === 3)
+                      return null;
                     const cost = cableChangeCost(state, c.id, kind);
                     return (
                       <button
@@ -158,9 +230,9 @@ export default function NodeDetails({
                       >
                         <b style={{ color: type.color }}>{type.name}</b>
                         <small>
-                          {cableCapacity(state, kind)} packets · speed{" "}
-                          {cableSpeed(state, kind)} ·{" "}
-                          {cableMaintenance(state, kind)}/month
+                          {cableCapacity(state, kind, c)} packets · speed{" "}
+                          {cableSpeed(state, kind, c)} ·{" "}
+                          {cableMaintenance(state, kind, c)}/month
                         </small>
                         <small>
                           {cost > 0

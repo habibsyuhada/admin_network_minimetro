@@ -65,6 +65,15 @@ try {
       await page.clock.runFor(Math.round((action.time - now) * 1000));
       now = action.time;
     }
+    if (action.type === "buy") {
+      const names = {
+        bandwidth: "Bandwidth Module",
+        buffer: "Buffer Module",
+        transfer: "Transfer Accelerator",
+      };
+      await btn(`Buy ${names[action.args[0]]}`).click();
+      continue;
+    }
     if (action.type === "reward") {
       const report = page.getByRole("dialog", {
         name: new RegExp(`Month ${Math.round(now / 60)} complete`),
@@ -91,7 +100,11 @@ try {
       continue;
     }
     await pause();
-    if (action.type === "place") {
+    if (action.type === "equip") {
+      await page.locator(`[data-node-id="${action.args[0]}"]`).click();
+      await btn("Equip Bandwidth Module").click();
+      await btn("Back to map").click();
+    } else if (action.type === "place") {
       if (!(await btn("Show whole map").isVisible()))
         await btn("Map controls").click();
       await btn("Show whole map").click();

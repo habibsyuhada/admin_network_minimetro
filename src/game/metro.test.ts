@@ -3,7 +3,7 @@ import {
   SITES,
   changeCable,
   cableChangeCost,
-  upgradeCost,
+  buyItem,
   cableMaintenance,
   nodeService,
   moveTransit,
@@ -84,7 +84,7 @@ describe("point-to-point cable transport", () => {
   });
   it("transports traffic in both directions on the same cable", () => {
     let s = connectCable(newMetro(42), 0, 0, 1);
-    s.speedBonus = 300;
+    s.nodes[1] = { ...s.nodes[1], x: s.nodes[0].x + 40, y: s.nodes[0].y };
     s.queues[0] = [{ service: 1 }];
     s.queues[1] = [{ service: 0 }];
     s = steps(s, 28);
@@ -137,7 +137,7 @@ describe("point-to-point cable transport", () => {
     expect(connectionError(s, 0, 1, 2)).not.toBeNull();
     expect(removeCable(s, 1)).toBe(s);
   });
-  it("settles monthly gold and applies capacity/speed upgrades to cable types", () => {
+  it("settles monthly gold and purchases inventory items without global bonuses", () => {
     let s = newMetro(42);
     s.time = 44.9;
     s = metroTick(s);
@@ -146,11 +146,12 @@ describe("point-to-point cable transport", () => {
     s = metroTick(s);
     expect(s.phase).toBe("reward");
     expect(metroTick(s)).toBe(s);
-    const capacity = reward(s, "capacity");
+    const capacity = buyItem(s, "bandwidth");
     expect(capacity.gold).toBe(s.gold - 300);
-    expect(cableCapacity(capacity, 2)).toBe(10);
+    expect(cableCapacity(capacity, 2)).toBe(8);
+    expect(capacity.inventory).toEqual(["bandwidth"]);
     expect(reward(s, "continue").gold).toBe(s.gold);
-    expect(reward(s, "speed").speedBonus).toBe(15);
+    expect(buyItem(s, "transfer").inventory).toEqual(["transfer"]);
   });
   it("fails only after sustained overload and recovers when queues shrink", () => {
     let s = newMetro(42);
@@ -294,7 +295,7 @@ describe("gold economy", () => {
     const poor = { ...s, gold: 99 };
     expect(connectCable(poor, 0, 1, 2)).toBe(poor);
     const rewardState = { ...s, gold: 299, phase: "reward" as const };
-    expect(reward(rewardState, "capacity")).toBe(rewardState);
+    expect(buyItem(rewardState, "bandwidth")).toBe(rewardState);
   });
   it("deducts losses and ends a run only when settlement makes the balance negative", () => {
     const s = metroTick({
@@ -546,11 +547,11 @@ describe("cable replacement", () => {
     expect(changed.profit).toBe(0);
     expect(removeCable(changed, 1).gold).toBe(newMetro(42).gold);
   });
-  it("scales network upgrades and their maintenance without repricing accrued costs", () => {
+  it("keeps stored items inactive and preserves accrued maintenance", () => {
     const s = { ...newMetro(42), phase: "reward" as const };
-    const upgraded = reward(s, "capacity");
-    expect(upgradeCost(upgraded, "capacity")).toBe(600);
-    expect(cableMaintenance(upgraded, 0)).toBe(24);
-    expect(upgraded.month).toBe(2);
+    const upgraded = buyItem(s, "bandwidth");
+    expect(buyItem(upgraded, "bandwidth")).toBe(upgraded);
+    expect(cableMaintenance(upgraded, 0)).toBe(20);
+    expect(reward(upgraded).month).toBe(2);
   });
 });

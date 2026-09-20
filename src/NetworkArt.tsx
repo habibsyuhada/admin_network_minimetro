@@ -9,6 +9,11 @@ export const DEVICE_NAMES = [
   "WhatsApp",
   "Netflix",
   "Spotify",
+  "Cable Relay",
+  "Wireless Bridge",
+  "Cache Server",
+  "Distribution Hub",
+  "Service Gateway",
 ];
 export const DEVICE_CODES = [
   "PC",
@@ -21,6 +26,11 @@ export const DEVICE_CODES = [
   "WA",
   "NF",
   "SP",
+  "RLY",
+  "WIFI",
+  "CACHE",
+  "HUB",
+  "GW",
 ];
 export const DEVICE_COLORS = [
   "#85dfc0",
@@ -33,6 +43,11 @@ export const DEVICE_COLORS = [
   "#7cde94",
   "#f37a83",
   "#8de89a",
+  "#c3cbd0",
+  "#e2ce74",
+  "#87cbea",
+  "#cea6ff",
+  "#ffa8d0",
 ];
 export function DeviceGlyph({
   kind,
@@ -65,7 +80,34 @@ export function DeviceGlyph({
           stroke="#37534e"
         />
       )}
-      {kind === 0 ? (
+      {kind >= 10 ? (
+        <>
+          <rect x="-17" y="-15" width="34" height="30" rx="5" />
+          {kind === 10 ? (
+            <path d="M-12 0H12M-6 -5L-11 0L-6 5M6 -5L11 0L6 5" />
+          ) : kind === 11 ? (
+            <>
+              <path d="M-13 -5Q0 -18 13 -5M-8 0Q0 -8 8 0M-3 5Q0 2 3 5" />
+              <circle cy="10" r="1" />
+            </>
+          ) : kind === 12 ? (
+            <>
+              <path d="M-10 -7H10M-10 0H10M-10 7H4" />
+              <circle cx="11" cy="8" r="2" />
+            </>
+          ) : kind === 13 ? (
+            <>
+              <circle r="5" />
+              <path d="M0 -5V-12M0 5V12M-5 0H-13M5 0H13M-4 -4L-10 -10M4 4L10 10" />
+            </>
+          ) : (
+            <>
+              <circle r="10" />
+              <path d="M-10 0H10M0 -10Q-9 0 0 10Q9 0 0 -10" />
+            </>
+          )}
+        </>
+      ) : kind === 0 ? (
         <ClientGlyph variant={variant} />
       ) : kind === 3 ? (
         <>

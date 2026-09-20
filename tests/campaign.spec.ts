@@ -11,7 +11,7 @@ test("campaign map selects missions, locks progression, and fits a phone", async
   ).toBeDisabled();
   await expect(
     page.getByRole("region", { name: "Selected mission" }),
-  ).toContainText("Connected Campus");
+  ).toContainText("Campus");
   await page.getByRole("button", { name: /Level 1:/ }).click();
   expect(
     await page.evaluate(

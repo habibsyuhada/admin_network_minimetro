@@ -1,0 +1,68 @@
+[
+  {
+    "id": "neighborhood",
+    "phase": "complete",
+    "month": 3,
+    "time": 180,
+    "delivered": 66,
+    "gold": 1241,
+    "devices": 7,
+    "actions": 6,
+    "maxQueue": 8
+  },
+  {
+    "id": "campus",
+    "phase": "complete",
+    "month": 4,
+    "time": 240,
+    "delivered": 121,
+    "gold": 740,
+    "devices": 10,
+    "actions": 9,
+    "maxQueue": 10
+  },
+  {
+    "id": "harbor",
+    "phase": "complete",
+    "month": 6,
+    "time": 360,
+    "delivered": 259,
+    "gold": 847,
+    "devices": 15,
+    "actions": 14,
+    "maxQueue": 14
+  },
+  {
+    "id": "downtown",
+    "phase": "complete",
+    "month": 8,
+    "time": 480,
+    "delivered": 549,
+    "gold": 1866,
+    "devices": 20,
+    "actions": 20,
+    "maxQueue": 17
+  },
+  {
+    "id": "highlands",
+    "phase": "complete",
+    "month": 11,
+    "time": 660,
+    "delivered": 830,
+    "gold": 4009,
+    "devices": 19,
+    "actions": 19,
+    "maxQueue": 17
+  },
+  {
+    "id": "metropolis",
+    "phase": "complete",
+    "month": 12,
+    "time": 720,
+    "delivered": 1253,
+    "gold": 5229,
+    "devices": 27,
+    "actions": 26,
+    "maxQueue": 37
+  }
+]

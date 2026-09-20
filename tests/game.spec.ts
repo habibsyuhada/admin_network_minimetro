@@ -49,7 +49,7 @@ test("blocked storage does not prevent starting Flow", async ({ page }) => {
   });
   await page.goto("/");
   await expect(
-    page.getByText(/Rekor dan pengaturan belum bisa disimpan/),
+    page.getByText(/Progres, rekor, dan pengaturan belum bisa disimpan/),
   ).toBeVisible();
   await page.getByRole("button", { name: "Main NOC Flow" }).click();
   await page.getByRole("button", { name: "Ayo hubungkan" }).click();

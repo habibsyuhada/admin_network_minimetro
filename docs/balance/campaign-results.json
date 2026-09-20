@@ -1,0 +1,50 @@
+[
+  {
+    "level": "neighborhood",
+    "seed": 987,
+    "phase": "complete",
+    "month": 3,
+    "delivered": 66,
+    "gold": 1490
+  },
+  {
+    "level": "campus",
+    "seed": 123,
+    "phase": "complete",
+    "month": 5,
+    "delivered": 164,
+    "gold": 1454
+  },
+  {
+    "level": "harbor",
+    "seed": 987,
+    "phase": "complete",
+    "month": 7,
+    "delivered": 345,
+    "gold": 1443
+  },
+  {
+    "level": "downtown",
+    "seed": 2026,
+    "phase": "complete",
+    "month": 8,
+    "delivered": 566,
+    "gold": 2812
+  },
+  {
+    "level": "highlands",
+    "seed": 45678,
+    "phase": "complete",
+    "month": 10,
+    "delivered": 906,
+    "gold": 5805
+  },
+  {
+    "level": "metropolis",
+    "seed": 987,
+    "phase": "complete",
+    "month": 12,
+    "delivered": 1319,
+    "gold": 7311
+  }
+]

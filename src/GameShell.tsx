@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import {
   Settings2,
-  Play,
   Volume2,
   VolumeX,
   Download,
   BookOpen,
   Trophy,
-  ChevronRight,
-  Network,
 } from "lucide-react";
 import { CLIENT_VARIANTS } from "./game/metro";
+import CampaignMap from "./CampaignMap";
+import { LEVELS, readProgress, levelUnlocked } from "./game/levels";
 import MetroGame from "./MetroGame";
 import Dialog from "./Dialog";
 import FullscreenButton from "./FullscreenButton";
@@ -25,16 +24,19 @@ function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "{}");
     return {
+      progress: readProgress(v?.progress),
       sound: typeof v?.sound === "boolean" ? v.sound : true,
       best:
         Number.isSafeInteger(v?.best) && v.best >= 0 ? (v.best as number) : 0,
     };
   } catch {
-    return { sound: true, best: 0 };
+    return { sound: true, best: 0, progress: readProgress(null) };
   }
 }
 export default function GameShell() {
   const [flow, setFlow] = useState(false);
+  const [activeLevel, setActiveLevel] = useState<string | undefined>();
+  const [selectedLevel, setSelectedLevel] = useState(LEVELS[0].id);
   const [profile, setProfile] = useState(load);
   const [panel, setPanel] = useState<"help" | "settings" | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -81,6 +83,16 @@ export default function GameShell() {
   if (flow)
     return (
       <MetroGame
+        levelId={activeLevel}
+        onComplete={(id, stars) =>
+          setProfile((v) => ({
+            ...v,
+            progress: {
+              ...v.progress,
+              [id]: Math.max(v.progress[id] ?? 0, stars),
+            },
+          }))
+        }
         onMenu={(delivered) => {
           setProfile((v) => ({ ...v, best: Math.max(v.best, delivered) }));
           setFlow(false);
@@ -91,7 +103,11 @@ export default function GameShell() {
     <main className="game-home">
       <header className="home-toolbar">
         <span className="operator-tag">
-          <i /> OPERATOR / 01
+          <i /> OPERATOR <b>{Object.keys(profile.progress).length}/6</b>
+        </span>
+        <span className="campaign-total">
+          <Trophy size={16} />
+          {Object.values(profile.progress).reduce((a, b) => a + b, 0)} / 18 ★
         </span>
         <button
           className="icon-button"
@@ -102,133 +118,57 @@ export default function GameShell() {
         </button>
       </header>
       <section className="home-title">
-        <span className="overline">NETWORK OPERATIONS CLUB</span>
-        <h1>
-          NOC
-          <span>
-            FLOW<span className="title-dot">.</span>
-          </span>
-        </h1>
-        <p>Jaringan di tanganmu.</p>
+        <div>
+          <span className="overline">BANGUN. HUBUNGKAN. TUMBUH.</span>
+          <h1 aria-label="NOC FLOW.">
+            NOC{" "}
+            <span>
+              FLOW<span className="title-dot">.</span>
+            </span>
+          </h1>
+        </div>
+        <span className="season-badge">
+          EKSPEDISI
+          <br />
+          <b>01</b>
+        </span>
       </section>
-      <div className="home-network" aria-hidden="true">
-        <svg viewBox="0 0 360 280">
-          <defs>
-            <pattern
-              id="home-grid"
-              width="20"
-              height="20"
-              patternUnits="userSpaceOnUse"
-            >
-              <circle cx="1" cy="1" r=".8" fill="#28423f" />
-            </pattern>
-            <radialGradient id="home-glow">
-              <stop stopColor="#4cc9a4" stopOpacity=".17" />
-              <stop offset="1" stopColor="#4cc9a4" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <rect width="360" height="280" fill="url(#home-grid)" />
-          <ellipse cx="180" cy="130" rx="165" ry="125" fill="url(#home-glow)" />
-          <g className="home-cables">
-            <path d="M65 75H135L180 120V150" stroke="#79e2bc" />
-            <path d="M295 85H240L180 145" stroke="#eeab68" />
-            <path d="M85 224H140L180 184V150" stroke="#9eabfa" />
-            <path d="M285 223H230L180 173V150" stroke="#79e2bc" />
-          </g>
-          <g className="home-cable-pulses">
-            <path d="M65 75H135L180 120V150" />
-            <path d="M285 223H230L180 173V150" />
-          </g>
-          <g transform="translate(65 75)">
-            <DeviceGlyph kind={0} />
-            <text className="art-label" y="42">
-              CLIENT / 01
-            </text>
-          </g>
-          <g transform="translate(295 85)">
-            <DeviceGlyph kind={2} />
-            <text className="art-label" y="42">
-              FACEBOOK
-            </text>
-          </g>
-          <g transform="translate(85 224)">
-            <DeviceGlyph kind={0} />
-            <text className="art-label" y="39">
-              CLIENT / 02
-            </text>
-          </g>
-          <g transform="translate(285 223)">
-            <DeviceGlyph kind={1} />
-            <text className="art-label" y="39">
-              YOUTUBE
-            </text>
-          </g>
-          <g transform="translate(180 146)">
-            <circle
-              r="49"
-              fill="#112e28"
-              stroke="#3e6e5e"
-              strokeDasharray="3 6"
-            />
-            <rect
-              x="-33"
-              y="-30"
-              width="66"
-              height="54"
-              rx="12"
-              fill="#213d34"
-              stroke="#83e6b9"
-            />
-            <path d="M-20 -10H20M-20 5H20" stroke="#83e6b9" strokeWidth="3" />
-            <g fill="#83e6b9">
-              <circle cx="-18" cy="15" r="2" />
-              <circle cx="-10" cy="15" r="2" />
-              <circle cx="-2" cy="15" r="2" />
-            </g>
-            <text className="art-label" y="-58">
-              CORE ROUTER
-            </text>
-          </g>
-        </svg>
-        <div className="network-caption">
-          <span className="live-led" /> KONEKSI KECIL. TANTANGAN BESAR.
+      <CampaignMap
+        selected={selectedLevel}
+        onSelect={setSelectedLevel}
+        progress={profile.progress}
+        onPlay={(id) => {
+          if (!levelUnlocked(id, profile.progress)) return;
+          unlockAudio();
+          playCue("tap");
+          setActiveLevel(id);
+          setFlow(true);
+        }}
+      />
+      <button
+        className="endless-play"
+        aria-label="Main NOC Flow"
+        onClick={() => {
+          unlockAudio();
+          playCue("tap");
+          setActiveLevel(undefined);
+          setFlow(true);
+        }}
+      >
+        <span>∞</span>
+        <div>
+          <b>MODE BEBAS</b>
+          <small>
+            Tanpa target · rekor {profile.best.toLocaleString("id-ID")} paket
+          </small>
         </div>
-      </div>
-      <section className="home-play">
-        <div className="district-select">
-          <span className="district-icon">
-            <Network size={22} />
-          </span>
-          <div>
-            <small>DISTRIK 01</small>
-            <strong>Local Area Network</strong>
-          </div>
-          <span className="endless-tag">ENDLESS</span>
-        </div>
-        <button
-          className="play-button"
-          aria-label="Main NOC Flow"
-          onClick={() => {
-            unlockAudio();
-            playCue("tap");
-            setFlow(true);
-          }}
-        >
-          <Play size={22} fill="currentColor" />
-          <span>MULAI BERMAIN</span>
-          <ChevronRight size={21} />
-        </button>
-        <div className="home-record">
-          <Trophy size={15} />
-          <span>REKOR PAKET</span>
-          <strong>{profile.best.toLocaleString("id-ID")}</strong>
-        </div>
-      </section>
+        <span>›</span>
+      </button>
       <nav className="home-bottom-bar" aria-label="Menu game">
         <button onClick={() => setPanel("help")}>
           <BookOpen size={18} /> Panduan
         </button>
-        <span>NOC FLOW / 02</span>
+        <span>PETA MISI</span>
         <button
           aria-label={profile.sound ? "Matikan suara" : "Aktifkan suara"}
           onClick={() => {
@@ -243,7 +183,7 @@ export default function GameShell() {
       </nav>
       {saveFailed && (
         <p className="notice" role="status">
-          Rekor dan pengaturan belum bisa disimpan di perangkat ini.
+          Progres, rekor, dan pengaturan belum bisa disimpan di perangkat ini.
         </p>
       )}
       {updateReady && (
@@ -253,6 +193,12 @@ export default function GameShell() {
       )}
       {panel === "help" && (
         <Dialog title="Panduan operator" onClose={() => setPanel(null)}>
+          <p>
+            Selesaikan target bulan dan paket untuk membuka map berikutnya.
+            Bintang tambahan: kirim 25% lebih banyak paket dan sisakan minimal
+            50% modal awal. Progres misi tersimpan di perangkat; sesi yang
+            sedang berjalan belum tersimpan.
+          </p>
           <p>
             Hubungkan perangkat dengan kabel berwarna. Antar paket ke perangkat
             berdasarkan ikon layanan. Paket YouTube dapat diterima node YouTube

@@ -1,8 +1,13 @@
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
 import { play } from "./balance.mjs";
-const run = play(987, "adaptive");
-if (run.phase !== "reward" || run.month !== 12)
+const campaign = process.argv[2] === "neighborhood";
+const run = play(987, "adaptive", campaign ? "neighborhood" : undefined);
+if (
+  campaign
+    ? run.phase !== "complete"
+    : run.phase !== "reward" || run.month !== 12
+)
   throw Error("Replay must reach month 12");
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -11,7 +16,12 @@ await page.clock.install({ time: new Date(987) });
 await page.goto("http://127.0.0.1:5173/");
 await page.clock.pauseAt(new Date(100000));
 await page.clock.setFixedTime(new Date(987));
-await page.getByRole("button", { name: "Main NOC Flow" }).click();
+await page
+  .getByRole("button", {
+    name: campaign ? "Main level 1" : "Main NOC Flow",
+    exact: true,
+  })
+  .click();
 await page.getByRole("button", { name: "Ayo hubungkan" }).click();
 let now = 0,
   paused = false;
@@ -128,22 +138,28 @@ try {
       throw Error(await page.getByRole("alert").innerText());
   }
   await resume();
-  await page.clock.runFor(Math.round((720 - now) * 1000));
-  const end = page.getByRole("dialog", { name: "Bulan 12 selesai" });
+  await page.clock.runFor(Math.round((run.time - now) * 1000));
+  const end = page.getByRole("dialog", {
+    name: campaign ? "Misi selesai!" : "Bulan 12 selesai",
+  });
   await end.waitFor();
-  reports.push({ time: 720, summary: await end.innerText() });
+  reports.push({ time: run.time, summary: await end.innerText() });
   const delivered = Number(await page.getByTestId("delivered").innerText());
   const gold = await page.getByTestId("gold").innerText();
   await page.screenshot({
-    path: "docs/balance/season-month-12.png",
+    path: campaign
+      ? "docs/balance/campaign-win.png"
+      : "docs/balance/season-month-12.png",
     fullPage: true,
   });
   fs.writeFileSync(
-    "docs/balance/browser.json",
+    campaign
+      ? "docs/balance/campaign-browser.json"
+      : "docs/balance/browser.json",
     JSON.stringify(
       {
         seed: 987,
-        months: 12,
+        months: run.month,
         delivered,
         gold,
         reports,
@@ -153,9 +169,16 @@ try {
       2,
     ),
   );
+  if (campaign) {
+    await btn("Kembali ke peta misi").click();
+    await page.reload();
+    await page.getByRole("button", { name: /Level 2:/ }).click();
+    if (!(await btn("Main level 2").isEnabled()))
+      throw Error("Win did not persist or unlock map 2");
+  }
   console.log(
     JSON.stringify({
-      months: 12,
+      months: run.month,
       delivered,
       gold,
       expectedDelivered: run.delivered,

@@ -1,3 +1,4 @@
+import { getLevel } from "./levels";
 export type Shape = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type Site = {
   x: number;
@@ -116,7 +117,8 @@ export type Cable = {
   cargo: Packet[];
 };
 export type Metro = {
-  version: 8;
+  version: 9;
+  levelId?: string;
   nodes: Site[];
   spawned: number;
   gold: number;
@@ -133,22 +135,24 @@ export type Metro = {
   capacityBonus: number;
   speedBonus: number;
   month: number;
-  phase: "running" | "reward" | "over";
+  phase: "running" | "reward" | "over" | "complete";
 };
 export const cableCapacity = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].capacity + s.capacityBonus;
 export const cableSpeed = (s: Metro, kind: CableKind) =>
   CABLE_TYPES[kind].speed + s.speedBonus;
-export function newMetro(seed = Date.now() >>> 0): Metro {
+export function newMetro(seed = Date.now() >>> 0, levelId?: string): Metro {
+  const level = getLevel(levelId);
   return {
-    version: 8,
-    nodes: SITES.slice(0, 3).map((n, i) => ({
+    version: 9,
+    ...(level ? { levelId: level.id } : {}),
+    nodes: (level?.start ?? SITES.slice(0, 3)).map((n, i) => ({
       ...n,
       serial: i + 1,
-      ...(n.shape === 0 ? { clientVariant: 0 } : {}),
+      ...(n.shape === 0 ? { clientVariant: n.clientVariant ?? 0 } : {}),
     })),
     spawned: 3,
-    gold: 1600,
+    gold: level?.gold ?? 1600,
     profit: 0,
     maintenanceUnits: 0,
     report: null,
@@ -347,34 +351,44 @@ export function metroTick(state: Metro): Metro {
     overload: [...state.overload],
     cables: state.cables.map((c) => ({ ...c, cargo: [...c.cargo] })),
   };
+  const level = getLevel(s.levelId);
+  const spawnEvery = level?.spawnEvery ?? 45;
+  const maxNodes = level?.maxNodes ?? MAX_ENDPOINTS;
   const random = () => {
     s.seed = (Math.imul(s.seed, 1664525) + 1013904223) >>> 0;
     return s.seed / 4294967296;
   };
   if (
-    Math.floor(s.time / 45) > Math.floor(state.time / 45) &&
-    s.spawned < MAX_ENDPOINTS
+    Math.floor(s.time / spawnEvery) > Math.floor(state.time / spawnEvery) &&
+    s.spawned < maxNodes
   ) {
     const pcWave = random() < 0.5;
     const roll = random();
     const count = pcWave ? (roll < 0.6 ? 1 : roll < 0.9 ? 2 : 3) : 1;
     const waveStart = s.nodes.length;
     let anchor: Site | undefined;
-    for (let i = 0; i < count && s.spawned < MAX_ENDPOINTS; i++) {
+    for (let i = 0; i < count && s.spawned < maxNodes; i++) {
       const shape: Shape = pcWave
         ? 0
         : SERVICES[Math.floor(random() * SERVICES.length)];
       for (let attempt = 0; attempt < 80; attempt++) {
         const angle = random() * Math.PI * 2;
         const distance = 85 + random() * 45;
+        const zone = level
+          ? level.zones[
+              level.zones.length === 1
+                ? 0
+                : Math.floor(random() * level.zones.length)
+            ]
+          : undefined;
         const candidate = {
           shape,
           x: anchor
             ? anchor.x + Math.cos(angle) * distance
-            : 80 + random() * 840,
+            : (zone?.x ?? 80) + random() * (zone?.width ?? 840),
           y: anchor
             ? anchor.y + Math.sin(angle) * distance
-            : 80 + random() * 1040,
+            : (zone?.y ?? 80) + random() * (zone?.height ?? 1040),
         };
         if (
           candidate.x < 40 ||
@@ -412,7 +426,14 @@ export function metroTick(state: Metro): Metro {
   if (Math.floor(s.time / 3) > Math.floor(state.time / 3))
     for (let id = 0; id < s.nodes.length; id++) {
       const shape = s.nodes[id].shape;
-      if (isTransit(shape) || random() > Math.min(0.65, 0.32 + s.time / 2400))
+      if (
+        isTransit(shape) ||
+        random() >
+          Math.min(
+            0.85,
+            Math.min(0.65, 0.32 + s.time / 2400) * (level?.traffic ?? 1),
+          )
+      )
         continue;
       const targets: number[] =
         shape === 0
@@ -474,6 +495,13 @@ export function metroTick(state: Metro): Metro {
     s.phase = s.gold < 0 ? "over" : "reward";
   }
   if (s.overload.some((t) => t >= OVERLOAD_SECONDS)) s.phase = "over";
+  if (
+    s.phase === "reward" &&
+    level &&
+    s.month >= level.months &&
+    s.delivered >= level.packets
+  )
+    s.phase = "complete";
   return s;
 }
 

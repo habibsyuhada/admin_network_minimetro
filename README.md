@@ -2,6 +2,10 @@
 
 Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangkat dan mempunyai satu pengangkut yang bolak-balik khusus pada kabel itu. Pemain membangun jaringan bercabang, sementara paket memilih rute otomatis ke node mana pun dengan ikon layanan yang cocok. Node berikon sama boleh muncul berkali-kali.
 
+## Campaign dan tampilan mobile
+
+Menu utama berupa peta kepulauan dengan enam misi, kunci progres, dan bintang pencapaian. Pilih pulau untuk melihat target dan modal. Mode Bebas tetap tersedia. Lihat [skema level/map](MAP_SCHEMA.md) untuk target dan konfigurasi tiap wilayah.
+
 ## Bermain
 
 - Pilih jenis kabel, lalu tarik dari perangkat A ke B. Kabel hanya dibuat lewat drag. Tap, klik, Enter, dan Spasi pada node membuka detail, tidak membuat kabel.
@@ -16,7 +20,7 @@ Game strategi jaringan mobile/PWA. Setiap kabel menghubungkan tepat dua perangka
 | Fiber | Oranye | 3 paket | Cepat | 200 |
 | Backbone | Ungu | 8 paket | Lambat | 250 |
 
-Modal awal 1.600 gold. Profit 18 gold per paket yang sampai ke tujuan akhir, dibayarkan setiap menit setelah dikurangi maintenance. Maintenance per bulan: Ethernet 20, Fiber 35, Backbone 40, router 30 dan switch 15 gold; dihitung per tick sesuai lama aktif, lalu dibulatkan ke atas satu gold saat settlement. Saldo negatif saat settlement mengakhiri sesi. Satu bulan berlangsung 60 detik simulasi. Upgrade bulanan opsional: +2 kapasitas mulai 300 gold (naik 300 setiap pembelian kapasitas) atau +15 kecepatan mulai 250 gold (naik 225 setiap pembelian kecepatan). Maintenance setiap kabel bertambah ceil(2 x bonus kapasitas + bonus kecepatan / 10) gold/bulan; biaya yang sudah berjalan tidak dihitung ulang. Gelombang perangkat muncul setiap 45 detik, maksimal 36 node otomatis. Ambang antrean PC/layanan 10, switch 16, router 24 paket; penuh selama 25 detik mengakhiri permainan.
+Dalam Mode Bebas, modal awal 1.600 gold. Profit 18 gold per paket yang sampai ke tujuan akhir, dibayarkan setiap menit setelah dikurangi maintenance. Maintenance per bulan: Ethernet 20, Fiber 35, Backbone 40, router 30 dan switch 15 gold; dihitung per tick sesuai lama aktif, lalu dibulatkan ke atas satu gold saat settlement. Saldo negatif saat settlement mengakhiri sesi. Satu bulan berlangsung 60 detik simulasi. Upgrade bulanan opsional: +2 kapasitas mulai 300 gold (naik 300 setiap pembelian kapasitas) atau +15 kecepatan mulai 250 gold (naik 225 setiap pembelian kecepatan). Maintenance setiap kabel bertambah ceil(2 x bonus kapasitas + bonus kecepatan / 10) gold/bulan; biaya yang sudah berjalan tidak dihitung ulang. Gelombang perangkat muncul setiap 45 detik, maksimal 36 node otomatis. Ambang antrean PC/layanan 10, switch 16, router 24 paket; penuh selama 25 detik mengakhiri permainan.
 
 **Kelola kabel** menghapus satu sambungan tanpa mengubah sambungan lainnya. Sebanyak 100% harga beli dikembalikan; maintenance yang sudah berjalan tetap ditagih; muatan yang sedang bergerak dikembalikan ke perangkat keberangkatannya.
 
@@ -24,9 +28,9 @@ Modal awal 1.600 gold. Profit 18 gold per paket yang sampai ke tujuan akhir, dib
 
 ## Peta dan penyimpanan
 
-Panel kontrol diringkas agar peta mendapat lebih banyak ruang pada HP; layar lebar memakai panel kontrol di samping. Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 40–300%. Persentase zoom kembali ke area awal, tombol Peta menampilkan seluruh area. Node baru tersebar ke wilayah lebih jauh tanpa mengecilkan kamera otomatis. Detail node menyediakan tombol Lihat node di peta. Kamera dibatasi area 1.000 × 1.200 (luas 5x peta awal); peta tetap di tengah jika lebih kecil daripada viewport. Sentuhan kedua membatalkan pembuatan kabel dan memulai pinch. Kabel paralel memiliki lajur terpisah dan paket mengikuti lajurnya.
+Panel kontrol diringkas agar peta mendapat lebih banyak ruang pada HP; layar lebar memakai panel kontrol ringkas di bawah. Geser area kosong untuk memindahkan peta. Pinch dua jari, roda mouse, atau tombol − / + mengatur zoom 40–300%. Persentase zoom kembali ke area awal, tombol Peta menampilkan seluruh area. Node baru tersebar ke wilayah lebih jauh tanpa mengecilkan kamera otomatis. Detail node menyediakan tombol Lihat node di peta. Kamera dibatasi area 1.000 × 1.200 (luas 5x peta awal); peta tetap di tengah jika lebih kecil daripada viewport. Sentuhan kedua membatalkan pembuatan kabel dan memulai pinch. Kabel paralel memiliki lajur terpisah dan paket mengikuti lajurnya.
 
-Game dijeda saat masuk latar belakang. Sesi aktif belum disimpan setelah reload; rekor paket dan suara tersimpan saat kembali ke menu. Mode shift lama telah dihapus; data browser lamanya tidak diubah.
+Game dijeda saat masuk latar belakang. Sesi aktif belum disimpan setelah reload; progres misi, rekor paket, dan suara tersimpan di perangkat. Mode shift lama telah dihapus; data browser lamanya tidak diubah.
 
 ## Menjalankan dan menguji
 

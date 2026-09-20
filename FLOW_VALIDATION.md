@@ -65,3 +65,11 @@ Browser validation: 51 scenarios passed across the full run and focused reruns; 
 Node cable cards now show peer icons and allow type replacement at the price difference. IDs, endpoints and carrier position are retained; excess cargo returns to the departure queue if capacity shrinks. Transit node sale refunds 50% of node cost plus 100% of attached cable costs. All player-facing cycles are months, 60 simulation seconds each.
 
 Balance changes and multi-seed findings are documented in BALANCE_REPORT.md. 39 unit tests pass, including replacement conservation, affordability and escalating network upgrade maintenance. Twelve targeted browser cases pass across Chromium desktop/mobile and WebKit (the WebKit monthly ledger was rerun at 2x after timing out under load). A real browser interaction replay completed month 12 with 1,322 delivered packets and 7,365 gold, without state injection. Forty final simulated sessions cover 20 seeds and two strategies; 13/20 adaptive sessions completed month 12.
+
+## Mobile expedition UI and campaign maps
+
+The home screen is now an island mission board with six levels, locked progression, stars, a mission card and a separate endless mode. Gameplay uses a full-height map and compact bottom controls, with a compact side layout only for short landscape screens. Dynamic viewport bounds keep controls inside narrow mobile browsers.
+
+Campaign definitions live in `src/game/levels.ts`; see `MAP_SCHEMA.md`. Completion requires both minimum months and delivered packets, checked after monthly maintenance and loss conditions. Best stars persist in the existing profile key and unlock the next level. Active sessions are not persisted.
+
+Validation: 42 unit tests passed. Campaign/menu and existing cable flows were checked on desktop Chromium, Android emulation and WebKit/iPhone emulation. TypeScript, formatting and production build passed. A real UI replay completed level 1 with 66 packets and 1,490 gold in month 3, then verified level 2 unlocked after reload. Six adaptive simulations completed their maps in months 3, 5, 7, 8, 10 and 12. See `docs/balance/campaign-results.json` and `docs/balance/campaign-browser.json`.

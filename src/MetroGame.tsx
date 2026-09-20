@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play, Settings2, Network } from "lucide-react";
+import { getLevel, missionStars } from "./game/levels";
 import Dialog from "./Dialog";
 import NodeDetails, { nodeName, nodeCode } from "./NodeDetails";
 import {
@@ -37,10 +38,22 @@ import { laneSegment, linePath, MAP_BOUNDS } from "./game/mapView";
 
 export default function MetroGame({
   onMenu,
+  levelId,
+  onComplete,
 }: {
   onMenu: (delivered: number) => void;
+  levelId?: string;
+  onComplete?: (id: string, stars: number) => void;
 }) {
-  const [s, setS] = useState(newMetro);
+  const level = getLevel(levelId);
+  const [s, setS] = useState(() => newMetro(level?.seed, level?.id));
+  const awarded = useRef(false);
+  useEffect(() => {
+    if (s.phase === "complete" && level && !awarded.current) {
+      awarded.current = true;
+      onComplete?.(level.id, missionStars(level, s.delivered, s.gold));
+    }
+  }, [s.phase, s.delivered, s.gold, level, onComplete]);
   const best = useRef(0);
   best.current = Math.max(best.current, s.delivered);
   const [buildKind, setBuildKind] = useState<TransitKind>(3);
@@ -159,7 +172,8 @@ export default function MetroGame({
   );
   const restart = () => {
     camera.reset();
-    setS(newMetro());
+    setS(newMetro(level?.seed, level?.id));
+    awarded.current = false;
     setDraft(null);
     setSelected(0);
     setPaused(false);
@@ -169,10 +183,15 @@ export default function MetroGame({
     setTip("Tarik kabel antar perangkat. Ketuk node untuk detail.");
   };
   return (
-    <main className="metro-game">
+    <main
+      className="metro-game"
+      style={
+        { "--map-accent": level?.color ?? "#9fe8ba" } as React.CSSProperties
+      }
+    >
       <header className="metro-header">
         <span className="metro-wordmark">
-          <Network size={20} /> NOC / FLOW
+          <Network size={20} /> <span>{level ? level.name : "NOC / FLOW"}</span>
         </span>
         <div className="simulation-controls" aria-label="Waktu simulasi">
           <button
@@ -230,7 +249,11 @@ export default function MetroGame({
         )}
 
         <div className="metro-map-title">
-          <span>01 — LOCAL AREA NETWORK</span>
+          <span>
+            {level
+              ? `${level.subtitle} · ${Math.min(s.month, level.months)}/${level.months} bulan · ${s.delivered}/${level.packets} paket`
+              : "MODE BEBAS / LOCAL AREA NETWORK"}
+          </span>
           <span>{s.queues.length} perangkat</span>
         </div>
         <svg
@@ -322,7 +345,29 @@ export default function MetroGame({
             height={MAP_BOUNDS.height}
             fill="url(#network-grid)"
           />
-          <g className="network-zones" aria-hidden="true">
+          {level && (
+            <g className="level-terrain" aria-hidden="true">
+              {level.zones.map((z, i) => (
+                <g key={i}>
+                  <rect
+                    x={z.x - 20}
+                    y={z.y - 20}
+                    width={z.width + 40}
+                    height={z.height + 40}
+                    rx="58"
+                  />
+                  <text x={z.x + 12} y={z.y + 25}>
+                    DISTRIK {i + 1}
+                  </text>
+                </g>
+              ))}
+            </g>
+          )}
+          <g
+            className="network-zones"
+            aria-hidden="true"
+            opacity={level ? 0.25 : 1}
+          >
             <rect x="30" y="36" width="135" height="170" rx="16" />
             <rect x="195" y="150" width="170" height="290" rx="16" />
             <rect x="35" y="345" width="140" height="210" rx="16" />
@@ -621,7 +666,10 @@ export default function MetroGame({
                   });
                 }}
               >
-                + Pasang {TRANSIT[kind].name.toLowerCase()}
+                <svg viewBox="-30 -30 60 60" aria-hidden="true">
+                  <DeviceGlyph kind={kind} />
+                </svg>
+                <span>+ Pasang {TRANSIT[kind].name.toLowerCase()}</span>
                 <small>{TRANSIT[kind].cost} gold</small>
               </button>
             ))}
@@ -679,6 +727,16 @@ export default function MetroGame({
           title="Jaringan kecil, terus tumbuh"
           onClose={() => setHelp(false)}
         >
+          {level && (
+            <p className="mission-brief">
+              <b>{level.name}</b>
+              <br />
+              {level.description}
+              <br />
+              Target: bertahan {level.months} bulan dan kirim {level.packets}{" "}
+              paket. Modal: {level.gold} gold.
+            </p>
+          )}
           <p>
             Setiap kabel menghubungkan dua perangkat dan memiliki satu
             pengangkut sendiri. Setiap paket menuju jenis layanan, misalnya
@@ -918,6 +976,30 @@ export default function MetroGame({
             onClick={() => setS((v) => reward(v, "speed"))}
           >
             Tingkatkan kecepatan · {upgradeCost(s, "speed")} gold
+          </button>
+        </Dialog>
+      )}
+      {s.phase === "complete" && level && (
+        <Dialog title="Misi selesai!">
+          <div
+            className="victory-emblem"
+            aria-label={`${missionStars(level, s.delivered, s.gold)} bintang`}
+          >
+            {"★".repeat(missionStars(level, s.delivered, s.gold))}
+            {"☆".repeat(3 - missionStars(level, s.delivered, s.gold))}
+          </div>
+          <h2 className="victory-title">{level.name}</h2>
+          <p>
+            {s.month} bulan terjaga. {s.delivered} paket sampai tujuan.
+          </p>
+          <p>
+            Saldo akhir <b>{s.gold} gold</b>. Progres level sudah dicatat.
+          </p>
+          <button className="primary" onClick={() => onMenu(best.current)}>
+            Kembali ke peta misi
+          </button>
+          <button className="secondary" onClick={restart}>
+            Ulangi untuk bintang lebih tinggi
           </button>
         </Dialog>
       )}

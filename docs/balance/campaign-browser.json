@@ -1,0 +1,21 @@
+{
+  "seed": 987,
+  "months": 3,
+  "delivered": 66,
+  "gold": "1490 gold",
+  "reports": [
+    {
+      "time": 60,
+      "summary": "Bulan 1 selesai\n\nProfit: 234 gold\nMaintenance: 90 gold\nHasil bersih: 144 gold\n\nUpgrade berlaku untuk seluruh jaringan. Kapasitas +2 menambah maintenance 4 gold/kabel/bulan; kecepatan +15 menambah sekitar 1–2 gold/kabel/bulan.\n\nSudah masuk saldo. Saldo sekarang: 1494 gold.\n\nLanjut bulan berikutnya\n+2 kapasitas · 300 gold\nTingkatkan kecepatan · 250 gold"
+    },
+    {
+      "time": 120,
+      "summary": "Bulan 2 selesai\n\nProfit: 396 gold\nMaintenance: 138 gold\nHasil bersih: 258 gold\n\nUpgrade berlaku untuk seluruh jaringan. Kapasitas +2 menambah maintenance 4 gold/kabel/bulan; kecepatan +15 menambah sekitar 1–2 gold/kabel/bulan.\n\nSudah masuk saldo. Saldo sekarang: 1202 gold.\n\nLanjut bulan berikutnya\n+2 kapasitas · 600 gold\nTingkatkan kecepatan · 250 gold"
+    },
+    {
+      "time": 180,
+      "summary": "Misi selesai!\n★★☆\nKampung Digital\n\n3 bulan terjaga. 66 paket sampai tujuan.\n\nSaldo akhir 1490 gold. Progres level sudah dicatat.\n\nKembali ke peta misi\nUlangi untuk bintang lebih tinggi"
+    }
+  ],
+  "actions": 9
+}

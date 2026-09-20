@@ -16,11 +16,27 @@ const compiled = ts.transpileModule(source, {
     target: ts.ScriptTarget.ES2022,
   },
 }).outputText;
-const g = await import(
-  "data:text/javascript;base64," + Buffer.from(compiled).toString("base64")
+const levelSource = fs.readFileSync(
+  new URL("../src/game/levels.ts", import.meta.url),
+  "utf8",
 );
-export function play(seed, strategy = "adaptive") {
-  let s = g.newMetro(seed),
+const levelCompiled = ts.transpileModule(levelSource, {
+  compilerOptions: {
+    module: ts.ModuleKind.ESNext,
+    target: ts.ScriptTarget.ES2022,
+  },
+}).outputText;
+const levelUrl =
+  "data:text/javascript;base64," +
+  Buffer.from(levelCompiled).toString("base64");
+const g = await import(
+  "data:text/javascript;base64," +
+    Buffer.from(
+      compiled.replaceAll('"./levels"', JSON.stringify(levelUrl)),
+    ).toString("base64")
+);
+export function play(seed, strategy = "adaptive", levelId) {
+  let s = g.newMetro(seed, levelId),
     actions = [],
     reports = [],
     peak = 0,
@@ -97,7 +113,7 @@ export function play(seed, strategy = "adaptive") {
       }
     }
   };
-  while (s.time < 720 && s.phase !== "over") {
+  while (s.time < 720 && s.phase !== "over" && s.phase !== "complete") {
     if (s.phase === "reward") {
       reports.push({
         month: s.month,
@@ -126,7 +142,10 @@ export function play(seed, strategy = "adaptive") {
     peak = Math.max(peak, ...s.queues.map((q) => q.length));
     maxWait = Math.max(maxWait, ...s.overload);
   }
-  if (s.phase === "reward" && !reports.some((r) => r.month === s.month))
+  if (
+    (s.phase === "reward" || s.phase === "complete") &&
+    !reports.some((r) => r.month === s.month)
+  )
     reports.push({
       month: s.month,
       gold: s.gold,

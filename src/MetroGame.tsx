@@ -408,7 +408,7 @@ export default function MetroGame({
             fill="url(#network-grid)"
           />
           <EnvironmentArt state={s} />
-          {level && (
+          {level && level.id !== "campus" && (
             <g className="level-terrain" aria-hidden="true">
               {level.zones.map((z, i) => (
                 <g key={i}>
@@ -1329,6 +1329,21 @@ export default function MetroGame({
             Final balance <b>{s.gold} gold</b>. Your level progress has been
             saved.
           </p>
+          <details className="star-breakdown">
+            <summary>Star requirements</summary>
+            <ul>
+              <li>★ Complete the mission</li>
+              <li>
+                {s.delivered >= Math.ceil(level.packets * 1.25) ? "★" : "☆"}{" "}
+                Deliver {Math.ceil(level.packets * 1.25)} packets ·{" "}
+                {s.delivered}/{Math.ceil(level.packets * 1.25)}
+              </li>
+              <li>
+                {s.gold >= level.gold / 2 ? "★" : "☆"} Keep{" "}
+                {Math.ceil(level.gold / 2)} gold · {s.gold} gold
+              </li>
+            </ul>
+          </details>
           <button className="primary" onClick={() => onMenu(best.current)}>
             Back to mission map
           </button>

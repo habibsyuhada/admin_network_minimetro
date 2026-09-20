@@ -1427,3 +1427,20 @@ dialog select {
     grid-row: 3;
   }
 }
+
+.star-breakdown {
+  margin: 12px 0 18px;
+  color: #bdd2c4;
+  font-size: 13px;
+}
+.star-breakdown summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.star-breakdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1.8;
+}

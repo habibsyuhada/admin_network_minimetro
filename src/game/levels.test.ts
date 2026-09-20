@@ -58,6 +58,7 @@ describe("campaign maps", () => {
     expect(levelUnlocked("harbor", p)).toBe(false);
     expect(levelUnlocked("bad", p)).toBe(false);
     expect(missionStars(LEVELS[0], 75, 900)).toBe(3);
+    expect(missionStars(LEVELS[0], 65, 2001)).toBe(2);
     expect(missionStars(LEVELS[0], 60, 0)).toBe(1);
   });
 });

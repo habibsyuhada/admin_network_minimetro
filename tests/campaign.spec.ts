@@ -78,4 +78,6 @@ test("saved mission progress unlocks the next map after reload", async ({
   await page.getByRole("button", { name: "Play level 2", exact: true }).click();
   await page.getByRole("button", { name: "Start connecting" }).click();
   await expect(page.getByTestId("gold")).toHaveText("1700 gold");
+  await expect(page.locator(".level-terrain")).toHaveCount(0);
+  await expect(page.locator('[data-terrain="building"]')).toHaveCount(3);
 });

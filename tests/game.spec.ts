@@ -29,10 +29,10 @@ test("mobile game menu opens only Flow and keeps sound preferences", async ({
     page.getByRole("button", { name: "Client 1", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Server 2", exact: true }),
+    page.getByRole("button", { name: "YouTube 2", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Database 3", exact: true }),
+    page.getByRole("button", { name: "Facebook 3", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Jeda mode Flow" }).click();
   await page.getByRole("button", { name: "Akhiri sesi & ke menu" }).click();

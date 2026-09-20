@@ -147,7 +147,7 @@ export default function GameShell() {
           <g transform="translate(295 85)">
             <DeviceGlyph kind={2} />
             <text className="art-label" y="42">
-              DATABASE
+              FACEBOOK
             </text>
           </g>
           <g transform="translate(85 224)">
@@ -159,7 +159,7 @@ export default function GameShell() {
           <g transform="translate(285 223)">
             <DeviceGlyph kind={1} />
             <text className="art-label" y="39">
-              APP SERVER
+              YOUTUBE
             </text>
           </g>
           <g transform="translate(180 146)">
@@ -254,8 +254,8 @@ export default function GameShell() {
         <Dialog title="Panduan operator" onClose={() => setPanel(null)}>
           <p>
             Hubungkan perangkat dengan kabel berwarna. Antar paket ke perangkat
-            tertentu, misalnya Server 2. Ikon menunjukkan jenisnya; buka Detail
-            node untuk melihat nama tujuan dan jumlah paket.
+            berdasarkan ikon layanan. Paket YouTube dapat diterima node YouTube
+            mana pun. Buka Detail node untuk melihat antrean per ikon.
           </p>
           <div className="device-legend">
             {DEVICE_NAMES.map((name, i) => (
@@ -286,8 +286,8 @@ export default function GameShell() {
               mengembalikan 50% harganya.
             </li>
             <li>
-              Antrean 8 paket memicu peringatan. Kurangi dalam 20 detik sebelum
-              jaringan kewalahan.
+              Antrean penuh memicu peringatan: PC/layanan 8, switch 10, router
+              16 paket. Kurangi dalam 20 detik sebelum jaringan kewalahan.
             </li>
           </ol>
           <button className="primary" onClick={() => setPanel(null)}>

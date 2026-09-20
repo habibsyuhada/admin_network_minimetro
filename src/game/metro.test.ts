@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   SITES,
+  SERVICES,
+  MAX_ENDPOINTS,
+  TRANSIT,
+  nodeBuffer,
   maintenanceDue,
   maintenanceRate,
   placeRouter,
@@ -38,7 +42,7 @@ describe("point-to-point cable transport", () => {
   it("waits for a carrier and respects each cable's capacity", () => {
     for (const kind of [0, 1, 2] as const) {
       let s = connectCable(newMetro(42), kind, 0, 1);
-      s.queues[0] = Array.from({ length: 12 }, () => ({ destination: 1 }));
+      s.queues[0] = Array.from({ length: 12 }, () => ({ service: 1 }));
       s = metroTick(s);
       expect(s.cables[0].cargo).toHaveLength(0);
       expect(s.delivered).toBe(0);
@@ -50,14 +54,14 @@ describe("point-to-point cable transport", () => {
   });
   it("unloads at a transfer node and waits for the next cable's carrier", () => {
     let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2);
-    s.cables[0].cargo = [{ destination: 2 }];
+    s.cables[0].cargo = [{ service: 2 }];
     s.cables[0].progress = 0.99;
     s.cables[0].wait = 0;
     s.cables[1].at = 1;
     s.cables[1].progress = 0.3;
     s.cables[1].wait = 0;
     s = metroTick(s);
-    expect(s.queues[1]).toEqual([{ destination: 2 }]);
+    expect(s.queues[1]).toEqual([{ service: 2 }]);
     expect(s.cables[1].cargo).toEqual([]);
     expect(s.delivered).toBe(0);
     s = steps(s, 120);
@@ -66,8 +70,8 @@ describe("point-to-point cable transport", () => {
   it("transports traffic in both directions on the same cable", () => {
     let s = connectCable(newMetro(42), 0, 0, 1);
     s.speedBonus = 300;
-    s.queues[0] = [{ destination: 1 }];
-    s.queues[1] = [{ destination: 0 }];
+    s.queues[0] = [{ service: 1 }];
+    s.queues[1] = [{ service: 0 }];
     s = steps(s, 28);
     expect(s.delivered).toBe(2);
     expect(count(s)).toBe(2);
@@ -75,13 +79,13 @@ describe("point-to-point cable transport", () => {
   });
   it("routes automatically by time and changes preference under queue pressure", () => {
     let s = connectCable(connectCable(newMetro(42), 1, 0, 1), 2, 0, 1);
-    s.queues[0] = [{ destination: 1 }];
+    s.queues[0] = [{ service: 1 }];
     expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
-    s.queues[0] = Array.from({ length: 50 }, () => ({ destination: 1 }));
+    s.queues[0] = Array.from({ length: 50 }, () => ({ service: 1 }));
     expect(routeCable(s, 0, 1)).toBe(s.cables[1].id);
     expect(routeCable(s, 0, 2)).toBeNull();
   });
-  it("finds multihop destinations and reroutes after a cable is removed", () => {
+  it("finds multihop services and reroutes after a cable is removed", () => {
     let s = connectCable(
       connectCable(connectCable(newMetro(42), 0, 0, 1), 0, 1, 2),
       1,
@@ -94,13 +98,13 @@ describe("point-to-point cable transport", () => {
   });
   it("removing an in-flight cable refunds half the price and returns all cargo to its departure node", () => {
     let s = connectCable(connectCable(newMetro(42), 0, 0, 1), 1, 1, 2);
-    s.queues[0] = [{ destination: 1 }, { destination: 1 }];
+    s.queues[0] = [{ service: 1 }, { service: 1 }];
     s = steps(s, 12);
     const original = s;
     expect(s.cables[0].cargo.length).toBe(2);
     s = removeCable(s, s.cables[0].id);
     expect(count(s)).toBe(count(original));
-    expect(s.queues[0]).toEqual([{ destination: 1 }, { destination: 1 }]);
+    expect(s.queues[0]).toEqual([{ service: 1 }, { service: 1 }]);
     expect(s.gold).toBe(original.gold + 50);
     expect(s.cables).toHaveLength(1);
     expect(s.cables[0]).toBe(original.cables[1]);
@@ -120,7 +124,7 @@ describe("point-to-point cable transport", () => {
     let s = newMetro(42);
     s.time = 34.9;
     s = metroTick(s);
-    expect(s.queues).toHaveLength(4);
+    expect(s.queues.length).toBeGreaterThanOrEqual(4);
     s.time = 59.9;
     s = metroTick(s);
     expect(s.phase).toBe("reward");
@@ -133,7 +137,7 @@ describe("point-to-point cable transport", () => {
   });
   it("fails only after sustained overload and recovers when queues shrink", () => {
     let s = newMetro(42);
-    s.queues[0] = Array.from({ length: 8 }, () => ({ destination: 1 }));
+    s.queues[0] = Array.from({ length: 8 }, () => ({ service: 1 }));
     s.overload[0] = 19.8;
     s = metroTick(s);
     expect(s.phase).toBe("running");
@@ -146,72 +150,44 @@ describe("point-to-point cable transport", () => {
   });
 });
 
-describe("specific node destinations", () => {
-  it("passes through an identical icon without delivering to the wrong node", () => {
+describe("service icon routing", () => {
+  it("delivers to any reachable node with the same service icon", () => {
     let s = newMetro(42);
-    s.queues.push([], [], []);
-    s.nodes.push(...SITES.slice(3, 6));
-    s.spawned = 6;
-    s.overload.push(0, 0, 0);
-    s = connectCable(connectCable(s, 0, 0, 1), 0, 1, 5);
-    s.cables[0].cargo = [{ destination: 5 }];
-    s.cables[0].progress = 0.99;
+    s.nodes.push({ x: 200, y: 250, shape: 1 });
+    s.queues.push([]);
+    s.overload.push(0);
+    s = connectCable(s, 0, 0, 3);
+    expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
+    s.cables[0].cargo = [{ service: 1 }];
+    s.cables[0].progress = 0.999;
     s.cables[0].wait = 0;
     s = metroTick(s);
-    expect(s.delivered).toBe(0);
-    expect(s.queues[1]).toEqual([{ destination: 5 }]);
-    expect(routeCable(s, 1, 5)).toBe(s.cables[1].id);
-    s.cables[1].cargo = s.queues[1];
-    s.queues[1] = [];
-    s.cables[1].progress = 0.99;
-    s.cables[1].wait = 0;
-    s = metroTick(s);
     expect(s.delivered).toBe(1);
-    expect(count(s)).toBe(1);
+    expect(s.queues[3]).toEqual([]);
   });
-  it("does not substitute a reachable node with the same icon", () => {
+  it("reroutes to another matching service when one connection is removed", () => {
     let s = newMetro(42);
-    s.queues.push([], [], []);
-    s.nodes.push(...SITES.slice(3, 6));
-    s.spawned = 6;
-    s.overload.push(0, 0, 0);
-    s = connectCable(s, 0, 0, 1);
+    s.nodes.push({ x: 200, y: 250, shape: 1 });
+    s.queues.push([]);
+    s.overload.push(0);
+    s = connectCable(connectCable(s, 0, 0, 1), 0, 0, 3);
+    const path = routeCable(s, 0, 1)!;
+    s = removeCable(s, path);
+    expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
     expect(routeCable(s, 0, 5)).toBeNull();
-    s.queues[0] = [{ destination: 5 }];
-    s = steps(s, 4);
-    expect(s.queues[0]).toHaveLength(1);
-    expect(s.cables[0].cargo).toHaveLength(0);
   });
-  it("generates only active, distinct destinations including matching device types", () => {
+  it("generates requests only for active service types and PC-icon replies", () => {
     let s = newMetro(42);
-    s.queues.push([], [], []);
-    s.nodes.push(...SITES.slice(3, 6));
-    s.spawned = 6;
-    s.overload.push(0, 0, 0);
-    let sameType = false;
+    s = placeRouter(s, 200, 300, 4);
     for (let i = 0; i < 40; i++) {
       s.time = 2.9;
       s.queues = s.queues.map(() => []);
       s = metroTick(s);
-      s.queues.forEach((queue, source) =>
-        queue.forEach((packet) => {
-          expect(packet.destination).not.toBe(source);
-          expect(
-            !(
-              SITES[source].shape === 0 && SITES[packet.destination].shape === 0
-            ),
-          ).toBe(true);
-          expect(packet.destination).toBeGreaterThanOrEqual(0);
-          expect(packet.destination).toBeLessThan(s.queues.length);
-          if (
-            (source === 1 && packet.destination === 5) ||
-            (source === 5 && packet.destination === 1)
-          )
-            sameType = true;
-        }),
-      );
+      expect(s.queues[0].every((p) => [1, 2].includes(p.service))).toBe(true);
+      expect(s.queues[1].every((p) => p.service === 0)).toBe(true);
+      expect(s.queues[2].every((p) => p.service === 0)).toBe(true);
+      expect(s.queues[3]).toEqual([]);
     }
-    expect(sameType).toBe(true);
   });
 });
 
@@ -228,15 +204,15 @@ describe("player-built routers", () => {
     expect(s.queues[3]).toEqual([]);
     expect(routerError({ ...s, gold: 0 }, 500, 500)).not.toBeNull();
   });
-  it("transfers through a router while keeping the exact destination", () => {
+  it("transfers through a router while keeping the exact service", () => {
     let s = placeRouter(newMetro(42), 200, 300);
     s = connectCable(connectCable(s, 0, 0, 3), 0, 3, 1);
     expect(routeCable(s, 0, 1)).toBe(s.cables[0].id);
-    s.cables[0].cargo = [{ destination: 1 }];
+    s.cables[0].cargo = [{ service: 1 }];
     s.cables[0].progress = 0.99;
     s.cables[0].wait = 0;
     s = metroTick(s);
-    expect(s.queues[3]).toEqual([{ destination: 1 }]);
+    expect(s.queues[3]).toEqual([{ service: 1 }]);
     expect(s.delivered).toBe(0);
     expect(routeCable(s, 3, 1)).toBe(s.cables[1].id);
   });
@@ -247,14 +223,14 @@ describe("player-built routers", () => {
       s.queues = s.queues.map(() => []);
       s = metroTick(s);
       expect(s.queues[3]).toEqual([]);
-      expect(s.queues.flat().some((p) => p.destination === 3)).toBe(false);
+      expect(s.queues.flat().some((p) => p.service === 3)).toBe(false);
     }
     s.time = 34.9;
     s = metroTick(s);
-    expect(s.nodes).toHaveLength(5);
+    expect(s.nodes.length).toBeGreaterThanOrEqual(5);
     expect(s.nodes[3].shape).toBe(3);
-    expect(s.nodes[4].shape).toBe(0);
-    expect(s.spawned).toBe(4);
+    expect([0, ...SERVICES]).toContain(s.nodes[4].shape);
+    expect(s.spawned).toBe(s.nodes.length - 1);
     expect(s.queues).toHaveLength(s.nodes.length);
     expect(s.overload).toHaveLength(s.nodes.length);
     expect(reward({ ...s, phase: "reward" }, "continue").gold).toBe(s.gold);
@@ -292,7 +268,7 @@ describe("gold economy", () => {
   });
   it("earns on final delivery only and blocks spending beyond the balance", () => {
     let s = connectCable(newMetro(42), 0, 0, 1);
-    s.cables[0].cargo = [{ destination: 1 }];
+    s.cables[0].cargo = [{ service: 1 }];
     s.cables[0].progress = 0.999;
     s.cables[0].wait = 0;
     s = metroTick(s);
@@ -320,5 +296,82 @@ describe("gold economy", () => {
     });
     expect(zero.gold).toBe(0);
     expect(zero.phase).toBe("reward");
+  });
+});
+
+describe("switch specifications and random growth", () => {
+  it("charges switch price and maintenance and enforces physical port limits", () => {
+    let s = placeRouter({ ...newMetro(42), gold: 5000 }, 200, 300, 4);
+    expect(s.gold).toBe(4920);
+    expect(maintenanceRate(s)).toBe(15);
+    expect(nodeBuffer(4)).toBe(10);
+    expect(nodeBuffer(3)).toBe(16);
+    s = connectCable(
+      connectCable(connectCable(connectCable(s, 0, 3, 0), 0, 3, 1), 0, 3, 2),
+      1,
+      3,
+      0,
+    );
+    expect(s.cables).toHaveLength(4);
+    expect(connectionError(s, 1, 3, 1)).toContain("4 port");
+    expect(connectCable(s, 1, 3, 1)).toBe(s);
+    expect(TRANSIT[3].ports).toBe(8);
+  });
+  it("switch transit waits less while delivery still requires the service icon", () => {
+    let s = connectCable(placeRouter(newMetro(42), 200, 300, 4), 0, 0, 3);
+    s.cables[0].cargo = [{ service: 1 }];
+    s.cables[0].progress = 0.999;
+    s.cables[0].wait = 0;
+    s = metroTick(s);
+    expect(s.delivered).toBe(0);
+    expect(s.queues[3]).toEqual([{ service: 1 }]);
+    expect(s.cables[0].wait).toBe(0.2);
+  });
+  it("samples every service, duplicate icons, and bursts of 1-3 PCs deterministically", () => {
+    const services = new Set<number>();
+    const pcSizes = new Set<number>();
+    let duplicate = false;
+    for (let seed = 0; seed < 1000; seed++) {
+      const original = {
+        ...newMetro(Math.imul(seed, 2654435761) >>> 0),
+        time: 34.9,
+      };
+      const s = metroTick(original);
+      const added = s.nodes.slice(3);
+      expect(metroTick(original)).toEqual(s);
+      expect(s.nodes.length).toBeLessThanOrEqual(6);
+      if (added[0]?.shape === 0) {
+        expect(added.every((n) => n.shape === 0)).toBe(true);
+        pcSizes.add(added.length);
+      } else if (added[0]) {
+        services.add(added[0].shape);
+        if ([1, 2].includes(added[0].shape)) duplicate = true;
+      }
+      s.nodes.forEach((n, i) =>
+        s.nodes
+          .slice(0, i)
+          .forEach((other) =>
+            expect(
+              Math.hypot(n.x - other.x, n.y - other.y),
+            ).toBeGreaterThanOrEqual(130),
+          ),
+      );
+    }
+    expect([...services].sort()).toEqual([...SERVICES].sort());
+    expect([...pcSizes].sort()).toEqual([1, 2, 3]);
+    expect(duplicate).toBe(true);
+  });
+  it("caps automatic population independently of player nodes", () => {
+    let s = placeRouter(
+      { ...newMetro(42), spawned: MAX_ENDPOINTS - 1, time: 34.9 },
+      200,
+      300,
+      4,
+    );
+    s = metroTick(s);
+    expect(s.spawned).toBe(MAX_ENDPOINTS);
+    expect(s.nodes).toHaveLength(5);
+    const next = metroTick({ ...s, time: 69.9, week: 2 });
+    expect(next.nodes).toHaveLength(5);
   });
 });

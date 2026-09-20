@@ -4,6 +4,9 @@ import {
   SITES,
   routeCable,
   CABLE_TYPES,
+  isTransit,
+  TRANSIT,
+  nodeBuffer,
 } from "./game/metro";
 import { DeviceGlyph, DEVICE_NAMES, DEVICE_CODES } from "./NetworkArt";
 
@@ -45,15 +48,17 @@ export default function NodeDetails({
         </div>
       </>
     );
+  const kind = nodes[node].shape;
+  const spec = isTransit(kind) ? TRANSIT[kind] : null;
   const destinations = new Map<number, number>();
   for (const packet of state.queues[node])
     destinations.set(
-      packet.destination,
-      (destinations.get(packet.destination) ?? 0) + 1,
+      packet.service,
+      (destinations.get(packet.service) ?? 0) + 1,
     );
   const incoming = state.cables
     .flatMap((c) => c.cargo)
-    .filter((p) => p.destination === node).length;
+    .filter((p) => p.service === nodes[node].shape).length;
   return (
     <>
       <button className="secondary" onClick={() => onSelect(null)}>
@@ -61,18 +66,21 @@ export default function NodeDetails({
       </button>
       <p>
         <b>{nodeCode(node, nodes)}</b> · {state.queues[node].length} paket
-        menunggu · {incoming} paket menuju ke sini dalam pengangkut.
+        menunggu · {incoming} paket berikon sama dalam pengangkut jaringan.
       </p>
-      {nodes[node].shape === 3 && (
+      {spec && (
         <p>
-          Router buatanmu. Paket transit menunggu pengangkut kabel berikutnya;
-          router tidak menghasilkan atau menerima paket sebagai tujuan akhir.
+          {spec.name} buatanmu.{" "}
+          {state.cables.filter((c) => c.stops.includes(node)).length}/
+          {spec.ports} port terpakai. Maintenance {spec.maintenance}{" "}
+          gold/minggu. Kapasitas antrean {nodeBuffer(nodes[node].shape)} paket.
+          Paket menunggu pengangkut berikutnya; bukan tujuan akhir.
         </p>
       )}
       <h3>Tujuan paket dari node ini</h3>
       <p className="muted">
-        Ikon menunjukkan jenis perangkat. Nama dan nomor menentukan tujuan
-        tepatnya.
+        Paket diterima oleh node mana pun dengan ikon yang sama. Rute otomatis
+        memilih koneksi yang tersedia.
       </p>
       <div className="node-destinations">
         {[...destinations]
@@ -84,11 +92,14 @@ export default function NodeDetails({
             return (
               <div key={destination} data-destination={destination}>
                 <svg viewBox="-30 -30 60 60">
-                  <DeviceGlyph kind={nodes[destination].shape} />
+                  <DeviceGlyph kind={destination} />
                 </svg>
                 <div>
-                  <b>Ke {nodeName(destination, nodes)}</b>
-                  <small>{nodeCode(destination, nodes)}</small>
+                  <b>Ke {DEVICE_NAMES[destination]}</b>
+                  <small>
+                    {nodes.filter((n) => n.shape === destination).length} node
+                    tersedia
+                  </small>
                   <small className={!cable ? "missing-route" : ""}>
                     {cable && next !== undefined
                       ? `Via ${nodeName(next, nodes)} · ${CABLE_TYPES[cable.kind].name} #${cable.id}`

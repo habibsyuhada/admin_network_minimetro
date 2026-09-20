@@ -15,10 +15,10 @@ test("point-to-point cables have separate carriers and can be removed individual
   await dragCable(page, 0, 1);
   await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
   // Tapping inspects a node and never extends or creates a cable.
-  await tap("Database 3");
+  await tap("Facebook 3");
   await expect(page.getByTestId("cable-count")).toHaveText("1 kabel aktif");
   await expect(
-    page.getByRole("dialog", { name: "Detail Database 3" }),
+    page.getByRole("dialog", { name: "Detail Facebook 3" }),
   ).toBeVisible();
   await tap("Kembali ke peta");
   await dragCable(page, 2, 1);
@@ -69,7 +69,7 @@ test("drag makes one cable and mobile layouts remain usable", async ({
     .getByRole("button", { name: "Client 1", exact: true })
     .boundingBox())!;
   const b = (await page
-    .getByRole("button", { name: "Server 2", exact: true })
+    .getByRole("button", { name: "YouTube 2", exact: true })
     .boundingBox())!;
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
   await page.mouse.down();
@@ -108,7 +108,7 @@ test("drag makes one cable and mobile layouts remain usable", async ({
         small.getByRole("button", { name: "Kabel Ethernet", exact: true }),
       ).toBeInViewport();
       await expect(
-        small.getByRole("button", { name: "Database 3", exact: true }),
+        small.getByRole("button", { name: "Facebook 3", exact: true }),
       ).toBeInViewport();
       await small.screenshot({
         path: `test-results/cable-layout-${test.info().project.name}-${viewport.width}.png`,

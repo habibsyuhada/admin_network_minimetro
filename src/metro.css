@@ -801,3 +801,27 @@
 .router-draft:focus-visible circle {
   stroke-width: 4px;
 }
+
+.transit-choice {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.transit-choice button {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #355348;
+  background: #1a3029;
+  color: #c5dece;
+  border-radius: 9px;
+  font-size: 11px;
+}
+.transit-choice button[aria-pressed="true"] {
+  border-color: #e0c675;
+  background: #313727;
+}
+.transit-choice small {
+  display: block;
+  font-size: 8px;
+  margin-top: 3px;
+}

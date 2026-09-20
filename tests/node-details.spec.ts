@@ -1,7 +1,7 @@
 import { dragCable } from "./helpers";
 import { test, expect } from "@playwright/test";
 
-test("node details show exact packet destinations and pause the simulation", async ({
+test("node details show service icon destinations and pause the simulation", async ({
   page,
 }) => {
   await page.clock.install({ time: new Date(42) });
@@ -18,7 +18,7 @@ test("node details show exact packet destinations and pause the simulation", asy
   });
   await expect(detail).toBeVisible();
   const destination = detail.locator('[data-destination="1"]');
-  await expect(destination).toContainText("Ke Server 2");
+  await expect(destination).toContainText("Ke YouTube");
   await expect(destination).toContainText("1 paket");
   await expect(destination).toContainText("Belum ada jalur ke tujuan");
   const clock = await page.getByTestId("flow-clock").textContent();
@@ -28,11 +28,11 @@ test("node details show exact packet destinations and pause the simulation", asy
   await dragCable(page, 0, 1);
   await page.getByRole("button", { name: "Detail node", exact: true }).click();
   await page.getByRole("button", { name: /Client 1.*paket/ }).click();
-  await expect(destination).toContainText("Via Server 2");
+  await expect(destination).toContainText("Via YouTube 2");
   await detail.getByRole("button", { name: "Semua node" }).click();
-  await page.getByRole("button", { name: /Database 3.*paket/ }).click();
+  await page.getByRole("button", { name: /Facebook 3.*paket/ }).click();
   await expect(
-    page.getByRole("dialog", { name: "Detail Database 3" }),
+    page.getByRole("dialog", { name: "Detail Facebook 3" }),
   ).toBeVisible();
   await page.screenshot({
     path: `test-results/node-details-${test.info().project.name}.png`,

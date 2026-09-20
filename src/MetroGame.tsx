@@ -4,7 +4,9 @@ import Dialog from "./Dialog";
 import NodeDetails, { nodeName } from "./NodeDetails";
 import {
   CABLE_TYPES,
-  ROUTER_COST,
+  TRANSIT,
+  type TransitKind,
+  nodeBuffer,
   maintenanceDue,
   maintenanceRate,
   cableCapacity,
@@ -37,6 +39,8 @@ export default function MetroGame({
   const [s, setS] = useState(newMetro);
   const best = useRef(0);
   best.current = Math.max(best.current, s.delivered);
+  const [buildKind, setBuildKind] = useState<TransitKind>(3);
+  const spec = TRANSIT[buildKind];
   const [draft, setDraft] = useState<{ x: number; y: number } | null>(null);
   const placing = draft !== null;
   const placement = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -362,16 +366,11 @@ export default function MetroGame({
                         height="13"
                         rx="3"
                         fill="#142c29"
-                        stroke={
-                          DEVICE_COLORS[s.nodes[packet.destination].shape]
-                        }
+                        stroke={DEVICE_COLORS[packet.service]}
                         strokeWidth=".6"
                       />
                       <g transform="scale(.29)">
-                        <DeviceGlyph
-                          kind={s.nodes[packet.destination].shape}
-                          compact
-                        />
+                        <DeviceGlyph kind={packet.service} compact />
                       </g>
                     </g>
                   ))}
@@ -388,7 +387,7 @@ export default function MetroGame({
             <g
               data-router-draft="true"
               role="button"
-              aria-label="Geser pratinjau router"
+              aria-label={`Geser pratinjau ${spec.name.toLowerCase()}`}
               tabIndex={0}
               transform={`translate(${draft.x},${draft.y})`}
               className="router-draft"
@@ -423,13 +422,15 @@ export default function MetroGame({
                 r="37"
                 fill="#25362bcc"
                 stroke={
-                  routerError(s, draft.x, draft.y) ? "#f48b73" : "#f2d779"
+                  routerError(s, draft.x, draft.y, buildKind)
+                    ? "#f48b73"
+                    : "#f2d779"
                 }
                 strokeDasharray="5 4"
               />
-              <DeviceGlyph kind={3} />
+              <DeviceGlyph kind={buildKind} />
               <text y="-45" className="metro-node-id">
-                GESER ROUTER
+                GESER {spec.name.toUpperCase()}
               </text>
             </g>
           )}
@@ -503,7 +504,7 @@ export default function MetroGame({
         >
           {s.overload[danger] > 0
             ? `Perangkat ${danger + 1} penuh · ${Math.max(0, Math.ceil(20 - s.overload[danger]))} detik untuk mengurangi antrean`
-            : "Paket punya tujuan spesifik. Buka Detail node"}
+            : "Antar paket ke node dengan ikon layanan yang sama"}
         </div>
       </div>
       <section className="metro-controls" aria-label="Kontrol jalur">
@@ -516,15 +517,17 @@ export default function MetroGame({
         {draft ? (
           <div className="router-confirm">
             <p role="status">
-              {routerError(s, draft.x, draft.y) ??
-                `Geser router ke posisi pilihanmu. Harga ${ROUTER_COST} gold. Simulasi dijeda.`}
+              {routerError(s, draft.x, draft.y, buildKind) ??
+                `Geser ${spec.name} ke posisi pilihanmu. Harga ${spec.cost} gold. Simulasi dijeda.`}
             </p>
             <button
-              disabled={frozen || !!routerError(s, draft.x, draft.y)}
+              disabled={frozen || !!routerError(s, draft.x, draft.y, buildKind)}
               onClick={() => {
-                setS((v) => placeRouter(v, draft.x, draft.y));
+                setS((v) => placeRouter(v, draft.x, draft.y, buildKind));
                 setDraft(null);
-                setTip("Router terpasang. Tarik kabel untuk menghubungkannya.");
+                setTip(
+                  `${spec.name} terpasang. Tarik kabel untuk menghubungkannya.`,
+                );
               }}
             >
               OK
@@ -532,24 +535,30 @@ export default function MetroGame({
             <button onClick={() => setDraft(null)}>Cancel</button>
           </div>
         ) : (
-          <button
-            className="router-build"
-            disabled={frozen || s.gold < ROUTER_COST}
-            onClick={() =>
-              setDraft({
-                x: Math.max(
-                  40,
-                  Math.min(960, camera.view.x + camera.view.width / 2),
-                ),
-                y: Math.max(
-                  40,
-                  Math.min(1160, camera.view.y + camera.view.height / 2),
-                ),
-              })
-            }
-          >
-            + Pasang router · {ROUTER_COST} gold
-          </button>
+          <div className="transit-choice">
+            {([3, 4] as const).map((kind) => (
+              <button
+                key={kind}
+                disabled={frozen || s.gold < TRANSIT[kind].cost}
+                onClick={() => {
+                  setBuildKind(kind);
+                  setDraft({
+                    x: Math.max(
+                      40,
+                      Math.min(960, camera.view.x + camera.view.width / 2),
+                    ),
+                    y: Math.max(
+                      40,
+                      Math.min(1160, camera.view.y + camera.view.height / 2),
+                    ),
+                  });
+                }}
+              >
+                + Pasang {TRANSIT[kind].name.toLowerCase()}
+                <small>{TRANSIT[kind].cost} gold</small>
+              </button>
+            ))}
+          </div>
         )}
         <div className="metro-line-buttons cable-type-buttons">
           {CABLE_TYPES.map((type, i) => (
@@ -605,9 +614,9 @@ export default function MetroGame({
         >
           <p>
             Setiap kabel menghubungkan dua perangkat dan memiliki satu
-            pengangkut sendiri. Setiap paket menuju satu perangkat tertentu,
-            misalnya Server 2. PC mengirim ke Server atau Database, bukan PC
-            lain. Ikon tetap menunjukkan jenis perangkatnya.
+            pengangkut sendiri. Setiap paket menuju jenis layanan, misalnya
+            YouTube. Semua node berikon YouTube bisa menerima paketnya. PC
+            meminta layanan; layanan mengirim balasan berikon PC.
           </p>
           <ol className="handbook">
             <li>
@@ -641,8 +650,19 @@ export default function MetroGame({
               sesuai lama aktif. Node yang muncul otomatis gratis.
             </li>
             <li>
-              Antrean 8 paket memulai hitung mundur. Kurangi antrean sebelum 20
-              detik habis!
+              Router: 150 gold, 8 port, buffer 16, maintenance 30/minggu.
+              Switch: 80 gold, 4 port, buffer 10, maintenance 15/minggu;
+              bongkar-muat lebih cepat (0,2 detik). Setiap kabel memakai satu
+              port.
+            </li>
+            <li>
+              Tiap 35 detik muncul gelombang PC atau layanan (masing-masing
+              50%). Gelombang PC: 1 PC 60%, 2 PC 30%, 3 PC 10%. Layanan dipilih
+              merata dari 7 jenis dan boleh berulang. Maksimal 36 node otomatis.
+            </li>
+            <li>
+              Antrean penuh memulai hitung mundur: PC/layanan 8, switch 10,
+              router 16 paket. Kurangi antrean sebelum 20 detik habis!
             </li>
           </ol>
           <p className="muted">

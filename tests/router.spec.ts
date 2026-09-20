@@ -111,3 +111,28 @@ test("weekly report credits only profit minus maintenance and never pays twice",
     `${700 + profit - maintenance} gold`,
   );
 });
+
+test("switch preview has its own price, icon and transit specification", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Main NOC Flow" }).click();
+  await page.getByRole("button", { name: "Ayo hubungkan" }).click();
+  await page.getByRole("button", { name: /Pasang switch/ }).click();
+  await expect(
+    page.getByRole("button", { name: "Geser pratinjau switch" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("gold")).toHaveText("1000 gold");
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await expect(page.getByTestId("gold")).toHaveText("920 gold");
+  await dragCable(page, 0, 3);
+  await dragCable(page, 3, 1);
+  await page.getByRole("button", { name: "Switch 4", exact: true }).click();
+  const detail = page.getByRole("dialog", { name: "Detail Switch 4" });
+  await expect(detail).toContainText("2/4 port");
+  await expect(detail).toContainText("10 paket");
+  await expect(detail).toContainText("15 gold/minggu");
+  await page.screenshot({
+    path: `test-results/switch-${test.info().project.name}.png`,
+  });
+});

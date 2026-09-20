@@ -1329,21 +1329,42 @@ export default function MetroGame({
             Final balance <b>{s.gold} gold</b>. Your level progress has been
             saved.
           </p>
-          <details className="star-breakdown">
-            <summary>Star requirements</summary>
+          <section className="star-breakdown" aria-label="Star requirements">
+            <h3>Your stars</h3>
             <ul>
-              <li>★ Complete the mission</li>
               <li>
-                {s.delivered >= Math.ceil(level.packets * 1.25) ? "★" : "☆"}{" "}
-                Deliver {Math.ceil(level.packets * 1.25)} packets ·{" "}
-                {s.delivered}/{Math.ceil(level.packets * 1.25)}
+                <b>★ Mission complete</b>
+                <span>
+                  {level.months} months and {level.packets} packets required ·
+                  Earned
+                </span>
               </li>
               <li>
-                {s.gold >= level.gold / 2 ? "★" : "☆"} Keep{" "}
-                {Math.ceil(level.gold / 2)} gold · {s.gold} gold
+                <b>
+                  {s.delivered >= Math.ceil(level.packets * 1.25) ? "★" : "☆"}{" "}
+                  Deliver {Math.ceil(level.packets * 1.25)} packets
+                </b>
+                <span>
+                  {s.delivered} delivered ·{" "}
+                  {s.delivered >= Math.ceil(level.packets * 1.25)
+                    ? "Earned"
+                    : `${Math.ceil(level.packets * 1.25) - s.delivered} more needed`}
+                </span>
+              </li>
+              <li>
+                <b>
+                  {s.gold >= level.gold / 2 ? "★" : "☆"} Finish with{" "}
+                  {Math.ceil(level.gold / 2)} gold
+                </b>
+                <span>
+                  {s.gold} gold remaining ·{" "}
+                  {s.gold >= level.gold / 2
+                    ? "Earned"
+                    : `${Math.ceil(level.gold / 2) - s.gold} more needed`}
+                </span>
               </li>
             </ul>
-          </details>
+          </section>
           <button className="primary" onClick={() => onMenu(best.current)}>
             Back to mission map
           </button>

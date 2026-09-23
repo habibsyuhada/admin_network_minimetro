@@ -1,3 +1,4 @@
+import GameSettings, { type GameSettingsProps } from "./GameSettings";
 import VisualGuide from "./VisualGuide";
 import { ItemIcon, Gold } from "./GameIcons";
 import OffscreenNodes from "./OffscreenNodes";
@@ -66,7 +67,12 @@ export default function MetroGame({
   onToggleMusic,
   sound = true,
   onToggleSound,
+  displaySettings,
 }: {
+  displaySettings: Pick<
+    GameSettingsProps,
+    "orientation" | "orientationNote" | "onOrientation"
+  >;
   music?: boolean;
   onToggleMusic?: () => void;
   sound?: boolean;
@@ -1049,20 +1055,13 @@ export default function MetroGame({
               >
                 Inventory · {s.inventory.length} items
               </button>
-              <button
-                className="secondary"
-                onClick={onToggleMusic}
-                aria-label={music ? "Mute music" : "Enable music"}
-              >
-                Music: {music ? "On" : "Off"}
-              </button>
-              <button
-                className="secondary"
-                onClick={onToggleSound}
-                aria-label={sound ? "Mute sound" : "Enable sound"}
-              >
-                Sound: {sound ? "On" : "Off"}
-              </button>
+              <GameSettings
+                {...displaySettings}
+                music={music}
+                sound={sound}
+                onToggleMusic={onToggleMusic}
+                onToggleSound={onToggleSound}
+              />
               <button
                 className="secondary"
                 onClick={() => onMenu(best.current)}

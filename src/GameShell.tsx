@@ -1,3 +1,5 @@
+import GameSettings from "./GameSettings";
+import useGameOrientation from "./useGameOrientation";
 import VisualGuide from "./VisualGuide";
 import { setMusicEnabled, unlockMusic } from "./game/music";
 import { useEffect, useState } from "react";
@@ -14,7 +16,6 @@ import CampaignMap from "./CampaignMap";
 import { LEVELS, readProgress, levelUnlocked } from "./game/levels";
 import MetroGame from "./MetroGame";
 import Dialog from "./Dialog";
-import FullscreenButton from "./FullscreenButton";
 import { DeviceGlyph, DEVICE_NAMES } from "./NetworkArt";
 import { setAudioEnabled, unlockAudio, playCue } from "./game/audio";
 type InstallPrompt = Event & {
@@ -37,6 +38,7 @@ function load() {
   }
 }
 export default function GameShell() {
+  const displaySettings = useGameOrientation();
   const [flow, setFlow] = useState(false);
   const [activeLevel, setActiveLevel] = useState<string | undefined>();
   const [selectedLevel, setSelectedLevel] = useState(LEVELS[0].id);
@@ -88,6 +90,7 @@ export default function GameShell() {
     return (
       <MetroGame
         levelId={activeLevel}
+        displaySettings={displaySettings}
         music={profile.music}
         onToggleMusic={() => {
           setMusicEnabled(!profile.music);
@@ -227,54 +230,66 @@ export default function GameShell() {
       )}
       {panel === "settings" && (
         <Dialog title="Settings" onClose={() => setPanel(null)}>
-          <p className="muted">
-            Reloading ends the active session. Your packet record is saved on
-            this device when you return to the menu.
-          </p>
-          <p className="muted">
-            {Object.keys(profile.progress).length}/6 maps completed ·{" "}
-            {Object.values(profile.progress).reduce((a, b) => a + b, 0)}/18
-            stars
-          </p>
-          <p className="muted">
-            Best run: {profile.best.toLocaleString("en-US")} packets
-          </p>
-          <button
-            className="secondary"
-            onClick={() => {
+          <GameSettings
+            {...displaySettings}
+            music={profile.music}
+            sound={profile.sound}
+            onToggleMusic={() => {
               setMusicEnabled(!profile.music);
               if (!profile.music) unlockMusic();
               setProfile((v) => ({ ...v, music: !v.music }));
             }}
-            aria-label={profile.music ? "Mute music" : "Enable music"}
-          >
-            Music: {profile.music ? "On" : "Off"}
-          </button>
-          <FullscreenButton />
-          {install && (
-            <button
-              className="primary"
-              onClick={async () => {
-                try {
-                  await install.prompt();
-                  await install.userChoice;
-                } finally {
-                  setInstall(null);
-                }
-              }}
+            onToggleSound={() => {
+              setAudioEnabled(!profile.sound);
+              unlockAudio();
+              setProfile((v) => ({ ...v, sound: !v.sound }));
+            }}
+          />
+          <details className="settings-extra">
+            <summary>Progress & app</summary>
+            <div className="settings-records">
+              <span>
+                <strong>{Object.keys(profile.progress).length}/6</strong> Maps
+              </span>
+              <span>
+                <strong>
+                  {Object.values(profile.progress).reduce((a, b) => a + b, 0)}
+                  /18
+                </strong>{" "}
+                Stars
+              </span>
+              <span>
+                <strong>{profile.best.toLocaleString("en-US")}</strong> Best
+                packets
+              </span>
+            </div>
+            {install && (
+              <button
+                className="primary"
+                onClick={async () => {
+                  try {
+                    await install.prompt();
+                    await install.userChoice;
+                  } finally {
+                    setInstall(null);
+                  }
+                }}
+              >
+                <Download size={18} /> Add to home screen
+              </button>
+            )}
+            <p className="muted">
+              iPhone: Safari → Share → Add to Home Screen.
+            </p>
+            <a
+              className="license-link"
+              href="./THIRD_PARTY_NOTICES.txt"
+              target="_blank"
+              rel="noreferrer"
             >
-              <Download size={18} /> Add to home screen
-            </button>
-          )}
-          <p className="muted">iPhone: Safari → Share → Add to Home Screen.</p>
-          <a
-            className="license-link"
-            href="./THIRD_PARTY_NOTICES.txt"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Component licenses ↗
-          </a>
+              Component licenses ↗
+            </a>
+          </details>
         </Dialog>
       )}
     </main>

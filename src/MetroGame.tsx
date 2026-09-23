@@ -475,6 +475,23 @@ export default function MetroGame({
               }
             />
           )}
+          <g pointerEvents="none" aria-hidden="true">
+            {s.nodes.map((n, id) =>
+              draft?.moveId === id ? null : (
+                <g key={id} transform={`translate(${n.x},${n.y})`}>
+                  {!isTransit(n.shape) && (
+                    <g className="automatic-node-pulse">
+                      <circle r="30" />
+                      <circle r="30" />
+                    </g>
+                  )}
+                  {s.overload[id] > 0 && (
+                    <circle r="33" className="overload-pulse" />
+                  )}
+                </g>
+              ),
+            )}
+          </g>
           {s.queues.map((q, id) => {
             if (draft?.moveId === id) return null;
             const n = s.nodes[id];
@@ -509,24 +526,6 @@ export default function MetroGame({
                   };
                 }}
               >
-                {!isTransit(n.shape) && (
-                  <g
-                    className="automatic-node-pulse"
-                    aria-hidden="true"
-                    pointerEvents="none"
-                  >
-                    <circle r="30" />
-                    <circle r="30" />
-                  </g>
-                )}
-                {s.overload[id] > 0 && (
-                  <circle
-                    r="33"
-                    className="overload-pulse"
-                    aria-hidden="true"
-                    pointerEvents="none"
-                  />
-                )}
                 <circle r="30" fill="transparent" />
                 {s.overload[id] > 0 && (
                   <circle

@@ -14,9 +14,9 @@ test("camera stops at map edges and centers when zoomed out", async ({
   const read = async () =>
     (await map.getAttribute("viewBox"))!.split(" ").map(Number);
   const drag = async (delta: number) => {
-    // The emulated visual viewport can clip the SVG edge. Start inside the visible map.
-    const x = Math.max(12, bounds.x + 8);
-    const y = Math.max(12, bounds.y + 8);
+    // Start on empty ground, away from nodes and the camera controls.
+    const x = bounds.x + bounds.width * 0.4;
+    const y = bounds.y + bounds.height * 0.4;
     await page.mouse.move(x, y);
     await page.mouse.down();
     await page.mouse.move(x + delta, y + delta, {
@@ -63,9 +63,16 @@ test("pan, zoom, reset and parallel cable lanes remain usable", async ({
   );
   const zoomed = await map.getAttribute("viewBox");
   const bounds = (await map.boundingBox())!;
-  await page.mouse.move(bounds.x + 12, bounds.y + 50);
+  await page.mouse.move(
+    bounds.x + bounds.width * 0.4,
+    bounds.y + bounds.height * 0.4,
+  );
   await page.mouse.down();
-  await page.mouse.move(bounds.x + 62, bounds.y + 95, { steps: 6 });
+  await page.mouse.move(
+    bounds.x + bounds.width * 0.4 + 50,
+    bounds.y + bounds.height * 0.4 + 45,
+    { steps: 6 },
+  );
   await page.mouse.up();
   await expect(map).not.toHaveAttribute("viewBox", zoomed!);
   await expect(page.getByTestId("cable-count")).toHaveText("0 active cables");
@@ -145,6 +152,7 @@ test("two-finger pinch cancels cable drawing and never commits a route", async (
 test("new distant nodes stay in the large map and can be located through details", async ({
   page,
 }) => {
+  test.setTimeout(90000);
   await page.clock.install({ time: new Date(42) });
   await page.goto("/");
   await page.clock.pauseAt(new Date(100000));

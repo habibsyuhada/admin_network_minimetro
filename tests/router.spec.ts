@@ -89,6 +89,7 @@ test("monthly report credits only profit minus maintenance and never pays twice"
   await page.getByRole("button", { name: "Start connecting" }).click();
   await page.getByRole("button", { name: "Map controls" }).click();
   await addTransit(page);
+  await page.getByRole("button", { name: "Map controls" }).click();
   await dragCable(page, 0, 3);
   await dragCable(page, 1, 3);
   await dragCable(page, 2, 3);

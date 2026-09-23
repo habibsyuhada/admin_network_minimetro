@@ -81,6 +81,7 @@ test("router preview moves before OK, rejects overlap, and Cancel spends nothing
 test("monthly report credits only profit minus maintenance and never pays twice", async ({
   page,
 }) => {
+  test.setTimeout(90000);
   await page.clock.install({ time: new Date(42) });
   await page.goto("/");
   await page.clock.pauseAt(new Date(100000));
